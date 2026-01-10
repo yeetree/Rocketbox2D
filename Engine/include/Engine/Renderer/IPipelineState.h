@@ -2,15 +2,20 @@
 #define ENGINE_RENDERER_IPIPELINESTATE
 
 #include "Engine/Renderer/IShader.h"
+#include "Engine/Renderer/IBuffer.h"
 #include "Engine/Renderer/VertexLayout.h"
 
 namespace Engine {
+    // How the triangles should be rendered
     enum class FillMode { Solid, Wireframe };
+
+    // How the triangles should be culled
     enum class CullMode { None, Front, Back };
 
+    // Describes how a Pipeline State Object should be created
     struct PipelineDesc {
-        IShader* shader = nullptr;
-        VertexLayout layout;
+        IShader* shader = nullptr;  // Shader to be used with pipeline
+        VertexLayout layout;        // Vertex attributes
         
         // Rasterizer State
         FillMode fillMode = FillMode::Solid;
@@ -24,11 +29,13 @@ namespace Engine {
         bool depthWrite = true;
     };
 
+    // Pipeline State Object
     class IPipelineState {
     public:
         virtual ~IPipelineState() = default;
         virtual void Bind() = 0;
         virtual void Unbind() = 0;
+        virtual void ApplyVertexLayout() = 0;
     };
 }
 

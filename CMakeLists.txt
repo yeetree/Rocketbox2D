@@ -10,6 +10,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # OpenGL
 find_package(OpenGL REQUIRED)
 
+# GLM
+add_subdirectory(vendor/glm)
+
 # SDL3
 list(APPEND CMAKE_PREFIX_PATH "C:/SDL3-3.4.0")
 find_package(SDL3 REQUIRED)

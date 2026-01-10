@@ -7,8 +7,10 @@
 #include <string>
 
 namespace Engine {
+    // Type of vertex element
     enum class VertexElementType { Int, Float, Bool, Vec2, Vec3, Vec4, Mat2, Mat3, Mat4 };
 
+    // Describes a vertex element
     struct ENGINE_EXPORT VertexElement {
         std::string name;
         VertexElementType type;
@@ -20,6 +22,7 @@ namespace Engine {
         VertexElement(VertexElementType type, const std::string& name);
     };
 
+    // Creates a VertexLayout with initializer list of VertexElements, calculates stride, and updates size, components, and offset of each element
     class ENGINE_EXPORT VertexLayout {
     public:
         VertexLayout(std::initializer_list<VertexElement> elements);

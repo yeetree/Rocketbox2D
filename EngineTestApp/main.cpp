@@ -37,6 +37,8 @@ public:
     std::unique_ptr<IBuffer> verts;
     std::unique_ptr<IBuffer> indices;
 
+    uint64_t ticks_prev;
+
     void Startup() override {
         shader = GetGraphicsDevice().CreateShader(ShaderDesc{
             {
@@ -61,6 +63,8 @@ public:
             shader.get(),
             VertexLayout({VertexElement(VertexElementType::Vec2, "position")}),
         });
+
+        ticks_prev = SDL_GetTicks();
     }
 
     void Input(SDL_Event event) override {
@@ -68,13 +72,16 @@ public:
     }
 
     void Update() override {
-
+        uint64_t ticks_now = SDL_GetTicks();
+        std::cout << "FPS: " << 1000.0 / (ticks_now - ticks_prev) << std::endl;
+        ticks_prev = ticks_now;
     }
 
     void Render() override {
         pipeline->Bind();
         verts->Bind();
         indices->Bind();
+        pipeline->ApplyVertexLayout();
         GetGraphicsDevice().SubmitDraw(indicesData.size());
     }
 

@@ -4,6 +4,8 @@
 #include "Renderer/OpenGL/OpenGLShader.h"
 #include <glad/gl.h>
 
+#include <iostream>
+
 namespace Engine {
     
     OpenGLGraphicsDevice::OpenGLGraphicsDevice(SDL_Window* window) : m_Window(window) {

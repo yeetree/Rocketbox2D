@@ -10,6 +10,7 @@
 #include "Engine/Renderer/IGraphicsDevice.h"
 
 namespace Engine {
+    // Main engine class, handles game loop.
     class ENGINE_EXPORT Engine {
     public:
         Engine();

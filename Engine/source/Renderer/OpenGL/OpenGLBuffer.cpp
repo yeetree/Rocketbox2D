@@ -1,14 +1,17 @@
 #include "Renderer/OpenGL/OpenGLBuffer.h"
+#include <iostream>
 
 namespace Engine
 {
-    OpenGLBuffer::OpenGLBuffer(const BufferDesc& desc) {
+    OpenGLBuffer::OpenGLBuffer(const BufferDesc& desc) : m_Size(desc.size), m_Type(desc.type) {
         m_Target = (desc.type == BufferType::Vertex) ? GL_ARRAY_BUFFER : GL_ELEMENT_ARRAY_BUFFER;
-
+        
         glGenBuffers(1, &m_RendererID);
         glBindBuffer(m_Target, m_RendererID);
         
         glBufferData(m_Target, desc.size, desc.data, (desc.isDynamic) ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
+
+        glBindBuffer(m_Target, 0);
     }
 
     OpenGLBuffer::~OpenGLBuffer() {
@@ -20,6 +23,26 @@ namespace Engine
     }
 
     void OpenGLBuffer::Unbind() {
+        glBindBuffer(m_Target, 0);
+    }
+
+    size_t OpenGLBuffer::GetSize() const {
+        return m_Size;
+    }
+
+    BufferType OpenGLBuffer::GetType() const {
+        return m_Type;
+    }
+
+    void OpenGLBuffer::UpdateData(const void* data, size_t size, size_t offset)  {
+        if (offset + size > m_Size) {
+            std::cout << "Buffer Overflow: Trying to write outside of buffer bounds!" << std::endl;
+            return;
+        }
+        
+        glBindBuffer(m_Target, m_RendererID);
+        glBufferSubData(m_Target, offset, size, data);
+
         glBindBuffer(m_Target, 0);
     }
 } // namespace Engine

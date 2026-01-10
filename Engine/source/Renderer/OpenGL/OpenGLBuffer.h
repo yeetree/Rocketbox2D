@@ -13,7 +13,14 @@ namespace Engine {
         void Bind() override;
         void Unbind() override;
 
+        size_t GetSize() const override;
+        BufferType GetType() const override;
+
+        void UpdateData(const void* data, size_t size, size_t offset = 0) override;
+
     private:
+        BufferType m_Type;
+        size_t m_Size;
         GLuint m_RendererID;
         GLenum m_Target;
     };

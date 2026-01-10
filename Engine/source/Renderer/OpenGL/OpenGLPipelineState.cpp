@@ -1,4 +1,5 @@
 #include "Renderer/OpenGL/OpenGLPipelineState.h"
+#include <iostream>
 
 namespace Engine
 {
@@ -28,27 +29,6 @@ namespace Engine
         m_DepthWrite = desc.depthWrite;
 
         glGenVertexArrays(1, &m_VAO);
-        glBindVertexArray(m_VAO);
-
-        // Bind vertex attributes (assume VAO is currently bound)
-        uint32_t attributeIndex = 0; 
-        for (const auto& e : m_Elements) {
-            glEnableVertexAttribArray(attributeIndex);
-            
-            glVertexAttribPointer(
-                attributeIndex,
-                e.components,       // Now correct (1, 2, 3, or 4)
-                GetGLBaseType(e.type), // Use Base Type (GL_FLOAT)
-                e.normalized ? GL_TRUE : GL_FALSE,
-                m_Stride,
-                (void*)(uintptr_t)e.offset
-            );
-            
-            attributeIndex++;
-        }
-
-        glBindVertexArray(0);
-
     }
 
     OpenGLPipelineState::~OpenGLPipelineState() {
@@ -74,6 +54,7 @@ namespace Engine
 
         if(m_EnableBlending) {
             glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         }
         else {
             glDisable(GL_BLEND);
@@ -94,6 +75,22 @@ namespace Engine
         // Unbind shader & VAO
         m_Shader->Unbind();
         glBindVertexArray(0);
+    }
+
+    void OpenGLPipelineState::ApplyVertexLayout() {
+        uint32_t attributeIndex = 0; 
+        for (const auto& e : m_Elements) {
+            glEnableVertexAttribArray(attributeIndex);
+            glVertexAttribPointer(
+                attributeIndex,
+                e.components,
+                GetGLBaseType(e.type),
+                e.normalized ? GL_TRUE : GL_FALSE,
+                m_Stride,
+                (void*)(uintptr_t)e.offset
+            );
+            attributeIndex++;
+        }
     }
 
 } // namespace Engine

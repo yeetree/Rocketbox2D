@@ -4,7 +4,7 @@ include(GenerateExportHeader)
 
 # Engine sources
 set(ENGINE_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/../external/glad/src/gl.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../vendor/glad/src/gl.c
 
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Core/Engine.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/IGraphicsDevice.cpp
@@ -20,17 +20,18 @@ set(ENGINE_SOURCES
 set(ENGINE_PUBLIC_INCLUDES
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_BINARY_DIR}/gen
+     ${CMAKE_CURRENT_SOURCE_DIR}../vendor/glm
 )
 
 set(ENGINE_PRIVATE_INCLUDES
     ${CMAKE_CURRENT_SOURCE_DIR}/source
-    ${CMAKE_CURRENT_SOURCE_DIR}/../external/glad/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../vendor/glad/include
 )
 
 # Build and link Engine
 add_library(Engine SHARED ${ENGINE_SOURCES})
 add_library(Engine::Engine ALIAS Engine)
-target_link_libraries(Engine PUBLIC SDL3::SDL3 PRIVATE OpenGL::GL)
+target_link_libraries(Engine PUBLIC glm::glm SDL3::SDL3 PRIVATE OpenGL::GL)
 target_include_directories(Engine PUBLIC ${ENGINE_PUBLIC_INCLUDES} PRIVATE ${ENGINE_PRIVATE_INCLUDES})
 
 # Hide all symbols by default

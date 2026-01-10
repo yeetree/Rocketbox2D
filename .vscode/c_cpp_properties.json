@@ -4,11 +4,12 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/**",
-                "C:\\SDL3-3.4.0\\include",
-                "${workspaceFolder}/Engine/source",
                 "${workspaceFolder}/Engine/include",
+                "${workspaceFolder}/Engine/source",
                 "${workspaceFolder}/build/Engine/gen",
-                "${workspaceFolder}/external/glad/include"
+                "${workspaceFolder}/vendor/glm",
+                "C:\\SDL3-3.4.0\\include",
+                "${workspaceFolder}/vendor/glad/include"
             ],
             "defines": [
                 "_DEBUG",

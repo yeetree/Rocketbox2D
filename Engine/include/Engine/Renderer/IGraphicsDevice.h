@@ -13,10 +13,13 @@
 #include "Engine/Renderer/IPipelineState.h"
 
 namespace Engine {
+    // What backend to create (Only OpenGL for now)
     enum class GraphicsAPI { OpenGL };
 
+    // Creates resources for rendering and dispatches draw calls
     class ENGINE_EXPORT IGraphicsDevice {
     public:
+        // Static function to create a graphics device implementation and select backend
         static std::unique_ptr<IGraphicsDevice> Create(GraphicsAPI api, SDL_Window* window);
 
         virtual ~IGraphicsDevice() = default;

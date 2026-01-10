@@ -1,5 +1,6 @@
 #include "Renderer/OpenGL/OpenGLShader.h"
 #include <iostream>
+#include <glm/gtc/type_ptr.hpp>
 
 namespace Engine
 {
@@ -103,6 +104,40 @@ namespace Engine
         glUseProgram(0);
     }
 
-    // TODO: Shader uniforms. Will do later
+    void OpenGLShader::SetBool(const std::string& name, bool value) {
+        glUniform1i(glGetUniformLocation(m_ProgramID, name.c_str()), (int)value); 
+    }
+
+    void OpenGLShader::SetInt(const std::string& name, int value) {
+        glUniform1i(glGetUniformLocation(m_ProgramID, name.c_str()), value); 
+    }
+
+    void OpenGLShader::SetFloat(const std::string& name, float value) {
+        glUniform1f(glGetUniformLocation(m_ProgramID, name.c_str()), value); 
+    }
+
+    void OpenGLShader::SetVec2(const std::string& name, Vec2 value) {
+        glUniform2f(glGetUniformLocation(m_ProgramID, name.c_str()), value.x, value.y); 
+    }
+
+    void OpenGLShader::SetVec3(const std::string& name, Vec3 value) {
+        glUniform3f(glGetUniformLocation(m_ProgramID, name.c_str()), value.x, value.y, value.z); 
+    }
+
+    void OpenGLShader::SetVec4(const std::string& name, Vec4 value) {
+        glUniform4f(glGetUniformLocation(m_ProgramID, name.c_str()), value.x, value.y, value.z, value.w); 
+    }
+
+    void OpenGLShader::SetMat2(const std::string& name, Mat2 value) {
+        glUniformMatrix2fv(glGetUniformLocation(m_ProgramID, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
+    }
+
+    void OpenGLShader::SetMat3(const std::string& name, Mat3 value) {
+        glUniformMatrix3fv(glGetUniformLocation(m_ProgramID, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
+    }
+    
+    void OpenGLShader::SetMat4(const std::string& name, Mat4 value) {
+        glUniformMatrix4fv(glGetUniformLocation(m_ProgramID, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
+    }
     
 } // namespace Engine

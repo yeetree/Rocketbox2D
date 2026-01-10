@@ -7,9 +7,10 @@
 #include "Engine/Renderer/IGraphicsDevice.h"
 
 namespace Engine {
-
+    // OpenGL Implementation of IPipelineState
     class OpenGLGraphicsDevice : public IGraphicsDevice {
     public:
+        // Constructor: Creates an OpenGLGraphicsDevice with SDL_Window
         OpenGLGraphicsDevice(SDL_Window* window);
         virtual ~OpenGLGraphicsDevice();
 
