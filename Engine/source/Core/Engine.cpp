@@ -1,4 +1,6 @@
 #include "Engine/Core/Engine.h"
+#include "Engine/Core/Filesystem.h"
+#include <iostream>
 
 namespace Engine {
 
@@ -12,6 +14,8 @@ namespace Engine {
     }
 
     void Engine::Init(int width, int height, std::string title, SDL_WindowFlags flags) {
+        std::cout << "Engine indev" << std::endl;
+
         // Create window
         // Create window with OpenGL -- everything else is platform agnostic, so switching backends will be insanely trivial in the future
         m_Window = SDL_CreateWindow(title.c_str(), width, height, flags | SDL_WINDOW_OPENGL);
@@ -23,6 +27,12 @@ namespace Engine {
 
         // Create graphics device
         m_GraphicsDevice = IGraphicsDevice::Create(GraphicsAPI::OpenGL, m_Window);
+
+        // Init filesystem (set base path)
+        FileSystem::SetBasePath(SDL_GetBasePath());
+
+        // Create resource manager
+        m_ResourceManager = std::make_unique<ResourceManager>(m_GraphicsDevice.get());
     }
 
     void Engine::Run() {

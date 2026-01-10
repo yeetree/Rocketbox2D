@@ -7,6 +7,9 @@ set(ENGINE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/../vendor/glad/src/gl.c
 
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Core/Engine.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/source/Core/FileSystem.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/source/Core/ResourceManager.cpp
+
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/IGraphicsDevice.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/VertexLayout.cpp
 
@@ -27,6 +30,7 @@ set(ENGINE_PUBLIC_INCLUDES
 set(ENGINE_PRIVATE_INCLUDES
     ${CMAKE_CURRENT_SOURCE_DIR}/source
     ${CMAKE_CURRENT_SOURCE_DIR}/../vendor/glad/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../vendor/stb
 )
 
 # Build and link Engine

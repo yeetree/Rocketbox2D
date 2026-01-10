@@ -8,6 +8,7 @@
 #include <string>
 
 #include "Engine/Renderer/IGraphicsDevice.h"
+#include "Engine/Core/ResourceManager.h"
 
 namespace Engine {
     // Main engine class, handles game loop.
@@ -20,6 +21,7 @@ namespace Engine {
         void Run();
 
         IGraphicsDevice& GetGraphicsDevice() { return *m_GraphicsDevice; }
+        ResourceManager& GetResourceManager() { return *m_ResourceManager; }
 
         virtual void Startup() = 0;
 
@@ -33,6 +35,7 @@ namespace Engine {
         bool m_Running;
         SDL_Window* m_Window;
         std::unique_ptr<IGraphicsDevice> m_GraphicsDevice;
+        std::unique_ptr<ResourceManager> m_ResourceManager;
     };
 } // namespace Engine
 
