@@ -14,6 +14,7 @@ set(ENGINE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/OpenGL/OpenGLPipelineState.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/OpenGL/OpenGLBuffer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/OpenGL/OpenGLShader.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/OpenGL/OpenGLTexture.cpp
 )
 
 # Engine includes

@@ -2,6 +2,7 @@
 #include "Renderer/OpenGL/OpenGLPipelineState.h"
 #include "Renderer/OpenGL/OpenGLBuffer.h"
 #include "Renderer/OpenGL/OpenGLShader.h"
+#include "Renderer/OpenGL/OpenGLTexture.h"
 #include <glad/gl.h>
 
 #include <iostream>
@@ -10,6 +11,7 @@ namespace Engine {
     
     OpenGLGraphicsDevice::OpenGLGraphicsDevice(SDL_Window* window) : m_Window(window) {
         // Set attributes
+        // Use OpenGL 3.3 Core
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
@@ -44,37 +46,42 @@ namespace Engine {
     // Resource Creation
     std::unique_ptr<IBuffer> OpenGLGraphicsDevice::CreateBuffer(const BufferDesc& desc) {
         return std::make_unique<OpenGLBuffer>(desc);
-    };
+    }
 
     std::unique_ptr<ITexture> OpenGLGraphicsDevice::CreateTexture(const TextureDesc& desc) {
-        return nullptr;
-    };
+        return std::make_unique<OpenGLTexture>(desc);
+    }
 
     std::unique_ptr<IShader> OpenGLGraphicsDevice::CreateShader(const ShaderDesc& desc) {
         return std::make_unique<OpenGLShader>(desc);
-    };
+    }
 
     std::unique_ptr<IPipelineState> OpenGLGraphicsDevice::CreatePipelineState(const PipelineDesc& desc) {
         return std::make_unique<OpenGLPipelineState>(desc);
-    };
+    }
 
     // Frame Management
     void OpenGLGraphicsDevice::BeginFrame() {
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f); // Dark Grey
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    };
+    }
 
     void OpenGLGraphicsDevice::EndFrame() {
         // Empty in OpenGL
-    };
+    }
 
     void OpenGLGraphicsDevice::Present() {
         SDL_GL_SwapWindow(m_Window);
-    };
+    }
 
     // Draw call
     void OpenGLGraphicsDevice::SubmitDraw(uint32_t indexCount) {
         glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, nullptr);
-    };
+    }
+
+    // Resize
+    void OpenGLGraphicsDevice::Resize(int width, int height) {
+        glViewport(0, 0, width, height);
+    }
 
 } // namespace Engine

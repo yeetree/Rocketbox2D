@@ -33,7 +33,10 @@ namespace Engine {
         void SubmitDraw(uint32_t indexCount) override;
 
         // Utility
-        ITexture* GetBackBuffer() override { return m_BackBuffer.get(); }
+        //ITexture* GetBackBuffer() override { return m_BackBuffer.get(); }
+
+        // Resize
+        void Resize(int width, int height) override;
 
     private:
         SDL_Window* m_Window;

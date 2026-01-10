@@ -40,6 +40,11 @@ namespace Engine {
                     case SDL_EVENT_QUIT:
                         m_Running = false;
                         break;
+                    case SDL_EVENT_WINDOW_RESIZED:
+                        int width, height;
+                        SDL_GetWindowSize(m_Window, &width, &height);
+                        m_GraphicsDevice->Resize(width, height);
+                        break;
                 }
                 Input(event);
             }

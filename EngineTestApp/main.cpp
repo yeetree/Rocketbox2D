@@ -92,7 +92,7 @@ public:
 
 int main(int argc, char **argv) {
     EngineTestApp app;
-    app.Init(800, 600, "EngineTestApp", NULL);
+    app.Init(800, 600, "EngineTestApp", SDL_WINDOW_RESIZABLE);
     app.Run();
     return 0;
 }

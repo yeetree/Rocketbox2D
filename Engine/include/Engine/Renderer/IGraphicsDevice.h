@@ -41,7 +41,10 @@ namespace Engine {
         virtual void SubmitDraw(uint32_t indexCount) = 0;
 
         // Get back buffer
-        virtual ITexture* GetBackBuffer() = 0;
+        //virtual ITexture* GetBackBuffer() = 0;
+
+        // Resize
+        virtual void Resize(int width, int height) = 0;
     };
 } // namespace Engine
 
