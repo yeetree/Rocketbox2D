@@ -1,0 +1,46 @@
+#ifndef ENGINE_RENDERER_IGRAPHICSDEVICE
+#define ENGINE_RENDERER_IGRAPHICSDEVICE
+
+#include "engine_export.h"
+
+#include <memory>
+
+#include <SDL3/SDL.h>
+
+#include "Engine/Renderer/IBuffer.h"
+#include "Engine/Renderer/IShader.h"
+#include "Engine/Renderer/ITexture.h"
+#include "Engine/Renderer/IPipelineState.h"
+
+namespace Engine {
+    enum class GraphicsAPI { OpenGL };
+
+    class ENGINE_EXPORT IGraphicsDevice {
+    public:
+        static std::unique_ptr<IGraphicsDevice> Create(GraphicsAPI api, SDL_Window* window);
+
+        virtual ~IGraphicsDevice() = default;
+
+        // Resource creation
+        virtual std::unique_ptr<IBuffer>  CreateBuffer(const BufferDesc& desc) = 0;
+        virtual std::unique_ptr<ITexture> CreateTexture(const TextureDesc& desc) = 0;
+        virtual std::unique_ptr<IShader>  CreateShader(const ShaderDesc& desc) = 0;
+        
+        // Pipeline creation
+        virtual std::unique_ptr<IPipelineState> CreatePipelineState(const PipelineDesc& desc) = 0;
+
+        // Render and swapchain
+        virtual void BeginFrame() = 0;
+        virtual void EndFrame() = 0;
+        virtual void Present() = 0;
+        
+        // Draw call
+        virtual void SubmitDraw(uint32_t indexCount) = 0;
+
+        // Get back buffer
+        virtual ITexture* GetBackBuffer() = 0;
+    };
+} // namespace Engine
+
+
+#endif // ENGINE_RENDERER_IGRAPHICSDEVICE
