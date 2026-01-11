@@ -22,6 +22,7 @@ set(ENGINE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/Renderer2D.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Scene/Scene.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/source/Scene/Entity.cpp
 )
 
 # Engine includes

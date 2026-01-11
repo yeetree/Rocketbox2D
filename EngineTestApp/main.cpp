@@ -67,7 +67,7 @@ public:
 
         entity = scene.CreateEntity();
         entity.AddComponent<SpriteComponent>(GetResourceManager().GetTexture("container"));
-        entity.AddComponent<NativeScriptComponent>().Bind<MyScript>();
+        entity.AddScript<MyScript>();
 
 
         float w = (float)GetWindowWidth();

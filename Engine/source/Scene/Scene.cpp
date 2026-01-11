@@ -1,6 +1,4 @@
 #include "Engine/Scene/Scene.h"
-#include "Engine/Scene/EntityScript.h"
-#include "Engine/Scene/Entity.h"
 #include <iostream>
 
 namespace Engine
@@ -26,14 +24,18 @@ namespace Engine
     void Scene::Update(float dt) {
         // Entity + NativeScript
         for (auto [entity, nsc] : m_Registry.view<NativeScriptComponent>().each()) {
-            GetEntityScript(entity, nsc)->Update(dt);
+            if(nsc.Instance) {
+                nsc.Instance->Update(dt);
+            }
         }
     }
 
     void Scene::Input(SDL_Event event) {
         // Entity + NativeScript
         for (auto [entity, nsc] : m_Registry.view<NativeScriptComponent>().each()) {
-            GetEntityScript(entity, nsc)->Input(event);
+            if(nsc.Instance) {
+                nsc.Instance->Input(event);
+            }
         }
     }
 
@@ -43,16 +45,6 @@ namespace Engine
         entity.AddComponent<TagComponent>(name);
         entity.AddComponent<TransformComponent>();
         return entity;
-    }
-
-    // Instantiates entity scripts
-    EntityScript* Scene::GetEntityScript(entt::entity entity, NativeScriptComponent& nsc) {
-        if (!nsc.Instance) {
-            nsc.Instance = nsc.InstantiateScript();
-            nsc.Instance->m_Entity = Entity{ entity, this };
-            nsc.Instance->Start();
-        }
-        return nsc.Instance;
     }
 
     // Destroys native scripts

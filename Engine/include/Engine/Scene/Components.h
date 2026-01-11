@@ -31,6 +31,13 @@ namespace Engine {
         EntityScript* (*InstantiateScript)();           // "new"
         void (*DestroyScript)(NativeScriptComponent*);  // "delete"
 
+        // Returns instance
+        template<typename T>
+        T& As() {
+            if (!Instance) return nullptr;
+            return *static_cast<T*>(Instance);
+        }
+
         template<typename T>
         void Bind() {
             InstantiateScript = []() { return static_cast<EntityScript*>(new T()); };                           // Casts to EntityScript* and returns pointer to new function

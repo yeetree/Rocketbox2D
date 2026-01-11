@@ -3,29 +3,34 @@
 
 #include "engine_export.h"
 
-#include "Engine/Scene/Scene.h"
+#include <entt/entt.hpp>
 
 namespace Engine
 {
+    class Scene;
+
     class ENGINE_EXPORT Entity {
     public:
         Entity() = default;
         Entity(entt::entity handle, Scene* scene) : m_EntityHandle(handle), m_Scene(scene) {}
 
-        template<typename T, typename... Args>
-        T& AddComponent(Args&&... args) {
-            return m_Scene->m_Registry.emplace<T>(m_EntityHandle, std::forward<Args>(args)...);
-        }
+        entt::entity GetHandle() const;
 
-        template<typename T>
-        T& GetComponent() {
-            return m_Scene->m_Registry.get<T>(m_EntityHandle);
-        }
+        template<typename T, typename... Args> T& AddComponent(Args&&... args);
+        template<typename T> T& GetComponent();
+        template<typename T> bool HasComponent() const;
+        template<typename T> void RemoveComponent();
+        
+        template<typename T> T& AddScript();
+        template<typename T> T* GetScript();
+        
+        void RemoveScript();
 
     private:
         entt::entity m_EntityHandle{ entt::null };
         Scene* m_Scene = nullptr;
     };
+
 } // namespace Engine
 
 
