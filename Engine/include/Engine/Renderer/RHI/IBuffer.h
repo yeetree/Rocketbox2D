@@ -1,5 +1,5 @@
-#ifndef ENGINE_RENDERER_IBUFFER
-#define ENGINE_RENDERER_IBUFFER
+#ifndef ENGINE_RENDERER_RHI_IBUFFER
+#define ENGINE_RENDERER_RHI_IBUFFER
 
 
 namespace Engine {
@@ -31,4 +31,4 @@ namespace Engine {
 } // namespace Engine
 
 
-#endif // ENGINE_RENDERER_IBUFFER
+#endif // ENGINE_RENDERER_RHI_IBUFFER

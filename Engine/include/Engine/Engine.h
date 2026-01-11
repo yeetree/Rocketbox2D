@@ -12,6 +12,8 @@
 #include "Engine/Renderer/RHI/ITexture.h"
 #include "Engine/Renderer/RHI/VertexLayout.h"
 
+#include "Engine/Renderer/Renderer2D.h"
+
 #include "Engine/Math/Vector.h"
 #include "Engine/Math/Matrix.h"
 

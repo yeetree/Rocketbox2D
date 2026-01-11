@@ -9,6 +9,8 @@
 
 #include "Engine/Renderer/RHI/IGraphicsDevice.h"
 #include "Engine/Core/ResourceManager.h"
+#include "Engine/Renderer/Renderer2D.h"
+#include "Engine/Math/Vector.h"
 
 namespace Engine {
     // Main engine class, handles game loop.
@@ -21,20 +23,31 @@ namespace Engine {
         void Run();
 
         IGraphicsDevice& GetGraphicsDevice() { return *m_GraphicsDevice; }
+        Renderer2D& GetRenderer2D() { return *m_Renderer2D; }
         ResourceManager& GetResourceManager() { return *m_ResourceManager; }
+
+        int GetWindowWidth() { return m_WindowWidth; }
+        int GetWindowHeight() { return m_WindowHeight; }
+        iVec2 GetWindowSize() { return iVec2(m_WindowWidth, m_WindowHeight); }
 
         virtual void Startup() = 0;
 
         virtual void Input(SDL_Event event) = 0;
-        virtual void Update() = 0;
+        virtual void Update(float dt) = 0;
         virtual void Render() = 0;
 
         virtual void Cleanup() = 0;
         
     private:
         bool m_Running;
+
         SDL_Window* m_Window;
+        int m_WindowWidth, m_WindowHeight;
+
+        uint64_t m_TicksPrevious;
+        
         std::unique_ptr<IGraphicsDevice> m_GraphicsDevice;
+        std::unique_ptr<Renderer2D> m_Renderer2D;
         std::unique_ptr<ResourceManager> m_ResourceManager;
     };
 } // namespace Engine

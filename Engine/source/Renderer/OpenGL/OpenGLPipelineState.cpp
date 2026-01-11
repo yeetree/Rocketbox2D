@@ -36,11 +36,11 @@ namespace Engine
     }
 
     void OpenGLPipelineState::Bind() {
-        // Use shader
-        m_Shader->Bind();
-
         // Use VAO
         glBindVertexArray(m_VAO);
+
+        // Use shader
+        m_Shader->Bind();
 
         // Set cull, fill, blending, and depth test/write
         glPolygonMode(GL_FRONT_AND_BACK, (m_FillMode == FillMode::Solid) ? GL_FILL : GL_LINE);

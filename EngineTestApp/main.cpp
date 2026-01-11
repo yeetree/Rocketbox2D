@@ -1,77 +1,75 @@
 #include <iostream>
 #include "Engine/Engine.h"
 #include <SDL3/SDL_main.h>
-
-std::vector<float> vertsData = {
-    0.5f, -0.5f,
-    -0.5f,  0.5f,
-    -0.5f, -0.5f,
-    0.5f, 0.5f,
-};
-
-std::vector<unsigned int> indicesData = {
-    0, 1, 2, 0, 3, 1
-};
+#include <glm/gtc/matrix_transform.hpp>
+#include <cmath>
 
 using namespace Engine;
 
+float fwrap(float x, float min, float max) {
+    if (min > max) {
+        return fwrap(x, max, min);
+    }
+    return (x >= 0 ? min : max) + std::fmod(x, max - min);
+}
+
 class EngineTestApp : public Engine {
 public:
-    std::unique_ptr<IPipelineState> pipeline;
     std::shared_ptr<ITexture> tex;
-    std::shared_ptr<IShader> shader;
-    std::unique_ptr<IBuffer> verts;
-    std::unique_ptr<IBuffer> indices;
+    Mat4 viewproj;
 
-    uint64_t ticks_prev;
+
+    float rot = 0;
+    float hue = 0;
+    Vec4 tint = Vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
     void Startup() override {
-        GetResourceManager().LoadShader("basic", "Assets/basic.vert", "Assets/basic.frag");
         GetResourceManager().LoadTexture("container", "Assets/awesomeface.png");
-        shader = GetResourceManager().GetShader("basic");
         tex = GetResourceManager().GetTexture("container");
 
-        verts = GetGraphicsDevice().CreateBuffer(BufferDesc{
-            vertsData.size() * sizeof(float),
-            BufferType::Vertex,
-            vertsData.data()
-        });
+        float w = (float)GetWindowWidth();
+        float h = (float)GetWindowHeight();
 
-        indices = GetGraphicsDevice().CreateBuffer(BufferDesc{
-            indicesData.size() * sizeof(unsigned int),
-            BufferType::Index,
-            indicesData.data()
-        });
+        viewproj = glm::ortho(0.0f, w, 0.0f, h, -1.0f, 1.0f);
 
-        pipeline = GetGraphicsDevice().CreatePipelineState(PipelineDesc{
-            shader.get(),
-            VertexLayout({VertexElement(VertexElementType::Vec2, "position")}),
-            FillMode::Solid,
-            CullMode::Back,
-            true
-        });
-
-        ticks_prev = SDL_GetTicks();
     }
 
     void Input(SDL_Event event) override {
-
+        switch(event.type) {
+            case SDL_EVENT_WINDOW_RESIZED:
+                viewproj = glm::ortho(0.0f, (float)GetWindowWidth(), 0.0f, (float)GetWindowHeight(), -1.0f, 1.0f);
+                break;
+        }
     }
 
-    void Update() override {
-        uint64_t ticks_now = SDL_GetTicks();
-        //std::cout << "FPS: " << 1000.0 / (ticks_now - ticks_prev) << std::endl;
-        ticks_prev = ticks_now;
+    void Update(float dt) override {
+        rot += 3.14 * dt;
+        hue += 0.1 * dt;
+
+        int i = static_cast<int>(hue * 6);
+        float s = 1.0f, v = 1.0f;
+        float f = hue * 6 - i;
+        float p = v * (1 - s);
+        float q = v * (1 - f * s);
+        float t = v * (1 - (1 - f) * s);
+
+        switch (i % 6) {
+            case 0: tint.r = v, tint.g = t, tint.b = p; break;
+            case 1: tint.r = q, tint.g = v, tint.b = p; break;
+            case 2: tint.r = p, tint.g = v, tint.b = t; break;
+            case 3: tint.r = p, tint.g = q, tint.b = v; break;
+            case 4: tint.r = t, tint.g = p, tint.b = v; break;
+            case 5: tint.r = v, tint.g = p, tint.b = q; break;
+        }
+
     }
 
     void Render() override {
-        pipeline->Bind();
-        verts->Bind();
-        indices->Bind();
-        pipeline->ApplyVertexLayout();
-        tex->Bind(0);
-        shader->SetInt("tex", 0);
-        GetGraphicsDevice().SubmitDraw(indicesData.size());
+        
+
+        GetRenderer2D().BeginScene(viewproj);
+        GetRenderer2D().DrawQuad(tex, Vec2(400, 300), Vec2(200, 200), rot, tint);
+        GetRenderer2D().EndScene();
     }
 
     void Cleanup() override {
