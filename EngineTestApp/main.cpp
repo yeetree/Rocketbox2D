@@ -13,19 +13,57 @@ float fwrap(float x, float min, float max) {
     return (x >= 0 ? min : max) + std::fmod(x, max - min);
 }
 
+class MyScript : public EntityScript {
+public:
+    float hue;
+
+    void Start() override {
+        GetComponent<TransformComponent>().position = Vec2(400, 300);
+        GetComponent<TransformComponent>().scale = Vec2(100, 100);
+    }
+
+    void Update(float dt) override {
+        hue += 0.1 * dt;
+        Vec4 &color = GetComponent<SpriteComponent>().color;
+
+        int i = static_cast<int>(hue * 6);
+        float s = 1.0f, v = 1.0f;
+        float f = hue * 6 - i;
+        float p = v * (1 - s);
+        float q = v * (1 - f * s);
+        float t = v * (1 - (1 - f) * s);
+
+        Vec4 tint(1.0f, 1.0f, 1.0f, 1.0f);
+
+        switch (i % 6) {
+            case 0: color.r = v, color.g = t, color.b = p; break;
+            case 1: color.r = q, color.g = v, color.b = p; break;
+            case 2: color.r = p, color.g = v, color.b = t; break;
+            case 3: color.r = p, color.g = q, color.b = v; break;
+            case 4: color.r = t, color.g = p, color.b = v; break;
+            case 5: color.r = v, color.g = p, color.b = q; break;
+        }
+
+        GetComponent<TransformComponent>().rotation += 3.14 * dt;
+    }
+};
+
 class EngineTestApp : public Engine {
 public:
-    std::shared_ptr<ITexture> tex;
-    Mat4 viewproj;
-
-
     float rot = 0;
     float hue = 0;
-    Vec4 tint = Vec4(1.0f, 1.0f, 1.0f, 1.0f);
+
+    Scene scene;
+    Mat4 viewproj;
+    Entity entity;
 
     void Startup() override {
         GetResourceManager().LoadTexture("container", "Assets/awesomeface.png");
-        tex = GetResourceManager().GetTexture("container");
+
+        entity = scene.CreateEntity();
+        entity.AddComponent<SpriteComponent>(GetResourceManager().GetTexture("container"));
+        entity.AddComponent<NativeScriptComponent>().Bind<MyScript>();
+
 
         float w = (float)GetWindowWidth();
         float h = (float)GetWindowHeight();
@@ -43,33 +81,11 @@ public:
     }
 
     void Update(float dt) override {
-        rot += 3.14 * dt;
-        hue += 0.1 * dt;
-
-        int i = static_cast<int>(hue * 6);
-        float s = 1.0f, v = 1.0f;
-        float f = hue * 6 - i;
-        float p = v * (1 - s);
-        float q = v * (1 - f * s);
-        float t = v * (1 - (1 - f) * s);
-
-        switch (i % 6) {
-            case 0: tint.r = v, tint.g = t, tint.b = p; break;
-            case 1: tint.r = q, tint.g = v, tint.b = p; break;
-            case 2: tint.r = p, tint.g = v, tint.b = t; break;
-            case 3: tint.r = p, tint.g = q, tint.b = v; break;
-            case 4: tint.r = t, tint.g = p, tint.b = v; break;
-            case 5: tint.r = v, tint.g = p, tint.b = q; break;
-        }
-
+        scene.Update(dt);
     }
 
     void Render() override {
-        
-
-        GetRenderer2D().BeginScene(viewproj);
-        GetRenderer2D().DrawQuad(tex, Vec2(400, 300), Vec2(200, 200), rot, tint);
-        GetRenderer2D().EndScene();
+        scene.Render(GetRenderer2D(), viewproj);
     }
 
     void Cleanup() override {

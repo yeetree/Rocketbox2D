@@ -20,6 +20,8 @@ set(ENGINE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/OpenGL/OpenGLTexture.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/Renderer2D.cpp
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/source/Scene/Scene.cpp
 )
 
 # Engine includes
@@ -38,7 +40,7 @@ set(ENGINE_PRIVATE_INCLUDES
 # Build and link Engine
 add_library(Engine SHARED ${ENGINE_SOURCES})
 add_library(Engine::Engine ALIAS Engine)
-target_link_libraries(Engine PUBLIC glm::glm SDL3::SDL3 PRIVATE OpenGL::GL)
+target_link_libraries(Engine PUBLIC glm::glm SDL3::SDL3 EnTT::EnTT PRIVATE OpenGL::GL)
 target_include_directories(Engine PUBLIC ${ENGINE_PUBLIC_INCLUDES} PRIVATE ${ENGINE_PRIVATE_INCLUDES})
 
 # Hide all symbols by default

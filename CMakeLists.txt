@@ -17,6 +17,9 @@ add_subdirectory(vendor/glm)
 list(APPEND CMAKE_PREFIX_PATH "C:/SDL3-3.4.0")
 find_package(SDL3 REQUIRED)
 
+# EnTT
+add_subdirectory(vendor/entt)
+
 # Engine library
 add_subdirectory(Engine)
 
