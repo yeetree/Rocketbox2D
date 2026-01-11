@@ -29,7 +29,7 @@ public:
         GetResourceManager().LoadShader("basic", "Assets/basic.vert", "Assets/basic.frag");
         GetResourceManager().LoadTexture("container", "Assets/awesomeface.png");
         shader = GetResourceManager().GetShader("basic");
-        tex = GetResourceManager().GetTexture("contaidner");
+        tex = GetResourceManager().GetTexture("container");
 
         verts = GetGraphicsDevice().CreateBuffer(BufferDesc{
             vertsData.size() * sizeof(float),
