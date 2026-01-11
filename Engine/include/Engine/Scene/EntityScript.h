@@ -1,6 +1,7 @@
 #ifndef ENGINE_SCENE_ENTITYSCRIPT
 #define ENGINE_SCENE_ENTITYSCRIPT
 
+#include <SDL3/SDL.h>
 #include "Engine/Scene/Entity.h"
 
 namespace Engine {
@@ -15,6 +16,7 @@ namespace Engine {
         virtual void Start() {}
         virtual void Destroy() {}
         virtual void Update(float dt) {}
+        virtual void Input(SDL_Event event) {}
 
     private:
         Entity m_Entity;

@@ -46,13 +46,18 @@ public:
 
         GetComponent<TransformComponent>().rotation += 3.14 * dt;
     }
+
+    void Input(SDL_Event event) override {
+        switch(event.type) {
+            case SDL_EVENT_KEY_DOWN:
+                hue = 0;
+                break;
+        }
+    }
 };
 
 class EngineTestApp : public Engine {
 public:
-    float rot = 0;
-    float hue = 0;
-
     Scene scene;
     Mat4 viewproj;
     Entity entity;
@@ -78,6 +83,7 @@ public:
                 viewproj = glm::ortho(0.0f, (float)GetWindowWidth(), 0.0f, (float)GetWindowHeight(), -1.0f, 1.0f);
                 break;
         }
+        scene.Input(event);
     }
 
     void Update(float dt) override {
