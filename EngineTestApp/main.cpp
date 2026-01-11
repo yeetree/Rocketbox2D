@@ -3,13 +3,14 @@
 #include <SDL3/SDL_main.h>
 
 std::vector<float> vertsData = {
+    0.5f, -0.5f,
+    -0.5f,  0.5f,
     -0.5f, -0.5f,
-     0.5f, -0.5f,
-     0.0f,  0.5f
+    0.5f, 0.5f,
 };
 
 std::vector<unsigned int> indicesData = {
-    0, 1, 2
+    0, 1, 2, 0, 3, 1
 };
 
 using namespace Engine;
@@ -17,6 +18,7 @@ using namespace Engine;
 class EngineTestApp : public Engine {
 public:
     std::unique_ptr<IPipelineState> pipeline;
+    std::shared_ptr<ITexture> tex;
     std::shared_ptr<IShader> shader;
     std::unique_ptr<IBuffer> verts;
     std::unique_ptr<IBuffer> indices;
@@ -25,7 +27,9 @@ public:
 
     void Startup() override {
         GetResourceManager().LoadShader("basic", "Assets/basic.vert", "Assets/basic.frag");
+        GetResourceManager().LoadTexture("container", "Assets/awesomeface.png");
         shader = GetResourceManager().GetShader("basic");
+        tex = GetResourceManager().GetTexture("contaidner");
 
         verts = GetGraphicsDevice().CreateBuffer(BufferDesc{
             vertsData.size() * sizeof(float),
@@ -42,6 +46,9 @@ public:
         pipeline = GetGraphicsDevice().CreatePipelineState(PipelineDesc{
             shader.get(),
             VertexLayout({VertexElement(VertexElementType::Vec2, "position")}),
+            FillMode::Solid,
+            CullMode::Back,
+            true
         });
 
         ticks_prev = SDL_GetTicks();
@@ -62,6 +69,8 @@ public:
         verts->Bind();
         indices->Bind();
         pipeline->ApplyVertexLayout();
+        tex->Bind(0);
+        shader->SetInt("tex", 0);
         GetGraphicsDevice().SubmitDraw(indicesData.size());
     }
 

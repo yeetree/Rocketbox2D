@@ -16,10 +16,12 @@ namespace Engine
         void LoadShader(const std::string& identifier, const std::string& vertPath, const std::string& fragPath);
         void LoadTexture(const std::string& identifier, const std::string& texturePath);
 
+        void SetShader(const std::string& identifier, std::unique_ptr<IShader> shader);
+        void SetTexture(const std::string& identifier, std::unique_ptr<ITexture> texture);
+
         std::shared_ptr<IShader> GetShader(const std::string& identifier);
         std::shared_ptr<ITexture> GetTexture(const std::string& identifier);
-
-
+        
     private:
         // Graphics device for creating GPU resources
         IGraphicsDevice* m_GraphicsDevice;
