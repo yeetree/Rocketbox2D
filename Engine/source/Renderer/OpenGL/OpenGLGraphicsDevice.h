@@ -4,7 +4,7 @@
 #include <SDL3/SDL.h>
 #include <glad/gl.h>
 
-#include "Engine/Renderer/IGraphicsDevice.h"
+#include "Engine/Renderer/RHI/IGraphicsDevice.h"
 
 namespace Engine {
     // OpenGL Implementation of IPipelineState

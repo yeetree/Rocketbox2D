@@ -10,8 +10,8 @@ set(ENGINE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Core/FileSystem.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Core/ResourceManager.cpp
 
-    ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/IGraphicsDevice.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/VertexLayout.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/RHI/IGraphicsDevice.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/RHI/VertexLayout.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/OpenGL/OpenGLGraphicsDevice.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/OpenGL/OpenGLPipelineState.cpp

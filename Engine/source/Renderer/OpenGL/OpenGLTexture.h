@@ -1,7 +1,7 @@
 #ifndef RENDERER_OPENGL_OPENGLTEXTURE
 #define RENDERER_OPENGL_OPENGLTEXTURE
 
-#include "Engine/Renderer/ITexture.h"
+#include "Engine/Renderer/RHI/ITexture.h"
 #include <glad/gl.h>
 
 

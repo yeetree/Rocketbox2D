@@ -7,7 +7,7 @@
 
 #include <string>
 
-#include "Engine/Renderer/IGraphicsDevice.h"
+#include "Engine/Renderer/RHI/IGraphicsDevice.h"
 #include "Engine/Core/ResourceManager.h"
 
 namespace Engine {

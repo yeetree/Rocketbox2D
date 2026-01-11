@@ -7,10 +7,10 @@
 
 #include <SDL3/SDL.h>
 
-#include "Engine/Renderer/IBuffer.h"
-#include "Engine/Renderer/IShader.h"
-#include "Engine/Renderer/ITexture.h"
-#include "Engine/Renderer/IPipelineState.h"
+#include "Engine/Renderer/RHI/IBuffer.h"
+#include "Engine/Renderer/RHI/IShader.h"
+#include "Engine/Renderer/RHI/ITexture.h"
+#include "Engine/Renderer/RHI/IPipelineState.h"
 
 namespace Engine {
     // What backend to create (Only OpenGL for now)

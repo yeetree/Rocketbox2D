@@ -3,7 +3,7 @@
 
 #include "engine_export.h"
 
-#include "Engine/Renderer/IGraphicsDevice.h"
+#include "Engine/Renderer/RHI/IGraphicsDevice.h"
 
 namespace Engine
 {

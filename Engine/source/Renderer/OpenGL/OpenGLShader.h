@@ -1,7 +1,7 @@
 #ifndef RENDERER_OPENGL_OPENGLSHADER
 #define RENDERER_OPENGL_OPENGLSHADER
 
-#include "Engine/Renderer/IShader.h"
+#include "Engine/Renderer/RHI/IShader.h"
 #include <glad/gl.h>
 
 namespace Engine {

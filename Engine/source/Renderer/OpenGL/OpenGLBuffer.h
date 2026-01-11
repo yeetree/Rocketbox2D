@@ -1,7 +1,7 @@
 #ifndef RENDERER_OPENGL_OPENGLBUFFER
 #define RENDERER_OPENGL_OPENGLBUFFER
 
-#include "Engine/Renderer/IBuffer.h"
+#include "Engine/Renderer/RHI/IBuffer.h"
 #include <glad/gl.h>
 
 namespace Engine {

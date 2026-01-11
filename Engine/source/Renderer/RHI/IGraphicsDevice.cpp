@@ -1,4 +1,4 @@
-#include "Engine/Renderer/IGraphicsDevice.h"
+#include "Engine/Renderer/RHI/IGraphicsDevice.h"
 #include "Renderer/OpenGL/OpenGLGraphicsDevice.h"
 
 namespace Engine

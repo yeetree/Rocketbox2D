@@ -1,7 +1,7 @@
 #ifndef RENDERER_OPENGL_OPENGLPIPELINESTATE
 #define RENDERER_OPENGL_OPENGLPIPELINESTATE
 
-#include "Engine/Renderer/IPipelineState.h"
+#include "Engine/Renderer/RHI/IPipelineState.h"
 #include <glad/gl.h>
 
 namespace Engine {

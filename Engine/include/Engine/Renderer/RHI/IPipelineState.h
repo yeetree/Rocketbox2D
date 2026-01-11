@@ -1,9 +1,9 @@
 #ifndef ENGINE_RENDERER_IPIPELINESTATE
 #define ENGINE_RENDERER_IPIPELINESTATE
 
-#include "Engine/Renderer/IShader.h"
-#include "Engine/Renderer/IBuffer.h"
-#include "Engine/Renderer/VertexLayout.h"
+#include "Engine/Renderer/RHI/IShader.h"
+#include "Engine/Renderer/RHI/IBuffer.h"
+#include "Engine/Renderer/RHI/VertexLayout.h"
 
 namespace Engine {
     // How the triangles should be rendered
