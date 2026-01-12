@@ -8,7 +8,7 @@ namespace Engine
         m_Registry.on_destroy<NativeScriptComponent>().connect<&OnNativeScriptDestroy>();
     }
 
-    void Scene::Render(Renderer2D& renderer, const Mat4& viewProj) {
+    void Scene::OnRender(Renderer2D& renderer, const Mat4& viewProj) {
         renderer.BeginScene(viewProj);
         
         // Entity + Transform + Sprite
@@ -21,20 +21,20 @@ namespace Engine
         renderer.EndScene();
     }
 
-    void Scene::Update(float dt) {
+    void Scene::OnUpdate(float dt) {
         // Entity + NativeScript
         for (auto [entity, nsc] : m_Registry.view<NativeScriptComponent>().each()) {
             if(nsc.Instance) {
-                nsc.Instance->Update(dt);
+                nsc.Instance->OnUpdate(dt);
             }
         }
     }
 
-    void Scene::Input(SDL_Event event) {
+    void Scene::OnInput(SDL_Event event) {
         // Entity + NativeScript
         for (auto [entity, nsc] : m_Registry.view<NativeScriptComponent>().each()) {
             if(nsc.Instance) {
-                nsc.Instance->Input(event);
+                nsc.Instance->OnInput(event);
             }
         }
     }
@@ -51,7 +51,7 @@ namespace Engine
     void Scene::OnNativeScriptDestroy(entt::registry &registry, entt::entity entity) {
         auto& nsc = registry.get<NativeScriptComponent>(entity);
         if (nsc.Instance) {
-            nsc.Instance->Destroy();
+            nsc.Instance->OnDestroy();
             nsc.DestroyScript(&nsc);
         }
     }

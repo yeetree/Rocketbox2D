@@ -15,9 +15,9 @@ namespace Engine {
 
         Entity CreateEntity(const std::string& name = "Entity");
         
-        void Render(Renderer2D& renderer, const Mat4& viewProj);
-        void Update(float dt);
-        void Input(SDL_Event event);
+        void OnRender(Renderer2D& renderer, const Mat4& viewProj);
+        void OnUpdate(float dt);
+        void OnInput(SDL_Event event);
 
         template<typename T>
         T& AddScript(Entity entity) {
@@ -25,7 +25,7 @@ namespace Engine {
             nsc.Bind<T>();
             nsc.Instance = nsc.InstantiateScript();
             nsc.Instance->m_Entity = entity;
-            nsc.Instance->Start();
+            nsc.Instance->OnStart();
             return *static_cast<T*>(nsc.Instance);
         }
 

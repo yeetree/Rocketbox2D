@@ -13,10 +13,10 @@ namespace Engine {
         T& GetComponent() { return m_Entity.GetComponent<T>(); }
 
     protected:
-        virtual void Start() {}
-        virtual void Destroy() {}
-        virtual void Update(float dt) {}
-        virtual void Input(SDL_Event event) {}
+        virtual void OnStart() {}
+        virtual void OnDestroy() {}
+        virtual void OnUpdate(float dt) {}
+        virtual void OnInput(SDL_Event event) {}
 
     private:
         Entity m_Entity;

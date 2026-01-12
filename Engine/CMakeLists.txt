@@ -9,6 +9,7 @@ set(ENGINE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Core/Engine.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Core/FileSystem.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Core/ResourceManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/source/Core/Input.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/RHI/IGraphicsDevice.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/RHI/VertexLayout.cpp

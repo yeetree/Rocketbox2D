@@ -17,12 +17,12 @@ class MyScript : public EntityScript {
 public:
     float hue;
 
-    void Start() override {
+    void OnStart() override {
         GetComponent<TransformComponent>().position = Vec2(400, 300);
         GetComponent<TransformComponent>().scale = Vec2(100, 100);
     }
 
-    void Update(float dt) override {
+    void OnUpdate(float dt) override {
         hue += 0.1 * dt;
         Vec4 &color = GetComponent<SpriteComponent>().color;
 
@@ -45,14 +45,22 @@ public:
         }
 
         GetComponent<TransformComponent>().rotation += 3.14 * dt;
-    }
 
-    void Input(SDL_Event event) override {
-        switch(event.type) {
-            case SDL_EVENT_KEY_DOWN:
-                hue = 0;
-                break;
+        Vec2 move = Vec2(0.0f, 0.0f);
+        if(Input::IsKeyDown(SDL_SCANCODE_A)) {
+            move.x -= 50 * dt;
         }
+        if(Input::IsKeyDown(SDL_SCANCODE_D)) {
+            move.x += 50 * dt;
+        }
+        if(Input::IsKeyDown(SDL_SCANCODE_W)) {
+            move.y += 50 * dt;
+        }
+        if(Input::IsKeyDown(SDL_SCANCODE_S)) {
+            move.y -= 50 * dt;
+        }
+
+        GetComponent<TransformComponent>().position += move;
     }
 };
 
@@ -62,7 +70,7 @@ public:
     Mat4 viewproj;
     Entity entity;
 
-    void Startup() override {
+    void OnStart() override {
         GetResourceManager().LoadTexture("container", "Assets/awesomeface.png");
 
         entity = scene.CreateEntity();
@@ -77,24 +85,24 @@ public:
 
     }
 
-    void Input(SDL_Event event) override {
+    void OnInput(SDL_Event event) override {
         switch(event.type) {
             case SDL_EVENT_WINDOW_RESIZED:
                 viewproj = glm::ortho(0.0f, (float)GetWindowWidth(), 0.0f, (float)GetWindowHeight(), -1.0f, 1.0f);
                 break;
         }
-        scene.Input(event);
+        scene.OnInput(event);
     }
 
-    void Update(float dt) override {
-        scene.Update(dt);
+    void OnUpdate(float dt) override {
+        scene.OnUpdate(dt);
     }
 
-    void Render() override {
-        scene.Render(GetRenderer2D(), viewproj);
+    void OnRender() override {
+        scene.OnRender(GetRenderer2D(), viewproj);
     }
 
-    void Cleanup() override {
+    void OnDestroy() override {
 
     }
 };

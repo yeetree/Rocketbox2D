@@ -9,6 +9,7 @@
 
 #include "Engine/Renderer/RHI/IGraphicsDevice.h"
 #include "Engine/Core/ResourceManager.h"
+#include "Engine/Core/Input.h"
 #include "Engine/Renderer/Renderer2D.h"
 #include "Engine/Math/Vector.h"
 
@@ -25,18 +26,19 @@ namespace Engine {
         IGraphicsDevice& GetGraphicsDevice() { return *m_GraphicsDevice; }
         Renderer2D& GetRenderer2D() { return *m_Renderer2D; }
         ResourceManager& GetResourceManager() { return *m_ResourceManager; }
+        Input& GetInput() { return *m_Input; }
 
         int GetWindowWidth() { return m_WindowWidth; }
         int GetWindowHeight() { return m_WindowHeight; }
         iVec2 GetWindowSize() { return iVec2(m_WindowWidth, m_WindowHeight); }
 
-        virtual void Startup() = 0;
+        virtual void OnStart() = 0;
 
-        virtual void Input(SDL_Event event) = 0;
-        virtual void Update(float dt) = 0;
-        virtual void Render() = 0;
+        virtual void OnInput(SDL_Event event) = 0;
+        virtual void OnUpdate(float dt) = 0;
+        virtual void OnRender() = 0;
 
-        virtual void Cleanup() = 0;
+        virtual void OnDestroy() = 0;
         
     private:
         bool m_Running;
@@ -49,6 +51,7 @@ namespace Engine {
         std::unique_ptr<IGraphicsDevice> m_GraphicsDevice;
         std::unique_ptr<Renderer2D> m_Renderer2D;
         std::unique_ptr<ResourceManager> m_ResourceManager;
+        std::unique_ptr<Input> m_Input;
     };
 } // namespace Engine
 

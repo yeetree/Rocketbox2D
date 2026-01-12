@@ -28,6 +28,10 @@ namespace Engine {
             return; // Failure
         }
 
+        // Create input
+        m_Input = std::make_unique<Input>();
+        Input::s_Instance = m_Input.get(); // Engine is friend to Input class, we set it's instance for it.
+
         // Create graphics device
         m_GraphicsDevice = IGraphicsDevice::Create(GraphicsAPI::OpenGL, m_Window);
         m_GraphicsDevice->Resize(m_WindowWidth, m_WindowHeight);
@@ -48,7 +52,7 @@ namespace Engine {
 
         m_Running = true;
 
-        Startup();
+        OnStart();
 
         m_TicksPrevious = SDL_GetTicks();
         while(m_Running) {
@@ -57,6 +61,8 @@ namespace Engine {
             float dt = (ticksNow - m_TicksPrevious) / 1000.0f;
 
             // Input
+            m_Input->OnUpdate(); // Process input in Input first
+
             SDL_Event event;
             while(SDL_PollEvent(&event)) {
                 switch(event.type) {
@@ -72,18 +78,18 @@ namespace Engine {
             }
 
             // Update
-            Update(dt);
+            OnUpdate(dt);
 
             // Render
             m_GraphicsDevice->BeginFrame();
-            Render();
+            OnRender();
             m_GraphicsDevice->EndFrame();
             m_GraphicsDevice->Present();
 
             // Update ticks
             m_TicksPrevious = ticksNow;
         }
-        Cleanup();
+        OnDestroy();
     }
 
     Engine::~Engine() {
