@@ -8,7 +8,7 @@
 
 namespace Engine {
     // Type of vertex element
-    enum class VertexElementType { Int, Float, Bool, Vec2, Vec3, Vec4, Mat2, Mat3, Mat4 };
+    enum class VertexElementType { Int, Float, Bool, Vec2, Vec3, Vec4, Mat4 };
 
     // Describes a vertex element
     struct ENGINE_EXPORT VertexElement {

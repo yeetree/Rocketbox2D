@@ -9,8 +9,6 @@ namespace Engine
             case VertexElementType::Vec2:
             case VertexElementType::Vec3:
             case VertexElementType::Vec4:
-            case VertexElementType::Mat2:
-            case VertexElementType::Mat3:
             case VertexElementType::Mat4: return GL_FLOAT;
             case VertexElementType::Int:  return GL_INT;
             case VertexElementType::Bool: return GL_BOOL;
@@ -80,16 +78,19 @@ namespace Engine
     void OpenGLPipelineState::ApplyVertexLayout() {
         uint32_t attributeIndex = 0; 
         for (const auto& e : m_Elements) {
-            glEnableVertexAttribArray(attributeIndex);
-            glVertexAttribPointer(
-                attributeIndex,
-                e.components,
-                GetGLBaseType(e.type),
-                e.normalized ? GL_TRUE : GL_FALSE,
-                m_Stride,
-                (void*)(uintptr_t)e.offset
-            );
-            attributeIndex++;
+            uint32_t count = (e.type == VertexElementType::Mat4) ? 4 : 1;
+            for (uint32_t i = 0; i < count; i++) {
+                glEnableVertexAttribArray(attributeIndex);
+                glVertexAttribPointer(
+                    attributeIndex,
+                    (e.type == VertexElementType::Mat4) ? 4 : e.components,
+                    GetGLBaseType(e.type),
+                    e.normalized ? GL_TRUE : GL_FALSE,
+                    m_Stride,
+                    (void*)(uintptr_t)(e.offset + (i * sizeof(float) * 4))
+                );
+                attributeIndex++;
+            }
         }
     }
 

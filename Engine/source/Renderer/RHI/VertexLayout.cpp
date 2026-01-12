@@ -12,8 +12,6 @@ namespace Engine
             case VertexElementType::Vec2:   return 4 * 2;
             case VertexElementType::Vec3:   return 4 * 3;
             case VertexElementType::Vec4:   return 4 * 4;
-            case VertexElementType::Mat2:   return 4 * 4;
-            case VertexElementType::Mat3:   return 4 * 9;
             case VertexElementType::Mat4:   return 4 * 16;
         }
         return 0;
@@ -29,8 +27,6 @@ namespace Engine
             case VertexElementType::Vec2:   return 2;
             case VertexElementType::Vec3:   return 3;
             case VertexElementType::Vec4:   return 4;
-            case VertexElementType::Mat2:   return 4;
-            case VertexElementType::Mat3:   return 9;
             case VertexElementType::Mat4:   return 16;
         }
         return 0;

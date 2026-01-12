@@ -20,8 +20,6 @@ namespace Engine {
         void SetVec2(const std::string& name, Vec2 value) override;
         void SetVec3(const std::string& name, Vec3 value) override;
         void SetVec4(const std::string& name, Vec4 value) override;
-        void SetMat2(const std::string& name, Mat2 value) override;
-        void SetMat3(const std::string& name, Mat3 value) override;
         void SetMat4(const std::string& name, Mat4 value) override;
 
     private:

@@ -4,6 +4,8 @@
 #include "engine_export.h"
 
 #include "Engine/Renderer/RHI/IGraphicsDevice.h"
+#include "Engine/Renderer/Mesh.h"
+#include "Engine/Renderer/Material.h"
 #include "Engine/Math/Vector.h"
 #include "Engine/Math/Matrix.h"
 
@@ -15,6 +17,7 @@ namespace Engine {
         ~Renderer2D() = default;
 
         void BeginScene(const Mat4& viewProj);
+        //void DrawMesh(const std::shared_ptr<Mesh>& mesh, const std::shared_ptr<Material>& material);
         void DrawQuad(const std::shared_ptr<ITexture>& tex, const Vec2& pos, const Vec2& size, float rotation = 0, Vec4 tint = Vec4(1.0f, 1.0f, 1.0f, 1.0f));
         void EndScene();
 

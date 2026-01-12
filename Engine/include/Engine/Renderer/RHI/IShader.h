@@ -33,8 +33,6 @@ namespace Engine {
         virtual void SetVec2(const std::string& name, Vec2 value) = 0;
         virtual void SetVec3(const std::string& name, Vec3 value) = 0;
         virtual void SetVec4(const std::string& name, Vec4 value) = 0;
-        virtual void SetMat2(const std::string& name, Mat2 value) = 0;
-        virtual void SetMat3(const std::string& name, Mat3 value) = 0;
         virtual void SetMat4(const std::string& name, Mat4 value) = 0;
     };
 }
