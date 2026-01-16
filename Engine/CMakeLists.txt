@@ -6,7 +6,7 @@ include(GenerateExportHeader)
 set(ENGINE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/../vendor/glad/src/gl.c
 
-    ${CMAKE_CURRENT_SOURCE_DIR}/source/Core/Engine.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/source/Core/Application.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Core/FileSystem.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Core/ResourceManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Core/Input.cpp
@@ -21,9 +21,6 @@ set(ENGINE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/OpenGL/OpenGLTexture.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/Renderer2D.cpp
-
-    ${CMAKE_CURRENT_SOURCE_DIR}/source/Scene/Scene.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/source/Scene/Entity.cpp
 )
 
 # Engine includes

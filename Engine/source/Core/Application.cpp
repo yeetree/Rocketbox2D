@@ -1,10 +1,18 @@
-#include "Engine/Core/Engine.h"
-#include "Engine/Core/Filesystem.h"
+#include "Engine/Core/Application.h"
+#include "Engine/Core/FileSystem.h"
 #include <iostream>
+#include <cstdint>
 
 namespace Engine {
 
-    Engine::Engine() : m_Running(false) {
+    Application *Application::s_Instance = nullptr;
+
+    Application::Application() : m_Running(false) {
+        if (s_Instance) {
+            return; 
+        }
+        s_Instance = this;
+
         // Initialize SDL
         if(!SDL_Init(SDL_INIT_VIDEO))
         {
@@ -13,7 +21,18 @@ namespace Engine {
         }
     }
 
-    void Engine::Init(int width, int height, std::string title, SDL_WindowFlags flags) {
+    Application& Application::Get() { return *s_Instance; }
+
+    IGraphicsDevice& Application::GetGraphicsDevice() { return *m_GraphicsDevice; }
+    Renderer2D& Application::GetRenderer2D() { return *m_Renderer2D; }
+    ResourceManager& Application::GetResourceManager() { return *m_ResourceManager; }
+    Input& Application::GetInput() { return *m_Input; }
+
+    int Application::GetWindowWidth() { return m_WindowWidth; }
+    int Application::GetWindowHeight() { return m_WindowHeight; }
+    iVec2 Application::GetWindowSize() { return iVec2(m_WindowWidth, m_WindowHeight); }
+
+    void Application::Init(int width, int height, std::string title, SDL_WindowFlags flags) {
         std::cout << "Engine indev" << std::endl;
 
         m_WindowWidth = width;
@@ -46,7 +65,7 @@ namespace Engine {
         m_ResourceManager = std::make_unique<ResourceManager>(m_GraphicsDevice.get());
     }
 
-    void Engine::Run() {
+    void Application::Run() {
         if(m_Running)
             return;
 
@@ -92,7 +111,7 @@ namespace Engine {
         OnDestroy();
     }
 
-    Engine::~Engine() {
+    Application::~Application() {
         if(m_Window)
             SDL_DestroyWindow(m_Window);
         SDL_Quit();

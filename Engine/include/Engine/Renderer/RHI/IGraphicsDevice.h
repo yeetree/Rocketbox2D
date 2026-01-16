@@ -4,6 +4,7 @@
 #include "engine_export.h"
 
 #include <memory>
+#include <cstdint>
 
 #include <SDL3/SDL.h>
 

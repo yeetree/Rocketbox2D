@@ -8,8 +8,8 @@
                 "${workspaceFolder}/Engine/source",
                 "${workspaceFolder}/build/Engine/gen",
                 "${workspaceFolder}/vendor/glm",
-                "C:\\SDL3-3.4.0\\include",
-                "${workspaceFolder}/vendor/glad/include"
+                "${workspaceFolder}/vendor/glad/include",
+                "${workspaceFolder}/vendor/SDL/include"
             ],
             "defines": [
                 "_DEBUG",

@@ -1,5 +1,5 @@
-#ifndef ENGINE_CORE_INPUT
-#define ENGINE_CORE_INPUT
+#ifndef INCLUDE_ENGINE_CORE_INPUT
+#define INCLUDE_ENGINE_CORE_INPUT
 
 #ifndef ENGINE_CORE_INPUT_H
 #define ENGINE_CORE_INPUT_H
@@ -7,7 +7,8 @@
 #include "engine_export.h"
 
 #include <SDL3/SDL.h>
-#include <unordered_map>
+#include <cstdint>
+
 #include "Engine/Math/Vector.h"
 
 namespace Engine {
@@ -25,7 +26,7 @@ namespace Engine {
         static bool IsMouseButtonJustReleased(uint8_t button);
 
     private:
-        friend class Engine; 
+        friend class Application; 
         static Input* s_Instance;
         void OnUpdate();
 
@@ -39,4 +40,4 @@ namespace Engine {
 }
 #endif
 
-#endif // ENGINE_CORE_INPUT
+#endif // INCLUDE_ENGINE_CORE_INPUT

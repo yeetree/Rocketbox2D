@@ -14,8 +14,10 @@ find_package(OpenGL REQUIRED)
 add_subdirectory(vendor/glm)
 
 # SDL3
-list(APPEND CMAKE_PREFIX_PATH "C:/SDL3-3.4.0")
-find_package(SDL3 REQUIRED)
+set(SDL_TEST_LIBRARY OFF)
+set(SDL_TESTS OFF)
+set(SDL_DISABLE_INSTALL ON)
+add_subdirectory(vendor/SDL)
 
 # EnTT
 add_subdirectory(vendor/entt)

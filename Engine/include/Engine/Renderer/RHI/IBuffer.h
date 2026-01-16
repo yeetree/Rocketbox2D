@@ -1,6 +1,7 @@
 #ifndef ENGINE_RENDERER_RHI_IBUFFER
 #define ENGINE_RENDERER_RHI_IBUFFER
 
+#include <cstddef>
 
 namespace Engine {
     // BufferType: What kind of data the buffer stores

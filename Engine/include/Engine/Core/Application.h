@@ -6,6 +6,7 @@
 #include <SDL3/SDL.h>
 
 #include <string>
+#include <cstdint>
 
 #include "Engine/Renderer/RHI/IGraphicsDevice.h"
 #include "Engine/Core/ResourceManager.h"
@@ -14,23 +15,25 @@
 #include "Engine/Math/Vector.h"
 
 namespace Engine {
-    // Main engine class, handles game loop.
-    class ENGINE_EXPORT Engine {
+    // Main application class, handles game loop.
+    class ENGINE_EXPORT Application {
     public:
-        Engine();
-        ~Engine();
+        Application();
+        ~Application();
+
+        Application& Get();
 
         void Init(int width, int height, std::string title, SDL_WindowFlags flags);
         void Run();
 
-        IGraphicsDevice& GetGraphicsDevice() { return *m_GraphicsDevice; }
-        Renderer2D& GetRenderer2D() { return *m_Renderer2D; }
-        ResourceManager& GetResourceManager() { return *m_ResourceManager; }
-        Input& GetInput() { return *m_Input; }
+        IGraphicsDevice& GetGraphicsDevice();
+        Renderer2D& GetRenderer2D();
+        ResourceManager& GetResourceManager();
+        Input& GetInput();
 
-        int GetWindowWidth() { return m_WindowWidth; }
-        int GetWindowHeight() { return m_WindowHeight; }
-        iVec2 GetWindowSize() { return iVec2(m_WindowWidth, m_WindowHeight); }
+        int GetWindowWidth();
+        int GetWindowHeight();
+        iVec2 GetWindowSize();
 
         virtual void OnStart() = 0;
 
@@ -41,6 +44,8 @@ namespace Engine {
         virtual void OnDestroy() = 0;
         
     private:
+        static Application *s_Instance;
+
         bool m_Running;
 
         SDL_Window* m_Window;
