@@ -61,6 +61,17 @@ namespace Engine
             }
         };
 
+        // Entity + Transform + Mesh + Material
+        for (auto [entity, transform, mesh, material] : m_Registry.view<TransformComponent, MeshComponent, MaterialComponent>().each()) {
+            if (mesh.mesh && material.material) {
+                glm::mat4 transformMat = glm::mat4(1.0f);
+                transformMat = glm::translate(transformMat, Vec3(transform.position, 0.0f));
+                transformMat = glm::rotate(transformMat, transform.rotation, Vec3(0.0f, 0.0f, 1.0f));
+                transformMat = glm::scale(transformMat, Vec3(transform.scale, 1.0f));
+                renderer.Submit(mesh.mesh.get(), material.material.get(), transformMat);
+            }
+        };
+
         renderer.EndScene();
     }
 

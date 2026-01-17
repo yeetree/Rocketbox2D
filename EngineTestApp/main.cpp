@@ -29,9 +29,11 @@ public:
     Mat4 viewproj;
     Scene scene;
     Entity entity;
+    Entity entity2;
 
     void OnStart() override {
-        GetResourceManager().LoadTexture("container", "Assets/awesomeface.png");
+        GetResourceManager().LoadTexture("container", "Assets/container.jpg");
+        GetResourceManager().LoadTexture("face", "Assets/awesomeface.png");
 
 
         float w = (float)GetWindowWidth();
@@ -40,10 +42,16 @@ public:
         viewproj = glm::ortho(0.0f, w, 0.0f, h, -1.0f, 1.0f);
 
         entity = scene.CreateEntity();
-        entity.AddComponent<SpriteComponent>(GetResourceManager().GetTexture("container"));
+        entity.AddComponent<SpriteComponent>(GetResourceManager().GetTexture("face"));
         entity.GetComponent<TransformComponent>().position = Vec2(100, 100);
         entity.GetComponent<TransformComponent>().scale = Vec2(100, 100);
         entity.AddComponent<NativeScriptComponent>().Bind<SpriteScript>();
+
+        entity2 = scene.CreateEntity();
+        entity2.AddComponent<SpriteComponent>(GetResourceManager().GetTexture("container"));
+        entity2.GetComponent<TransformComponent>().position = Vec2(300, 300);
+        entity2.GetComponent<TransformComponent>().scale = Vec2(150, 150);
+        entity2.AddComponent<NativeScriptComponent>().Bind<SpriteScript>();
     }
 
     void OnInput(SDL_Event event) override {

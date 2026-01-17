@@ -37,7 +37,7 @@ namespace Engine {
         
         // Initialize logger
         Log::Init();
-        LOG_CORE_INFO("Engine indev");
+        LOG_CORE_INFO("Engine version Rocketbox2D_In_Development");
 
         m_WindowWidth = width;
         m_WindowHeight = height;

@@ -27,6 +27,9 @@ add_subdirectory(vendor/spdlog)
 # Engine library
 add_subdirectory(Engine)
 
+# Rocketbox2D
+add_subdirectory(Rocketbox2D)
+
 option(RB2D_BUILD_ENGINE_TEST_APP "Build the engine test app" ON)
 
 if(RB2D_BUILD_ENGINE_TEST_APP)

@@ -4,6 +4,8 @@
 #include "Engine/Scene/ScriptableEntity.h"
 #include "Engine/Math/Vector.h"
 #include "Engine/Renderer/RHI/ITexture.h"
+#include "Engine/Renderer/Mesh.h"
+#include "Engine/Renderer/Material.h"
 
 #include <string>
 #include <memory>
@@ -23,6 +25,14 @@ namespace Engine
     struct SpriteComponent {
         std::shared_ptr<ITexture> texture;
         Vec4 color{1.0f, 1.0f, 1.0f, 1.0f};
+    };
+
+    struct MeshComponent {
+        std::shared_ptr<Mesh> mesh;
+    };
+
+    struct MaterialComponent {
+        std::shared_ptr<Material> material;
     };
 
     struct NativeScriptComponent {

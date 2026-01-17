@@ -56,12 +56,45 @@ namespace Engine
         m_Textures[identifier] = sharedTexture;
     }
 
+    void ResourceManager::CreateMesh(const std::string& identifier, const void* vertices, uint32_t vSize, const void* indices, uint32_t iSize, uint32_t indexCount, const VertexLayout& layout, bool vDynamic, bool iDynamic) {
+        BufferDesc vbo, ebo;
+        vbo.data = vertices;
+        ebo.data = indices;
+        vbo.size = vSize;
+        ebo.size = iSize;
+        vbo.type = BufferType::Vertex;
+        ebo.type = BufferType::Index;
+        vbo.isDynamic = vDynamic;
+        ebo.isDynamic = iDynamic;
+        std::shared_ptr<IBuffer> vboBuf = m_GraphicsDevice->CreateBuffer(vbo);
+        std::shared_ptr<IBuffer> eboBuf = m_GraphicsDevice->CreateBuffer(ebo);
+        std::shared_ptr<Mesh> mesh = std::make_shared<Mesh>(vboBuf, eboBuf, indexCount, layout);
+        m_Meshes[identifier] = mesh;
+    }
+
+    void ResourceManager::CreateMaterial(const std::string& identifier, std::shared_ptr<IShader> shader) {
+        if(!shader) {
+            LOG_CORE_WARN("Resource Warning: Material: {0} was created with a null shader!", identifier);
+        }
+
+        std::shared_ptr<Material> material = std::make_shared<Material>(shader);
+        m_Materials[identifier] = material;
+    }
+
     void ResourceManager::SetShader(const std::string& identifier, std::unique_ptr<IShader> shader) {
         m_Shaders[identifier] = std::move(shader);
     }
 
     void ResourceManager::SetTexture(const std::string& identifier, std::unique_ptr<ITexture> texture) {
         m_Textures[identifier] = std::move(texture);
+    }
+
+    void ResourceManager::SetMesh(const std::string& identifier, std::unique_ptr<Mesh> mesh) {
+        m_Meshes[identifier] = std::move(mesh);
+    }
+
+    void ResourceManager::SetMaterial(const std::string& identifier, std::unique_ptr<Material> material) {
+        m_Materials[identifier] = std::move(material);
     }
 
     std::shared_ptr<IShader> ResourceManager::GetShader(const std::string& identifier) {
@@ -81,6 +114,26 @@ namespace Engine
             }
         }
         LOG_CORE_ERROR("Resource Error: Texture {0} not found!", identifier);
+        return nullptr;
+    }
+
+    std::shared_ptr<Mesh> ResourceManager::GetMesh(const std::string& identifier){
+        if (m_Meshes.count(identifier)) {
+            if (auto ptr = m_Meshes[identifier]) {
+                return ptr;
+            }
+        }
+        LOG_CORE_ERROR("Resource Error: Mesh {0} not found!", identifier);
+        return nullptr;
+    }
+
+    std::shared_ptr<Material> ResourceManager::GetMaterial(const std::string& identifier){
+        if (m_Materials.count(identifier)) {
+            if (auto ptr = m_Materials[identifier]) {
+                return ptr;
+            }
+        }
+        LOG_CORE_ERROR("Resource Error: Material {0} not found!", identifier);
         return nullptr;
     }
 } // namespace Engine
