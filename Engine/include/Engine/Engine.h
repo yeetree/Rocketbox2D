@@ -14,7 +14,7 @@
 #include "Engine/Renderer/RHI/ITexture.h"
 #include "Engine/Renderer/RHI/VertexLayout.h"
 
-#include "Engine/Renderer/Renderer2D.h"
+#include "Engine/Renderer/Renderer.h"
 
 #include "Engine/Scene/Scene.h"
 #include "Engine/Scene/Entity.h"

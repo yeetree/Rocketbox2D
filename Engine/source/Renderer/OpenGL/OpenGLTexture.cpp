@@ -2,7 +2,7 @@
 
 namespace Engine
 {
-    OpenGLTexture::OpenGLTexture(const TextureDesc &desc) : m_Format(desc.format), m_Width(desc.width), m_Height(desc.height) {
+    OpenGLTexture::OpenGLTexture(const TextureDesc &desc) : ITexture(), m_Format(desc.format), m_Width(desc.width), m_Height(desc.height) {
         glGenTextures(1, &m_TextureID);
         glBindTexture(GL_TEXTURE_2D, m_TextureID);
 

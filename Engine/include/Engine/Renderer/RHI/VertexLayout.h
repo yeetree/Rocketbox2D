@@ -26,10 +26,12 @@ namespace Engine {
     // Creates a VertexLayout with initializer list of VertexElements, calculates stride, and updates size, components, and offset of each element
     class ENGINE_EXPORT VertexLayout {
     public:
-        VertexLayout(std::initializer_list<VertexElement> elements);
+        VertexLayout(std::initializer_list<VertexElement> elements = {});
 
         inline uint32_t GetStride() const { return m_Stride; }
         inline const std::vector<VertexElement>& GetElements() const { return m_Elements; }
+
+        uint64_t GetHash() const;
 
     private:
         void CalculateOffsetsAndStride();

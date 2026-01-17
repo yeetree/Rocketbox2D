@@ -4,7 +4,7 @@
 
 namespace Engine
 {
-    OpenGLShader::OpenGLShader(const ShaderDesc &desc) {
+    OpenGLShader::OpenGLShader(const ShaderDesc &desc) : IShader() {
 
         // Create shader
         m_ProgramID = glCreateProgram();

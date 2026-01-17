@@ -25,7 +25,7 @@ namespace Engine {
     Application& Application::Get() { return *s_Instance; }
 
     IGraphicsDevice& Application::GetGraphicsDevice() { return *m_GraphicsDevice; }
-    Renderer2D& Application::GetRenderer2D() { return *m_Renderer2D; }
+    Renderer& Application::GetRenderer() { return *m_Renderer; }
     ResourceManager& Application::GetResourceManager() { return *m_ResourceManager; }
     Input& Application::GetInput() { return *m_Input; }
 
@@ -64,7 +64,7 @@ namespace Engine {
 
         // Create Renderer2D
         LOG_CORE_INFO("Initializing renderer...");
-        m_Renderer2D = std::make_unique<Renderer2D>(m_GraphicsDevice.get());
+        m_Renderer = std::make_unique<Renderer>(m_GraphicsDevice.get());
 
         // Init filesystem (set base path)
         LOG_CORE_INFO("Initializing filesystem...");

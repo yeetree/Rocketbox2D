@@ -11,7 +11,7 @@
 #include "Engine/Renderer/RHI/IGraphicsDevice.h"
 #include "Engine/Core/ResourceManager.h"
 #include "Engine/Core/Input.h"
-#include "Engine/Renderer/Renderer2D.h"
+#include "Engine/Renderer/Renderer.h"
 #include "Engine/Math/Vector.h"
 
 namespace Engine {
@@ -27,7 +27,7 @@ namespace Engine {
         void Run();
 
         IGraphicsDevice& GetGraphicsDevice();
-        Renderer2D& GetRenderer2D();
+        Renderer& GetRenderer();
         ResourceManager& GetResourceManager();
         Input& GetInput();
 
@@ -54,7 +54,7 @@ namespace Engine {
         uint64_t m_TicksPrevious;
         
         std::unique_ptr<IGraphicsDevice> m_GraphicsDevice;
-        std::unique_ptr<Renderer2D> m_Renderer2D;
+        std::unique_ptr<Renderer> m_Renderer;
         std::unique_ptr<ResourceManager> m_ResourceManager;
         std::unique_ptr<Input> m_Input;
     };

@@ -38,6 +38,15 @@ namespace Engine
         CalculateOffsetsAndStride();
     }
 
+    uint64_t VertexLayout::GetHash() const {
+        // Hash layout
+        uint64_t hash = 0;
+        for (const auto& element : m_Elements) {
+            hash ^= std::hash<int>{}((int)element.type) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+        }
+        return hash;
+    }
+
     void VertexLayout::CalculateOffsetsAndStride() {
         uint32_t offset = 0;
         m_Stride = 0;

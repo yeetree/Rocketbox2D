@@ -2,6 +2,7 @@
 #include "Engine/Scene/Components.h"
 #include "Engine/Scene/ScriptableEntity.h"
 #include "Engine/Core/Application.h"
+#include <glm/gtc/matrix_transform.hpp>
 
 namespace Engine
 {
@@ -45,14 +46,18 @@ namespace Engine
     }
 
     void Scene::OnRender(const Mat4 &viewProj) {
-        Renderer2D& renderer = Application::Get().GetRenderer2D();
+        Renderer& renderer = Application::Get().GetRenderer();
 
         renderer.BeginScene(viewProj);
         
         // Entity + Transform + Sprite
         for (auto [entity, transform, sprite] : m_Registry.view<TransformComponent, SpriteComponent>().each()) {
             if (sprite.texture) {
-                renderer.DrawQuad(sprite.texture, transform.position, transform.scale, transform.rotation, sprite.color);
+                glm::mat4 transformMat = glm::mat4(1.0f);
+                transformMat = glm::translate(transformMat, Vec3(transform.position, 0.0f));
+                transformMat = glm::rotate(transformMat, transform.rotation, Vec3(0.0f, 0.0f, 1.0f));
+                transformMat = glm::scale(transformMat, Vec3(transform.scale, 1.0f));
+                renderer.DrawQuad(sprite.texture, sprite.color, transformMat);
             }
         };
 

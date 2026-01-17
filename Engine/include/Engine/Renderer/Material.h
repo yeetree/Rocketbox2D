@@ -15,25 +15,21 @@ namespace Engine
 {
     class ENGINE_EXPORT Material {
     public:
-        Material(std::shared_ptr<IShader> shader, const VertexLayout& layout);
+        Material() = default;
+        Material(std::shared_ptr<IShader> shader);
 
+        void Set(const std::string& name, ShaderUniformValue value) { m_Uniforms[name] = value; }
+        void SetTexture(const std::string& name, std::shared_ptr<ITexture> tex) { m_Textures[name] = tex; }
 
-        void SetBool(const std::string& name, bool value);
-        void SetInt(const std::string& name, int value);
-        void SetFloat(const std::string& name, float value);
-        void SetVec2(const std::string& name, Vec2 value);
-        void SetVec3(const std::string& name, Vec3 value);
-        void SetVec4(const std::string& name, Vec4 value);
-        void SetMat4(const std::string& name, Mat4 value);
-        void SetTexture(const std::string& name, std::shared_ptr<ITexture> tex);
-
-        void Apply(); 
+        std::shared_ptr<IShader> GetShader() const { return m_Shader; }
+        std::map<std::string, ShaderUniformValue> GetUniforms() const { return m_Uniforms; }
+        std::map<std::string, std::shared_ptr<ITexture>> GetTextures() const { return m_Textures; }
 
     private:
         std::shared_ptr<IShader> m_Shader;
-        std::shared_ptr<IPipelineState> m_PSO;
+        
+        std::map<std::string, ShaderUniformValue> m_Uniforms;
         std::map<std::string, std::shared_ptr<ITexture>> m_Textures;
-        bool m_Dirty;
     };
 } // namespace Engine
 
