@@ -47,6 +47,8 @@ target_include_directories(Engine PUBLIC ${ENGINE_PUBLIC_INCLUDES} PRIVATE ${ENG
 set_target_properties(Engine PROPERTIES
     CXX_VISIBILITY_PRESET hidden
     VISIBILITY_INLINES_HIDDEN YES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
 
 # Generate export header
@@ -56,10 +58,9 @@ generate_export_header(Engine
     EXPORT_FILE_NAME "${CMAKE_CURRENT_BINARY_DIR}/gen/engine_export.h"
 )
 
-# Copy SDL3 library
 add_custom_command(TARGET Engine POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
     "$<TARGET_FILE:SDL3::SDL3>"
-    "$<TARGET_FILE_DIR:Engine>"
-    COMMENT "Copying SDL3 library..."
+    "${CMAKE_BINARY_DIR}/bin"
+    COMMENT "Copying SDL3 library to common bin..."
 )
