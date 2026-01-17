@@ -3,7 +3,6 @@
 
 #include "engine_export.h"
 
-#include "Engine/Scene/Entity.h"
 #include "Engine/Math/Matrix.h"
 #include "Engine/Renderer/Camera.h"
 
@@ -12,6 +11,8 @@
 
 namespace Engine
 {
+    class Entity;
+
     // Scene.h
     class ENGINE_EXPORT Scene {
     public:
@@ -19,6 +20,7 @@ namespace Engine
         ~Scene();
 
         Entity CreateEntity(const std::string& name = "Entity");
+        Entity GetEntity(const std::string& name);
 
         void OnStart();
         void OnInput(SDL_Event event);

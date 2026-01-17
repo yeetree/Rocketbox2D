@@ -1,4 +1,5 @@
 #include "Engine/Scene/Scene.h"
+#include "Engine/Scene/Entity.h"
 #include "Engine/Scene/Components.h"
 #include "Engine/Scene/ScriptableEntity.h"
 #include "Engine/Core/Application.h"
@@ -16,10 +17,23 @@ namespace Engine
     }
 
     Entity Scene::CreateEntity(const std::string& name) {
-        Entity entity = { m_Registry.create(), &m_Registry };
+        Entity entity = { m_Registry.create(), this };
         entity.AddComponent<TransformComponent>();
         entity.AddComponent<TagComponent>(name);
         return entity;
+    }
+
+    Entity Scene::GetEntity(const std::string& name) {
+        auto view = m_Registry.view<TagComponent>();
+        for (auto entity : view) {
+            const auto& tag = view.get<TagComponent>(entity);
+            if (tag.tag == name) {
+                return { entity, this };
+            }
+        }
+        
+        LOG_CORE_WARN("Entity with tag '{0}' not found!", name);
+        return {};
     }
 
     void Scene::OnStart() {
@@ -44,7 +58,7 @@ namespace Engine
             // Initialize if needed
             if (!nsc.Instance) {
                 nsc.Instance = nsc.InstantiateScript();
-                nsc.Instance->m_Entity = Entity(entity, &m_Registry);
+                nsc.Instance->m_Entity = { entity, this };
                 nsc.Instance->OnStart();
             }
 
@@ -58,7 +72,7 @@ namespace Engine
             // Initialize if needed
             if (!nsc.Instance) {
                 nsc.Instance = nsc.InstantiateScript();
-                nsc.Instance->m_Entity = Entity{ entity, &m_Registry };
+                nsc.Instance->m_Entity = { entity, this };
                 nsc.Instance->OnStart();
             }
 
@@ -124,7 +138,7 @@ namespace Engine
             auto& cam = view.get<CameraComponent>(entity);
             if (cam.priority > highestPriority) {
                 highestPriority = cam.priority;
-                selectedCamera = {entity, &m_Registry};
+                selectedCamera = { entity, this };
             }
         }
 

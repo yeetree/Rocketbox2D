@@ -19,6 +19,8 @@ namespace Engine {
         template<typename T>
         T& AddComponent() { return m_Entity.AddComponent<T>(); }
 
+        Scene& GetScene() { return m_Entity.GetScene(); }
+
     protected:
         virtual void OnStart() {}
         virtual void OnDestroy() {}

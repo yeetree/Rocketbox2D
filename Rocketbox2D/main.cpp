@@ -18,6 +18,7 @@ const unsigned int shipIndices[] {
 class RocketScript : public ScriptableEntity {
     const float movespeed = 2.0f;
     const float rotspeed = 4.0f;
+    Vec2 camOffset = Vec2(0.0f, 0.0f);
 
     void OnUpdate(float dt) override {
         Vec2 move = Vec2(0.0f, 0.0f);
@@ -42,8 +43,16 @@ class RocketScript : public ScriptableEntity {
             rot -= rotspeed * dt;
         }
 
+        // If LSHIFT is down, offset camera so that it looks like it isn't moving
+        if(Input::IsKeyDown(SDL_SCANCODE_LSHIFT)) {
+            camOffset -= move;
+        }
+
         GetComponent<TransformComponent>().position += move;
         GetComponent<TransformComponent>().rotation += rot;
+        
+        // Set camera position
+        GetScene().GetEntity("Camera").GetComponent<TransformComponent>().position = GetComponent<TransformComponent>().position + camOffset;
     }
 };
 
@@ -52,6 +61,7 @@ class Rocketbox2D : public Application {
 public:
     Scene scene;
     Entity rocket;
+    Entity ref;
     Entity camera;
 
     void OnStart() override {
@@ -64,15 +74,21 @@ public:
 
         GetResourceManager().CreateMesh("shipMesh", shipVerts, sizeof(shipVerts), shipIndices, sizeof(shipIndices), sizeof(shipIndices), {VertexElement(VertexElementType::Vec2, "position")});
 
-        rocket = scene.CreateEntity();
+        rocket = scene.CreateEntity("Rocket");
         rocket.AddComponent<MeshComponent>(GetResourceManager().GetMesh("shipMesh"));
         rocket.AddComponent<MaterialComponent>(GetResourceManager().GetMaterial("basicMaterial"));
         rocket.GetComponent<MaterialComponent>().material->Set("u_Color", Vec4(1.0f, 0.0f, 0.0f, 1.0f));
-        rocket.GetComponent<TransformComponent>().position = Vec2(0.0f, 0.0f);
         rocket.GetComponent<TransformComponent>().scale = Vec2(1.0f, 1.0f);
         rocket.AddComponent<NativeScriptComponent>().Bind<RocketScript>();
 
-        camera = scene.CreateEntity();
+        ref = scene.CreateEntity("RefEntity");
+        ref.AddComponent<MeshComponent>(GetResourceManager().GetMesh("shipMesh"));
+        ref.AddComponent<MaterialComponent>(GetResourceManager().GetMaterial("basicMaterial"));
+        // TODO: Implement material instancing: This changes color of both entities
+        ref.GetComponent<MaterialComponent>().material->Set("u_Color", Vec4(1.0f, 1.0f, 0.0f, 1.0f));
+        ref.GetComponent<TransformComponent>().scale = Vec2(1.0f, 1.0f);
+
+        camera = scene.CreateEntity("Camera");
         camera.AddComponent<CameraComponent>(10.0f);
 
     }
