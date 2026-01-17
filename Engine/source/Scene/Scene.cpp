@@ -2,12 +2,17 @@
 #include "Engine/Scene/Components.h"
 #include "Engine/Scene/ScriptableEntity.h"
 #include "Engine/Core/Application.h"
+#include "Engine/Core/Log.h"
 #include <glm/gtc/matrix_transform.hpp>
 
 namespace Engine
 {
     Scene::Scene() {
-        
+        m_Registry.on_construct<CameraComponent>().connect<&Scene::OnCameraAdded>(this);
+    }
+
+    Scene::~Scene() {
+        m_Registry.on_construct<CameraComponent>().disconnect<&Scene::OnCameraAdded>(this);
     }
 
     Entity Scene::CreateEntity(const std::string& name) {
@@ -17,7 +22,23 @@ namespace Engine
         return entity;
     }
 
+    void Scene::OnStart() {
+        float height, aspect;
+        height = (float)Application::Get().GetWindowHeight();
+        // Default camera is pixel-perfect
+        m_DefaultCamera = Camera(height);
+    }
+
     void Scene::OnInput(SDL_Event event) {
+        if(event.type == SDL_EVENT_WINDOW_RESIZED) {
+            m_DefaultCamera.OnResize();
+            // Entity + CameraComponent
+            for (auto [entity, cam] : m_Registry.view<CameraComponent>().each()) {
+                // Set aspect ratio
+                cam.camera.OnResize();
+            };
+        }
+
         // Entity + NativeScriptComponent
         for (auto [entity, nsc] : m_Registry.view<NativeScriptComponent>().each()) {
             // Initialize if needed
@@ -45,10 +66,24 @@ namespace Engine
         };
     }
 
-    void Scene::OnRender(const Mat4 &viewProj) {
+    void Scene::OnRender() {
         Renderer& renderer = Application::Get().GetRenderer();
 
-        renderer.BeginScene(viewProj);
+        // Get camera
+        Entity camera = GetActiveCameraEntity();
+    
+        if (!camera.IsValid()) {
+            renderer.BeginScene(m_DefaultCamera.GetViewProjectionMatrix());
+        } else {
+            CameraComponent& cam = camera.GetComponent<CameraComponent>();
+            TransformComponent& trans = camera.GetComponent<TransformComponent>();
+            
+            // Sync camera & transform
+            cam.camera.SetPosition(trans.position);
+            cam.camera.SetRotation(trans.rotation);
+            
+            renderer.BeginScene(cam.camera.GetViewProjectionMatrix());
+        }
         
         // Entity + Transform + Sprite
         for (auto [entity, transform, sprite] : m_Registry.view<TransformComponent, SpriteComponent>().each()) {
@@ -73,6 +108,27 @@ namespace Engine
         };
 
         renderer.EndScene();
+    }
+
+    void Scene::OnCameraAdded(entt::registry& registry, entt::entity entity) {
+        registry.get<CameraComponent>(entity).camera.OnResize();
+    }
+
+    Entity Scene::GetActiveCameraEntity() {
+        Entity selectedCamera;
+        int highestPriority = -1;
+
+        // Entity + Camera
+        auto view = m_Registry.view<CameraComponent>();
+        for (auto entity : view) {
+            auto& cam = view.get<CameraComponent>(entity);
+            if (cam.priority > highestPriority) {
+                highestPriority = cam.priority;
+                selectedCamera = {entity, &m_Registry};
+            }
+        }
+
+        return selectedCamera;
     }
 
 } // namespace Engine

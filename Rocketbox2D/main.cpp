@@ -1,7 +1,6 @@
 #include <iostream>
 #include "Engine/Engine.h"
 #include <SDL3/SDL_main.h>
-#include <glm/gtc/matrix_transform.hpp>
 #include <cmath>
 
 using namespace Engine;
@@ -17,7 +16,7 @@ const unsigned int shipIndices[] {
 };
 
 class RocketScript : public ScriptableEntity {
-    const float movespeed = 200.0f;
+    const float movespeed = 2.0f;
     const float rotspeed = 4.0f;
 
     void OnUpdate(float dt) override {
@@ -51,38 +50,34 @@ class RocketScript : public ScriptableEntity {
 
 class Rocketbox2D : public Application {
 public:
-    Mat4 viewproj;
     Scene scene;
     Entity rocket;
+    Entity camera;
 
     void OnStart() override {
         LOG_TRACE("Hello, Rocketbox2D!");
 
-        float w = (float)GetWindowWidth();
-        float h = (float)GetWindowHeight();
+        scene.OnStart();
 
         GetResourceManager().LoadShader("basic", "./Assets/basic.vert", "./Assets/basic.frag");
         GetResourceManager().CreateMaterial("basicMaterial", GetResourceManager().GetShader("basic"));
 
         GetResourceManager().CreateMesh("shipMesh", shipVerts, sizeof(shipVerts), shipIndices, sizeof(shipIndices), sizeof(shipIndices), {VertexElement(VertexElementType::Vec2, "position")});
 
-        viewproj = glm::ortho(0.0f, w, 0.0f, h, -1.0f, 1.0f);
-
         rocket = scene.CreateEntity();
         rocket.AddComponent<MeshComponent>(GetResourceManager().GetMesh("shipMesh"));
         rocket.AddComponent<MaterialComponent>(GetResourceManager().GetMaterial("basicMaterial"));
         rocket.GetComponent<MaterialComponent>().material->Set("u_Color", Vec4(1.0f, 0.0f, 0.0f, 1.0f));
-        rocket.GetComponent<TransformComponent>().position = Vec2(100.0f, 100.0f);
-        rocket.GetComponent<TransformComponent>().scale = Vec2(100.0f, 100.0f);
+        rocket.GetComponent<TransformComponent>().position = Vec2(0.0f, 0.0f);
+        rocket.GetComponent<TransformComponent>().scale = Vec2(1.0f, 1.0f);
         rocket.AddComponent<NativeScriptComponent>().Bind<RocketScript>();
+
+        camera = scene.CreateEntity();
+        camera.AddComponent<CameraComponent>(10.0f);
+
     }
 
     void OnInput(SDL_Event event) override {
-        switch(event.type) {
-            case SDL_EVENT_WINDOW_RESIZED:
-                viewproj = glm::ortho(0.0f, (float)GetWindowWidth(), 0.0f, (float)GetWindowHeight(), -1.0f, 1.0f);
-                break;
-        }
         scene.OnInput(event);
     }
 
@@ -91,7 +86,7 @@ public:
     }
 
     void OnRender() override {
-        scene.OnRender(viewproj);
+        scene.OnRender();
     }
 
     void OnDestroy() override {

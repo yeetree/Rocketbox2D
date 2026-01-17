@@ -32,6 +32,7 @@ namespace Engine {
     int Application::GetWindowWidth() { return m_WindowWidth; }
     int Application::GetWindowHeight() { return m_WindowHeight; }
     iVec2 Application::GetWindowSize() { return iVec2(m_WindowWidth, m_WindowHeight); }
+    float Application::GetAspectRatio() { return m_AspectRatio; }
 
     void Application::Init(int width, int height, std::string title, SDL_WindowFlags flags) {
         
@@ -41,6 +42,7 @@ namespace Engine {
 
         m_WindowWidth = width;
         m_WindowHeight = height;
+        m_AspectRatio = (float)m_WindowWidth / (float)m_WindowHeight;
 
         // Create window
         // Create window with OpenGL -- everything else is platform agnostic, so switching backends will be insanely trivial in the future
@@ -101,7 +103,9 @@ namespace Engine {
                         m_Running = false;
                         break;
                     case SDL_EVENT_WINDOW_RESIZED:
-                        SDL_GetWindowSize(m_Window, &m_WindowWidth, &m_WindowHeight);
+                        m_WindowWidth = event.window.data1;
+                        m_WindowHeight = event.window.data2;
+                        m_AspectRatio = (float)m_WindowWidth / (float)m_WindowHeight;
                         m_GraphicsDevice->Resize(m_WindowWidth, m_WindowHeight);
                         break;
                 }

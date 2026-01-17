@@ -6,6 +6,7 @@
 #include "Engine/Renderer/RHI/ITexture.h"
 #include "Engine/Renderer/Mesh.h"
 #include "Engine/Renderer/Material.h"
+#include "Engine/Renderer/Camera.h"
 
 #include <string>
 #include <memory>
@@ -33,6 +34,12 @@ namespace Engine
 
     struct MaterialComponent {
         std::shared_ptr<Material> material;
+    };
+
+    struct CameraComponent {
+        Camera camera;
+        int priority = 0;
+        CameraComponent(float verticalSize = 1.0f) : camera(verticalSize) {};
     };
 
     struct NativeScriptComponent {

@@ -23,6 +23,7 @@ set(ENGINE_SOURCES
 
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/Material.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/Renderer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/Camera.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Scene/Scene.cpp
 )

@@ -34,6 +34,7 @@ namespace Engine {
         int GetWindowWidth();
         int GetWindowHeight();
         iVec2 GetWindowSize();
+        float GetAspectRatio();
 
         virtual void OnStart() = 0;
 
@@ -50,6 +51,7 @@ namespace Engine {
 
         SDL_Window* m_Window;
         int m_WindowWidth, m_WindowHeight;
+        float m_AspectRatio;
 
         uint64_t m_TicksPrevious;
         
