@@ -22,6 +22,10 @@ add_subdirectory(vendor/SDL)
 # EnTT
 add_subdirectory(vendor/entt)
 
+# spdlog
+set(SPDLOG_BUILD_PIC ON)
+add_subdirectory(vendor/spdlog)
+
 # Engine library
 add_subdirectory(Engine)
 

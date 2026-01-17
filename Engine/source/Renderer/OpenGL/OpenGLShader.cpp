@@ -1,5 +1,5 @@
 #include "Renderer/OpenGL/OpenGLShader.h"
-#include <iostream>
+#include "Engine/Core/Log.h"
 #include <glm/gtc/type_ptr.hpp>
 
 namespace Engine
@@ -29,7 +29,7 @@ namespace Engine
             if (!success)
             {
                 glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-                std::cout << "Vertex shader compilation failed! OpenGL: " << infoLog << std::endl;
+                LOG_CORE_ERROR("OpenGL: Vertex shader compilation failed! OpenGL: {0}", infoLog);
             }
 
             glAttachShader(m_ProgramID, vertexShader);
@@ -49,7 +49,7 @@ namespace Engine
             if (!success)
             {
                 glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-                std::cout << "Fragment shader compilation failed! OpenGL: " << infoLog << std::endl;
+                LOG_CORE_ERROR("OpenGL: Fragment shader compilation failed! OpenGL: {0}", infoLog);
             }
         }
 
@@ -67,13 +67,13 @@ namespace Engine
             if (!success)
             {
                 glGetShaderInfoLog(geometryShader, 512, NULL, infoLog);
-                std::cout << "Geometry shader compilation failed! OpenGL: " << infoLog << std::endl;
+                LOG_CORE_ERROR("OpenGL: Geometry shader compilation failed! OpenGL: {0}", infoLog);
             }
         }
 
         if (desc.sources.find(ShaderStage::Compute) != desc.sources.end()) {
             // Compute shader
-            std::cout << "Compute shader compilation failed! Engine: Compute shaders are not supported in OpenGL API Backend." << std::endl;
+            LOG_CORE_ERROR("OpenGL: Compute shader compilation failed! Engine: Compute shaders are not supported in OpenGL API Backend.");
         }
 
         // Link shaders
@@ -87,7 +87,7 @@ namespace Engine
         glGetProgramiv(m_ProgramID, GL_LINK_STATUS, &success);
         if (!success) {
             glGetProgramInfoLog(m_ProgramID, 512, NULL, infoLog);
-            std::cout << "Shader linking failed! OpenGL: " << infoLog << std::endl;
+            LOG_CORE_ERROR("OpenGL: Shader linking failed! OpenGL: {0}", infoLog);
         }
 
     }

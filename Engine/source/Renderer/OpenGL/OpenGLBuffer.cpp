@@ -1,5 +1,5 @@
 #include "Renderer/OpenGL/OpenGLBuffer.h"
-#include <iostream>
+#include "Engine/Core/Log.h"
 
 namespace Engine
 {
@@ -36,7 +36,7 @@ namespace Engine
 
     void OpenGLBuffer::UpdateData(const void* data, size_t size, size_t offset)  {
         if (offset + size > m_Size) {
-            std::cout << "Buffer Overflow: Trying to write outside of buffer bounds!" << std::endl;
+            LOG_CORE_ERROR("Buffer overflow: Trying to write outside of buffer bounds!");
             return;
         }
         

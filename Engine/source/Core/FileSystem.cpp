@@ -1,4 +1,5 @@
 #include "Engine/Core/FileSystem.h"
+#include "Engine/Core/Log.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -16,7 +17,7 @@ std::string Engine::FileSystem::ReadFile(const std::string &path)
 {
     std::ifstream file(path);
     if (!file.is_open()) {
-        std::cout << "Could not open file: " << path << std::endl;
+        LOG_CORE_ERROR("Could not open file! File not found: {0}", FileSystem::GetAbsolutePath(path));
         return "";
     }
     std::stringstream buffer;

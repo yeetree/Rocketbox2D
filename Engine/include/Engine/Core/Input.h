@@ -1,8 +1,5 @@
-#ifndef INCLUDE_ENGINE_CORE_INPUT
-#define INCLUDE_ENGINE_CORE_INPUT
-
-#ifndef ENGINE_CORE_INPUT_H
-#define ENGINE_CORE_INPUT_H
+#ifndef ENGINE_CORE_INPUT
+#define ENGINE_CORE_INPUT
 
 #include "engine_export.h"
 
@@ -38,6 +35,5 @@ namespace Engine {
         const bool* m_CurrentKeyState;
     };
 }
-#endif
 
-#endif // INCLUDE_ENGINE_CORE_INPUT
+#endif // ENGINE_CORE_INPUT_

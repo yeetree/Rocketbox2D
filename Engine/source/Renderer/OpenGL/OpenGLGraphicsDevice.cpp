@@ -3,13 +3,14 @@
 #include "Renderer/OpenGL/OpenGLBuffer.h"
 #include "Renderer/OpenGL/OpenGLShader.h"
 #include "Renderer/OpenGL/OpenGLTexture.h"
+#include "Engine/Core/Log.h"
 #include <glad/gl.h>
-
-#include <iostream>
 
 namespace Engine {
     
     OpenGLGraphicsDevice::OpenGLGraphicsDevice(SDL_Window* window) : m_Window(window) {
+        LOG_CORE_INFO("OpenGL: Creating OpenGL graphics device...");
+        
         // Set attributes
         // Use OpenGL 3.3 Core
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
@@ -19,20 +20,26 @@ namespace Engine {
         SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 
         // Create context
+        LOG_CORE_INFO("OpenGL: Creating OpenGL context...");
         m_Context = SDL_GL_CreateContext(m_Window);
+        if(m_Context == nullptr) {
+            LOG_CORE_CRITICAL("OpenGL: OpenGL context could not be created! SDL: {0}", SDL_GetError());
+            return; // Failure
+        }
         
-         // Initialize glad
+        // Initialize glad
+        LOG_CORE_INFO("OpenGL: Initializing GLAD...");
         int version = gladLoadGL((GLADloadfunc)SDL_GL_GetProcAddress);
 
         if (version == 0) {
-            SDL_Log("Failed to initialize GLAD");
-            return;
+            LOG_CORE_CRITICAL("OpenGL: Failed to initialize GLAD!");
+            return; // Failure
         }
 
         // Print OpenGL version
         int major = GLAD_VERSION_MAJOR(version);
         int minor = GLAD_VERSION_MINOR(version);
-        SDL_Log("Loaded OpenGL version %d.%d", major, minor);
+        LOG_CORE_INFO("OpenGL: Loaded OpenGL version {0}.{1}", major, minor);
 
         // Make current
         SDL_GL_MakeCurrent(m_Window, m_Context);

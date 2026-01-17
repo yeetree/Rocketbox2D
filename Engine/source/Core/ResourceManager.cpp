@@ -1,5 +1,6 @@
 #include "Engine/Core/ResourceManager.h"
 #include "Engine/Core/FileSystem.h"
+#include "Engine/Core/Log.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #include <iostream>
@@ -40,7 +41,7 @@ namespace Engine
 
         if(pixels == nullptr)
         {
-            std::cout << "Couldn't load image: " << FileSystem::GetAbsolutePath(texturePath) << std::endl;
+            LOG_CORE_ERROR("Could not load image! File not found: {0}", FileSystem::GetAbsolutePath(texturePath));
             return;
         }
 
@@ -69,7 +70,7 @@ namespace Engine
                 return ptr;
             }
         }
-        std::cout << "Resource Error: Shader " << identifier << " not found!" << std::endl;
+        LOG_CORE_ERROR("Resource Error: Shader {0} not found!", identifier);
         return nullptr;
     }
 
@@ -79,7 +80,7 @@ namespace Engine
                 return ptr;
             }
         }
-        std::cout << "Resource Error: Texture " << identifier << " not found!" << std::endl;
+        LOG_CORE_ERROR("Resource Error: Texture {0} not found!", identifier);
         return nullptr;
     }
 } // namespace Engine
