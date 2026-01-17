@@ -72,7 +72,7 @@ namespace Engine
         std::shared_ptr<IBuffer> ebo = m_GraphicsDevice->CreateBuffer(eboDesc);
 
         // Create quad mesh
-        m_QuadMesh = Mesh(vbo, ebo, 6, {VertexElement(VertexElementType::Vec2, "a_Position"), VertexElement(VertexElementType::Vec2, "a_TexCoords")});
+        m_QuadMesh = Mesh(vbo, ebo, 6, {VertexElement(VertexElementType::Vec2, "a_Position"), VertexElement(VertexElementType::Vec2, "a_TexCoord")});
 
         // Create shader
         ShaderDesc shaderDesc;
