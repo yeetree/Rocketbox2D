@@ -15,7 +15,7 @@ namespace Engine
 {
     class ENGINE_EXPORT Material {
     public:
-        Material(IGraphicsDevice *device, std::shared_ptr<IShader> shader, const VertexLayout& layout);
+        Material(std::shared_ptr<IShader> shader, const VertexLayout& layout);
 
 
         void SetBool(const std::string& name, bool value);

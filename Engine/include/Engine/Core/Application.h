@@ -21,7 +21,7 @@ namespace Engine {
         Application();
         ~Application();
 
-        Application& Get();
+        static Application& Get();
 
         void Init(int width, int height, std::string title, SDL_WindowFlags flags);
         void Run();

@@ -1,8 +1,9 @@
 #include "Engine/Renderer/Material.h"
+#include "Engine/Core/Application.h"
 
 namespace Engine
 {
-    Material::Material(IGraphicsDevice *device, std::shared_ptr<IShader> shader, const VertexLayout& layout) : m_Shader(shader), m_Dirty(false) {
+    Material::Material(std::shared_ptr<IShader> shader, const VertexLayout& layout) : m_Shader(shader), m_Dirty(false) {
         // Create PSO
         PipelineDesc desc{};
         desc.shader = m_Shader.get();
@@ -11,7 +12,7 @@ namespace Engine
         // Temporary
         desc.enableBlending = true;
 
-        m_PSO = device->CreatePipelineState(desc);
+        m_PSO = Application::Get().GetGraphicsDevice().CreatePipelineState(desc);
     }
 
     void Material::SetBool(const std::string& name, bool value) {
