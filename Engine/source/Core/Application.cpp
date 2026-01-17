@@ -105,7 +105,7 @@ namespace Engine {
                         m_GraphicsDevice->Resize(m_WindowWidth, m_WindowHeight);
                         break;
                 }
-                Input(event);
+                OnInput(event);
             }
 
             // Update
