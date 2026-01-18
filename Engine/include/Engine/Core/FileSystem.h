@@ -4,6 +4,7 @@
 #include "engine_export.h"
 
 #include <string>
+#include <vector>
 #include <filesystem>
 
 namespace Engine
@@ -11,7 +12,7 @@ namespace Engine
     class ENGINE_EXPORT FileSystem {
     public:
         static void SetBasePath(const char* basePath);
-        static std::string ReadFile(const std::string &path);
+        static std::vector<char> ReadFile(const std::string &path);
         static bool Exists(const std::string &path);
         static std::string GetAbsolutePath(const std::string& relativePath);
     private:

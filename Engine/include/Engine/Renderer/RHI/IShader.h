@@ -21,7 +21,7 @@ namespace Engine {
     struct ShaderDesc {
         // Map ShaderStage to string (expects source code)
         // Only compiles what ShaderStages are specified
-        std::map<ShaderStage, std::string> sources; 
+        std::map<ShaderStage, std::vector<char>> sources; 
     };
 
     class ENGINE_EXPORT IShader {

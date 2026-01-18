@@ -4,8 +4,6 @@ include(GenerateExportHeader)
 
 # Engine sources
 set(ENGINE_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/../vendor/glad/src/gl.c
-
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Core/Application.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Core/FileSystem.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Core/ResourceManager.cpp
@@ -16,12 +14,14 @@ set(ENGINE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/RHI/IShader.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/RHI/VertexLayout.cpp
 
-    ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/OpenGL/OpenGLGraphicsDevice.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/OpenGL/OpenGLPipelineState.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/OpenGL/OpenGLBuffer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/OpenGL/OpenGLShader.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/OpenGL/OpenGLTexture.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/OpenGL/OpenGLVertexArray.cpp
+    #${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/OpenGL/OpenGLGraphicsDevice.cpp
+    #${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/OpenGL/OpenGLPipelineState.cpp
+    #${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/OpenGL/OpenGLBuffer.cpp
+    #${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/OpenGL/OpenGLShader.cpp
+    #${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/OpenGL/OpenGLTexture.cpp
+    #${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/OpenGL/OpenGLVertexArray.cpp
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/Vulkan/VulkanGraphicsDevice.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/Renderer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/Camera.cpp
@@ -38,14 +38,14 @@ set(ENGINE_PUBLIC_INCLUDES
 
 set(ENGINE_PRIVATE_INCLUDES
     ${CMAKE_CURRENT_SOURCE_DIR}/source
-    ${CMAKE_CURRENT_SOURCE_DIR}/../vendor/glad/include
     ${CMAKE_CURRENT_SOURCE_DIR}/../vendor/stb
 )
 
 # Build and link Engine
 add_library(Engine SHARED ${ENGINE_SOURCES})
 add_library(Engine::Engine ALIAS Engine)
-target_link_libraries(Engine PUBLIC glm::glm SDL3::SDL3 EnTT::EnTT spdlog::spdlog PRIVATE OpenGL::GL)
+target_link_libraries(Engine PUBLIC glm::glm SDL3::SDL3 EnTT::EnTT spdlog::spdlog PRIVATE Vulkan::Vulkan)
+target_compile_definitions(Engine PUBLIC VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1)
 target_include_directories(Engine PUBLIC ${ENGINE_PUBLIC_INCLUDES} PRIVATE ${ENGINE_PRIVATE_INCLUDES})
 
 # Hide all symbols by default
@@ -101,4 +101,32 @@ function(engine_add_project PROJECT_NAME SOURCES ASSET_DIR)
             "${APP_OUTPUT_DIR}/Assets"
         COMMENT "Deployed ${PROJECT_NAME} to ${APP_OUTPUT_DIR}"
     )
+endfunction()
+
+# function to add shader target
+function(add_slang_shader_target TARGET)
+    cmake_parse_arguments("SHADER" "" "" "SOURCES" ${ARGN})
+
+    set(SHADERS_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/shaders")
+    set(OUTPUT_SPV "${SHADERS_OUTPUT_DIR}/slang.spv")
+    
+    file(MAKE_DIRECTORY "${SHADERS_OUTPUT_DIR}")
+
+    set(ENTRY_POINTS -entry vertMain -entry fragMain)
+
+    add_custom_command(
+        OUTPUT "${OUTPUT_SPV}"
+        COMMAND ${SLANGC_EXECUTABLE} ${SHADER_SOURCES} 
+                -target spirv 
+                -profile spirv_1_4 
+                -emit-spirv-directly 
+                -fvk-use-entrypoint-name 
+                ${ENTRY_POINTS} 
+                -o "${OUTPUT_SPV}"
+        DEPENDS ${SHADER_SOURCES}
+        COMMENT "Compiling Slang Shaders: ${SHADER_SOURCES}"
+        VERBATIM
+    )
+
+    add_custom_target(${TARGET} DEPENDS "${OUTPUT_SPV}")
 endfunction()

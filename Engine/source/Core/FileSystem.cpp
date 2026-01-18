@@ -13,16 +13,22 @@ void Engine::FileSystem::SetBasePath(const char* basePath) {
     s_RootPath = exePath;
 }
 
-std::string Engine::FileSystem::ReadFile(const std::string &path)
+std::vector<char> Engine::FileSystem::ReadFile(const std::string &path)
 {
-    std::ifstream file(path);
+    std::ifstream file(path, std::ios::ate | std::ios::binary);
+
     if (!file.is_open()) {
         LOG_CORE_ERROR("Could not open file! File not found: {0}", FileSystem::GetAbsolutePath(path));
-        return "";
+        return {};
     }
-    std::stringstream buffer;
-    buffer << file.rdbuf();
-    return buffer.str();
+
+    std::vector<char> buffer(file.tellg());
+
+    file.seekg(0, std::ios::beg);
+    file.read(buffer.data(), static_cast<std::streamsize>(buffer.size()));
+    file.close();
+
+    return buffer;
 }
 
 bool Engine::FileSystem::Exists(const std::string &path) {

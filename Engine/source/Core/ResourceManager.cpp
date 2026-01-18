@@ -9,8 +9,8 @@ namespace Engine
 {
     void ResourceManager::LoadShader(const std::string& identifier, const std::string& vertPath, const std::string& fragPath) {
 
-        std::string vertSource = FileSystem::ReadFile(FileSystem::GetAbsolutePath(vertPath));
-        std::string fragSource = FileSystem::ReadFile(FileSystem::GetAbsolutePath(fragPath));
+        std::vector<char> vertSource = FileSystem::ReadFile(FileSystem::GetAbsolutePath(vertPath));
+        std::vector<char> fragSource = FileSystem::ReadFile(FileSystem::GetAbsolutePath(fragPath));
 
         ShaderDesc desc;
         desc.sources[ShaderStage::Vertex] = vertSource;

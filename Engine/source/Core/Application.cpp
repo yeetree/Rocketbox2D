@@ -45,9 +45,9 @@ namespace Engine {
         m_AspectRatio = (float)m_WindowWidth / (float)m_WindowHeight;
 
         // Create window
-        // Create window with OpenGL -- everything else is platform agnostic, so switching backends will be insanely trivial in the future
+        // Create window with Vulkan -- everything else is platform agnostic, so switching backends will be insanely trivial in the future
         LOG_CORE_INFO("Creating window...");
-        m_Window = SDL_CreateWindow(title.c_str(), m_WindowWidth, m_WindowHeight, flags | SDL_WINDOW_OPENGL);
+        m_Window = SDL_CreateWindow(title.c_str(), m_WindowWidth, m_WindowHeight, flags | SDL_WINDOW_VULKAN);
         if(m_Window == nullptr)
         {
             LOG_CORE_CRITICAL("Window could not be created! SDL: {0}", SDL_GetError());
@@ -61,7 +61,7 @@ namespace Engine {
 
         // Create graphics device
         LOG_CORE_INFO("Initializing graphics device...");
-        m_GraphicsDevice = IGraphicsDevice::Create(GraphicsAPI::OpenGL, m_Window);
+        m_GraphicsDevice = IGraphicsDevice::Create(GraphicsAPI::Vulkan, m_Window);
         m_GraphicsDevice->Resize(m_WindowWidth, m_WindowHeight);
 
         // Create Renderer2D

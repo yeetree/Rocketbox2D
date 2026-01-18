@@ -15,8 +15,8 @@
 #include "Engine/Renderer/RHI/IVertexArray.h"
 
 namespace Engine {
-    // What backend to create (Only OpenGL for now)
-    enum class GraphicsAPI { OpenGL };
+    // What backend to create (Only Vulkan for now)
+    enum class GraphicsAPI { Vulkan };
 
     // Creates resources for rendering and dispatches draw calls
     class ENGINE_EXPORT IGraphicsDevice {

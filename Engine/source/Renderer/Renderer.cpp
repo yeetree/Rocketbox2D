@@ -97,8 +97,8 @@ namespace Engine
 
         // Create shader
         ShaderDesc shaderDesc;
-        shaderDesc.sources[ShaderStage::Vertex] = vertSource;
-        shaderDesc.sources[ShaderStage::Fragment] = fragSource;
+        //shaderDesc.sources[ShaderStage::Vertex] = vertSource;
+        //shaderDesc.sources[ShaderStage::Fragment] = fragSource;
         Ref<IShader> shader = m_GraphicsDevice->CreateShader(shaderDesc);
 
         // Create material
