@@ -14,13 +14,9 @@ namespace Engine {
 
         void Bind() override;
         void Unbind() override;
-        void ApplyVertexLayout() override;
 
     private:
-        GLuint m_VAO;                           // Vertex Array Object for pipeline
         IShader* m_Shader;                      // Shader
-        std::vector<VertexElement> m_Elements;  // Vertex Arrtributes
-        uint32_t m_Stride;                      // Stride
         FillMode m_FillMode;                    // Fill mode
         CullMode m_CullMode;                    // Cull mode
         bool m_EnableBlending;                  // Blending

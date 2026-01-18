@@ -1,5 +1,6 @@
 #include "Engine/Renderer/Renderer.h"
 #include "Engine/Core/Application.h"
+#include "Engine/Core/Log.h"
 #include <glm/gtc/matrix_transform.hpp>
 
 // Quad data
@@ -71,8 +72,17 @@ namespace Engine
         std::shared_ptr<IBuffer> vbo = m_GraphicsDevice->CreateBuffer(vboDesc);
         std::shared_ptr<IBuffer> ebo = m_GraphicsDevice->CreateBuffer(eboDesc);
 
+        VertexLayout layout = {VertexElement(VertexElementType::Vec2, "a_Position"), VertexElement(VertexElementType::Vec2, "a_TexCoord")};
+
+        VertexArrayDesc vaoDesc;
+        vaoDesc.vbo = vbo;
+        vaoDesc.ebo = ebo;
+        vaoDesc.layout = layout;
+
+        std::shared_ptr<IVertexArray> vao = m_GraphicsDevice->CreateVertexArray(vaoDesc);
+
         // Create quad mesh
-        m_QuadMesh = Mesh(vbo, ebo, 6, {VertexElement(VertexElementType::Vec2, "a_Position"), VertexElement(VertexElementType::Vec2, "a_TexCoord")});
+        m_QuadMesh = std::make_shared<Mesh>(vao, 6, layout);
 
         // Create shader
         ShaderDesc shaderDesc;
@@ -81,10 +91,10 @@ namespace Engine
         std::shared_ptr<IShader> shader = m_GraphicsDevice->CreateShader(shaderDesc);
 
         // Create material
-        m_QuadMaterial = Material(shader);
+        m_QuadMaterial = std::make_shared<Material>(shader);
     }
 
-    void Renderer::Submit(Mesh* mesh, Material* material, const Mat4& transform) {
+    void Renderer::Submit(std::shared_ptr<Mesh> mesh, std::shared_ptr<Material> material, const Mat4& transform) {
         RenderCommand cmd;
         cmd.mesh = mesh;
         cmd.shader = material->GetShader();
@@ -93,15 +103,31 @@ namespace Engine
         cmd.transform = transform;
         
         // Shader/Mesh sort key
-        cmd.sortKey = ((uint64_t)material->GetShader()->GetID() << 32) | (uint64_t)mesh->GetID();
+        cmd.sortKey = ((uint64_t)cmd.shader->GetID() << 32) | (uint64_t)mesh->GetID();
+
+        m_CommandQueue.push_back(cmd);
+    }
+
+    void Renderer::Submit(std::shared_ptr<Mesh> mesh, std::shared_ptr<MaterialInstance> material, const Mat4& transform) {
+        RenderCommand cmd;
+        cmd.mesh = mesh;
+        cmd.shader = material->GetParent()->GetShader();
+        cmd.uniforms = material->GetParent()->GetUniforms(); 
+        cmd.textures = material->GetParent()->GetTextures();
+        cmd.uniformOverrides = material->GetUniformOverrides();
+        cmd.textureOverrides = material->GetTextureOverrides();
+        cmd.transform = transform;
+        
+        // Shader/Mesh sort key
+        cmd.sortKey = ((uint64_t)cmd.shader->GetID() << 32) | (uint64_t)mesh->GetID();
         
         m_CommandQueue.push_back(cmd);
     }
 
     void Renderer::DrawQuad(const std::shared_ptr<ITexture>& texture, const Vec4& color, const Mat4& transform) {
-        m_QuadMaterial.SetTexture("u_Texture", texture);
-        m_QuadMaterial.Set("u_Tint", color);
-        Submit(&m_QuadMesh, &m_QuadMaterial, transform);
+        m_QuadMaterial->SetTexture("u_Texture", texture);
+        m_QuadMaterial->Set("u_Tint", color);
+        Submit(m_QuadMesh, m_QuadMaterial, transform);
     }
 
     void Renderer::BeginScene(const Mat4& viewProjection) {
@@ -119,50 +145,70 @@ namespace Engine
     }
 
     void Renderer::Flush() {
+        uint32_t lastPSO = 0;
+        uint32_t lastMesh = 0;
+
         for (auto& cmd : m_CommandQueue) {
-            // Get PSO
-            auto pso = GetOrCreatePSO(cmd.mesh, cmd.shader.get());
-            pso->Bind();
+            // Only switch Pipeline if different
+            auto pso = GetOrCreatePSO(cmd.mesh, cmd.shader);
+            uint64_t currentPSO = pso->GetID();
+            if (currentPSO != lastPSO) {
+                pso->Bind();
+                lastPSO = currentPSO;
+                
+                // Set standard Engine uniforms (global)
+                cmd.shader->SetMat4("u_ViewProjection", m_ViewProjection);
+            }
 
-            // Apply the Mesh's specific buffers
-            cmd.mesh->Bind();
-            pso->ApplyVertexLayout();
+            // Only switch Mesh if it's different
+            uint64_t currentMesh = cmd.mesh->GetID();
+            if (currentMesh != lastMesh) {
+                cmd.mesh->Bind();
+                lastMesh = currentMesh;
+            }
 
-            // Bind Material uniforms and textures
+            // Bind Material uniforms and textures and overrides
             // Set uniforms
             for (const auto& [name, value] : cmd.uniforms) {
-                std::visit([&](auto&& arg) {
-                    using T = std::decay_t<decltype(arg)>;
-                    if constexpr (std::is_same_v<T, bool>) cmd.shader->SetBool(name, arg);
-                    else if constexpr (std::is_same_v<T, int>) cmd.shader->SetInt(name, arg);
-                    else if constexpr (std::is_same_v<T, float>) cmd.shader->SetFloat(name, arg);
-                    else if constexpr (std::is_same_v<T, Vec2>) cmd.shader->SetVec2(name, arg);
-                    else if constexpr (std::is_same_v<T, Vec3>) cmd.shader->SetVec3(name, arg);
-                    else if constexpr (std::is_same_v<T, Vec4>) cmd.shader->SetVec4(name, arg);
-                    else if constexpr (std::is_same_v<T, Mat4>) cmd.shader->SetMat4(name, arg);
-                }, value);
+                cmd.shader->Set(name, value);
+            }
+
+            for (const auto& [name, value] : cmd.uniformOverrides) {
+                cmd.shader->Set(name, value);
             }
 
             // Bind textures
             uint32_t slot = 0;
+            std::unordered_map<std::string, uint32_t> texSlots;
             for (const auto& [name, tex] : cmd.textures) {
+                texSlots[name] = slot;
                 tex->Bind(slot);
                 cmd.shader->SetInt(name, slot);
                 slot++;
             }
-            
-            // Set standard Engine uniforms
-            cmd.shader->SetMat4("u_ViewProjection", m_ViewProjection);
+
+            for (const auto& [name, tex] : cmd.textureOverrides) {
+                uint32_t texSlot = slot;
+                if(texSlots.count(name)) {
+                    texSlot = texSlots[name];
+                }
+                else {
+                    slot++;
+                }
+                tex->Bind(texSlot);
+                cmd.shader->SetInt(name, texSlot);
+            }
+
+            // Set standard Engine uniforms (per object)
             cmd.shader->SetMat4("u_Transform", cmd.transform);
 
-            // Deaw
+            // Draw
             m_GraphicsDevice->SubmitDraw(cmd.mesh->GetIndexCount());
         }
-
         m_CommandQueue.clear();
     }
 
-    std::shared_ptr<IPipelineState> Renderer::GetOrCreatePSO(Mesh* mesh, IShader* shader) {
+    std::shared_ptr<IPipelineState> Renderer::GetOrCreatePSO(std::shared_ptr<Mesh> mesh, std::shared_ptr<IShader> shader) {
         uint64_t shaderID = shader->GetID();
         uint64_t layoutHash = mesh->GetLayout().GetHash();
         
@@ -171,7 +217,7 @@ namespace Engine
 
         if (m_PSOCache.find(psoKey) == m_PSOCache.end()) {
             PipelineDesc desc{};
-            desc.shader = shader;
+            desc.shader = shader.get();
             desc.layout = mesh->GetLayout();
             
             desc.enableBlending = true; // Temp

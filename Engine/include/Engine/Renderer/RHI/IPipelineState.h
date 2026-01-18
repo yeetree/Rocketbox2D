@@ -32,10 +32,19 @@ namespace Engine {
     // Pipeline State Object
     class IPipelineState {
     public:
+        IPipelineState() {
+            static uint32_t nextID = 1;
+            m_ID = nextID++;
+        }
+
         virtual ~IPipelineState() = default;
         virtual void Bind() = 0;
         virtual void Unbind() = 0;
-        virtual void ApplyVertexLayout() = 0;
+
+        uint32_t GetID() const { return m_ID; }
+
+    private:
+        uint32_t m_ID;
     };
 }
 

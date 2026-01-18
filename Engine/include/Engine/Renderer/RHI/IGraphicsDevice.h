@@ -12,6 +12,7 @@
 #include "Engine/Renderer/RHI/IShader.h"
 #include "Engine/Renderer/RHI/ITexture.h"
 #include "Engine/Renderer/RHI/IPipelineState.h"
+#include "Engine/Renderer/RHI/IVertexArray.h"
 
 namespace Engine {
     // What backend to create (Only OpenGL for now)
@@ -26,9 +27,10 @@ namespace Engine {
         virtual ~IGraphicsDevice() = default;
 
         // Resource creation
-        virtual std::unique_ptr<IBuffer>  CreateBuffer(const BufferDesc& desc) = 0;
-        virtual std::unique_ptr<ITexture> CreateTexture(const TextureDesc& desc) = 0;
-        virtual std::unique_ptr<IShader>  CreateShader(const ShaderDesc& desc) = 0;
+        virtual std::unique_ptr<IBuffer>      CreateBuffer(const BufferDesc& desc) = 0;
+        virtual std::unique_ptr<ITexture>     CreateTexture(const TextureDesc& desc) = 0;
+        virtual std::unique_ptr<IShader>      CreateShader(const ShaderDesc& desc) = 0;
+        virtual std::unique_ptr<IVertexArray> CreateVertexArray(const VertexArrayDesc& desc) = 0;
         
         // Pipeline creation
         virtual std::unique_ptr<IPipelineState> CreatePipelineState(const PipelineDesc& desc) = 0;

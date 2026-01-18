@@ -12,13 +12,19 @@
 #include "Engine/Renderer/RHI/IPipelineState.h"
 #include "Engine/Renderer/RHI/IShader.h"
 #include "Engine/Renderer/RHI/ITexture.h"
+#include "Engine/Renderer/RHI/IVertexArray.h"
 #include "Engine/Renderer/RHI/VertexLayout.h"
 
 #include "Engine/Renderer/Renderer.h"
+#include "Engine/Renderer/Material.h"
+#include "Engine/Renderer/MaterialInstance.h"
+#include "Engine/Renderer/Mesh.h"
+#include "Engine/Renderer/Camera.h"
 
 #include "Engine/Scene/Scene.h"
 #include "Engine/Scene/Entity.h"
 #include "Engine/Scene/Components.h"
+#include "Engine/Scene/ScriptableEntity.h"
 
 #include "Engine/Math/Vector.h"
 #include "Engine/Math/Matrix.h"

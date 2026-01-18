@@ -5,7 +5,7 @@
 #include "Engine/Math/Vector.h"
 #include "Engine/Renderer/RHI/ITexture.h"
 #include "Engine/Renderer/Mesh.h"
-#include "Engine/Renderer/Material.h"
+#include "Engine/Renderer/MaterialInstance.h"
 #include "Engine/Renderer/Camera.h"
 
 #include <string>
@@ -33,7 +33,8 @@ namespace Engine
     };
 
     struct MaterialComponent {
-        std::shared_ptr<Material> material;
+        std::shared_ptr<MaterialInstance> material;
+        MaterialComponent(std::shared_ptr<Material> mat) : material(std::make_shared<MaterialInstance>(mat)) {};
     };
 
     struct CameraComponent {

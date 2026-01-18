@@ -1,8 +1,6 @@
 #ifndef ENGINE_RENDERER_MATERIAL
 #define ENGINE_RENDERER_MATERIAL
 
-#include "engine_export.h"
-
 #include <memory>
 #include <string>
 
@@ -13,10 +11,10 @@
 
 namespace Engine
 {
-    class ENGINE_EXPORT Material {
+    class Material {
     public:
         Material() = default;
-        Material(std::shared_ptr<IShader> shader);
+        Material(std::shared_ptr<IShader> shader) : m_Shader(shader) {};
 
         void Set(const std::string& name, ShaderUniformValue value) { m_Uniforms[name] = value; }
         void SetTexture(const std::string& name, std::shared_ptr<ITexture> tex) { m_Textures[name] = tex; }

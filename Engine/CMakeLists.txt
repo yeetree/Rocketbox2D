@@ -13,6 +13,7 @@ set(ENGINE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Core/Log.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/RHI/IGraphicsDevice.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/RHI/IShader.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/RHI/VertexLayout.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/OpenGL/OpenGLGraphicsDevice.cpp
@@ -20,8 +21,8 @@ set(ENGINE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/OpenGL/OpenGLBuffer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/OpenGL/OpenGLShader.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/OpenGL/OpenGLTexture.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/OpenGL/OpenGLVertexArray.cpp
 
-    ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/Material.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/Renderer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/Camera.cpp
 

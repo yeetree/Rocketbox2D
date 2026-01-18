@@ -23,6 +23,7 @@ namespace Engine {
         std::unique_ptr<ITexture> CreateTexture(const TextureDesc& desc) override;
         std::unique_ptr<IShader> CreateShader(const ShaderDesc& desc) override;
         std::unique_ptr<IPipelineState> CreatePipelineState(const PipelineDesc& desc) override;
+        std::unique_ptr<IVertexArray> CreateVertexArray(const VertexArrayDesc& desc) override;
 
         // Frame Management
         void BeginFrame() override;

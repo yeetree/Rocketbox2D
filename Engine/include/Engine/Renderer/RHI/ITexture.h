@@ -26,7 +26,7 @@ namespace Engine {
     class ITexture {
     public:
         ITexture() {
-            static uint32_t nextID = 0;
+            static uint32_t nextID = 1;
             m_ID = nextID++;
         }
 

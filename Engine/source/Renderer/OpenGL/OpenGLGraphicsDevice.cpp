@@ -3,6 +3,7 @@
 #include "Renderer/OpenGL/OpenGLBuffer.h"
 #include "Renderer/OpenGL/OpenGLShader.h"
 #include "Renderer/OpenGL/OpenGLTexture.h"
+#include "Renderer/OpenGL/OpenGLVertexArray.h"
 #include "Engine/Core/Log.h"
 #include <glad/gl.h>
 
@@ -61,6 +62,10 @@ namespace Engine {
 
     std::unique_ptr<IShader> OpenGLGraphicsDevice::CreateShader(const ShaderDesc& desc) {
         return std::make_unique<OpenGLShader>(desc);
+    }
+
+    std::unique_ptr<IVertexArray> OpenGLGraphicsDevice::CreateVertexArray(const VertexArrayDesc& desc) {
+        return std::make_unique<OpenGLVertexArray>(desc);
     }
 
     std::unique_ptr<IPipelineState> OpenGLGraphicsDevice::CreatePipelineState(const PipelineDesc& desc) {

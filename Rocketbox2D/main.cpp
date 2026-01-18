@@ -84,7 +84,6 @@ public:
         ref = scene.CreateEntity("RefEntity");
         ref.AddComponent<MeshComponent>(GetResourceManager().GetMesh("shipMesh"));
         ref.AddComponent<MaterialComponent>(GetResourceManager().GetMaterial("basicMaterial"));
-        // TODO: Implement material instancing: This changes color of both entities
         ref.GetComponent<MaterialComponent>().material->Set("u_Color", Vec4(1.0f, 1.0f, 0.0f, 1.0f));
         ref.GetComponent<TransformComponent>().scale = Vec2(1.0f, 1.0f);
 

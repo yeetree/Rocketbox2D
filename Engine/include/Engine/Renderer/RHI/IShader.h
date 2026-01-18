@@ -24,10 +24,10 @@ namespace Engine {
         std::map<ShaderStage, std::string> sources; 
     };
 
-    class IShader {
+    class ENGINE_EXPORT IShader {
     public:
         IShader() {
-            static uint32_t nextID = 0;
+            static uint32_t nextID = 1;
             m_ID = nextID++;
         }
 
@@ -46,6 +46,8 @@ namespace Engine {
         virtual void SetVec3(const std::string& name, Vec3 value) = 0;
         virtual void SetVec4(const std::string& name, Vec4 value) = 0;
         virtual void SetMat4(const std::string& name, Mat4 value) = 0;
+
+        void Set(const std::string& name, ShaderUniformValue value);
     private:
         uint32_t m_ID;
     };

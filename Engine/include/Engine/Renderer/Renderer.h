@@ -6,6 +6,7 @@
 #include "Engine/Renderer/RHI/IGraphicsDevice.h"
 #include "Engine/Renderer/Mesh.h"
 #include "Engine/Renderer/Material.h"
+#include "Engine/Renderer/MaterialInstance.h"
 #include "Engine/Math/Vector.h"
 #include "Engine/Math/Matrix.h"
 
@@ -19,21 +20,23 @@ namespace Engine {
 
         void BeginScene(const Mat4& viewProjection);
         void EndScene();
-        void Submit(Mesh* mesh, Material* material, const Mat4& transform);
+        void Submit(std::shared_ptr<Mesh> mesh, std::shared_ptr<Material> material, const Mat4& transform);
+        void Submit(std::shared_ptr<Mesh> mesh, std::shared_ptr<MaterialInstance> material, const Mat4& transform);
 
         void DrawQuad(const std::shared_ptr<ITexture>& texture, const Vec4& color, const Mat4& transform);
 
     private:
         void Flush();
-        std::shared_ptr<IPipelineState> GetOrCreatePSO(Mesh* mesh, IShader* shader);
+        std::shared_ptr<IPipelineState> GetOrCreatePSO(std::shared_ptr<Mesh> mesh, std::shared_ptr<IShader> shader);
 
         struct RenderCommand {
-            Mesh* mesh;
+            std::shared_ptr<Mesh> mesh;
             std::shared_ptr<IShader> shader;
 
             std::map<std::string, ShaderUniformValue> uniforms; 
             std::map<std::string, std::shared_ptr<ITexture>> textures;
-
+            std::map<std::string, ShaderUniformValue> uniformOverrides; 
+            std::map<std::string, std::shared_ptr<ITexture>> textureOverrides;
 
             Mat4 transform;
             
@@ -48,8 +51,8 @@ namespace Engine {
         std::map<uint64_t, std::shared_ptr<IPipelineState>> m_PSOCache;
 
         // Quads
-        Mesh m_QuadMesh;
-        Material m_QuadMaterial;
+        std::shared_ptr<Mesh> m_QuadMesh;
+        std::shared_ptr<Material> m_QuadMaterial;
     };
 }
 #endif // ENGINE_RENDERER_RENDERER

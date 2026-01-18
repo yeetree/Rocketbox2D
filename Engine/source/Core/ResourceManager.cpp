@@ -57,18 +57,25 @@ namespace Engine
     }
 
     void ResourceManager::CreateMesh(const std::string& identifier, const void* vertices, uint32_t vSize, const void* indices, uint32_t iSize, uint32_t indexCount, const VertexLayout& layout, bool vDynamic, bool iDynamic) {
-        BufferDesc vbo, ebo;
-        vbo.data = vertices;
-        ebo.data = indices;
-        vbo.size = vSize;
-        ebo.size = iSize;
-        vbo.type = BufferType::Vertex;
-        ebo.type = BufferType::Index;
-        vbo.isDynamic = vDynamic;
-        ebo.isDynamic = iDynamic;
-        std::shared_ptr<IBuffer> vboBuf = m_GraphicsDevice->CreateBuffer(vbo);
-        std::shared_ptr<IBuffer> eboBuf = m_GraphicsDevice->CreateBuffer(ebo);
-        std::shared_ptr<Mesh> mesh = std::make_shared<Mesh>(vboBuf, eboBuf, indexCount, layout);
+        BufferDesc vboDesc, eboDesc;
+        vboDesc.data = vertices;
+        eboDesc.data = indices;
+        vboDesc.size = vSize;
+        eboDesc.size = iSize;
+        vboDesc.type = BufferType::Vertex;
+        eboDesc.type = BufferType::Index;
+        vboDesc.isDynamic = vDynamic;
+        eboDesc.isDynamic = iDynamic;
+        std::shared_ptr<IBuffer> vbo = m_GraphicsDevice->CreateBuffer(vboDesc);
+        std::shared_ptr<IBuffer> ebo = m_GraphicsDevice->CreateBuffer(eboDesc);
+
+        VertexArrayDesc vaoDesc;
+        vaoDesc.vbo = vbo;
+        vaoDesc.ebo = ebo;
+        vaoDesc.layout = layout;
+
+        std::shared_ptr<IVertexArray> vao = m_GraphicsDevice->CreateVertexArray(vaoDesc);
+        std::shared_ptr<Mesh> mesh = std::make_shared<Mesh>(vao, indexCount, layout);
         m_Meshes[identifier] = mesh;
     }
 
