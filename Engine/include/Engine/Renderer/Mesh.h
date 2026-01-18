@@ -6,6 +6,7 @@
 #include <memory>
 #include <cstdint>
 
+#include "Engine/Core/Base.h"
 #include "Engine/Renderer/RHI/IVertexArray.h"
 #include "Engine/Renderer/RHI/VertexLayout.h"
 
@@ -14,7 +15,7 @@ namespace Engine
     class ENGINE_EXPORT Mesh {
     public:
         Mesh() = default;
-        Mesh(std::shared_ptr<IVertexArray> vao, uint32_t indexCount, VertexLayout layout) : m_VAO(vao), m_IndexCount(indexCount), m_Layout(layout) {
+        Mesh(Ref<IVertexArray> vao, uint32_t indexCount, VertexLayout layout) : m_VAO(vao), m_IndexCount(indexCount), m_Layout(layout) {
             static uint32_t nextID = 1;
             m_ID = nextID++;
         };
@@ -32,7 +33,7 @@ namespace Engine
         uint32_t GetID() const { return m_ID; }
 
     private:
-        std::shared_ptr<IVertexArray> m_VAO;
+        Ref<IVertexArray> m_VAO;
         uint32_t m_IndexCount;
         VertexLayout m_Layout;
         uint32_t m_ID;

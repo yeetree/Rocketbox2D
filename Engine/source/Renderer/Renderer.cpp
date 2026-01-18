@@ -80,8 +80,8 @@ namespace Engine
         eboDesc.size = sizeof(quadIndices);
         eboDesc.type = BufferType::Index;
 
-        std::shared_ptr<IBuffer> vbo = m_GraphicsDevice->CreateBuffer(vboDesc);
-        std::shared_ptr<IBuffer> ebo = m_GraphicsDevice->CreateBuffer(eboDesc);
+        Ref<IBuffer> vbo = m_GraphicsDevice->CreateBuffer(vboDesc);
+        Ref<IBuffer> ebo = m_GraphicsDevice->CreateBuffer(eboDesc);
 
         VertexLayout layout = {VertexElement(VertexElementType::Vec2, "a_Position"), VertexElement(VertexElementType::Vec2, "a_TexCoord")};
 
@@ -90,22 +90,22 @@ namespace Engine
         vaoDesc.ebo = ebo;
         vaoDesc.layout = layout;
 
-        std::shared_ptr<IVertexArray> vao = m_GraphicsDevice->CreateVertexArray(vaoDesc);
+        Ref<IVertexArray> vao = m_GraphicsDevice->CreateVertexArray(vaoDesc);
 
         // Create quad mesh
-        m_QuadMesh = std::make_shared<Mesh>(vao, 6, layout);
+        m_QuadMesh = CreateRef<Mesh>(vao, 6, layout);
 
         // Create shader
         ShaderDesc shaderDesc;
         shaderDesc.sources[ShaderStage::Vertex] = vertSource;
         shaderDesc.sources[ShaderStage::Fragment] = fragSource;
-        std::shared_ptr<IShader> shader = m_GraphicsDevice->CreateShader(shaderDesc);
+        Ref<IShader> shader = m_GraphicsDevice->CreateShader(shaderDesc);
 
         // Create material
-        m_QuadMaterial = std::make_shared<Material>(shader);
+        m_QuadMaterial = CreateRef<Material>(shader);
     }
 
-    void Renderer::Submit(std::shared_ptr<Mesh> mesh, std::shared_ptr<Material> material, const Mat4& transform) {
+    void Renderer::Submit(Ref<Mesh> mesh, Ref<Material> material, const Mat4& transform) {
         RenderCommand cmd;
         cmd.mesh = mesh;
         cmd.shader = material->GetShader();
@@ -119,7 +119,7 @@ namespace Engine
         m_CommandQueue.push_back(cmd);
     }
 
-    void Renderer::Submit(std::shared_ptr<Mesh> mesh, std::shared_ptr<MaterialInstance> material, const Mat4& transform) {
+    void Renderer::Submit(Ref<Mesh> mesh, Ref<MaterialInstance> material, const Mat4& transform) {
         RenderCommand cmd;
         cmd.mesh = mesh;
         cmd.shader = material->GetParent()->GetShader();
@@ -135,7 +135,7 @@ namespace Engine
         m_CommandQueue.push_back(cmd);
     }
 
-    void Renderer::DrawQuad(const std::shared_ptr<ITexture>& texture, const Vec4& color, const Mat4& transform) {
+    void Renderer::DrawQuad(const Ref<ITexture>& texture, const Vec4& color, const Mat4& transform) {
         m_QuadMaterial->SetTexture("u_Texture", texture);
         m_QuadMaterial->Set("u_Tint", color);
         Submit(m_QuadMesh, m_QuadMaterial, transform);
@@ -168,7 +168,7 @@ namespace Engine
             if (currentPSO != lastPSO) {
                 pso->Bind();
                 lastPSO = currentPSO;
-                
+
                 // Apply Engine UBO
                 cmd.shader->SetUniformBlockBinding("u_ViewData", 0);
             }
@@ -221,7 +221,7 @@ namespace Engine
         m_CommandQueue.clear();
     }
 
-    std::shared_ptr<IPipelineState> Renderer::GetOrCreatePSO(std::shared_ptr<Mesh> mesh, std::shared_ptr<IShader> shader) {
+    Ref<IPipelineState> Renderer::GetOrCreatePSO(Ref<Mesh> mesh, Ref<IShader> shader) {
         uint64_t shaderID = shader->GetID();
         uint64_t layoutHash = mesh->GetLayout().GetHash();
         

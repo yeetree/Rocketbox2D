@@ -16,8 +16,8 @@ namespace Engine {
     private:
         static GLenum GetGLBaseType(const VertexElementType &t);
         GLuint m_VAO;
-        std::shared_ptr<IBuffer> m_VBO;
-        std::shared_ptr<IBuffer> m_EBO;
+        Ref<IBuffer> m_VBO;
+        Ref<IBuffer> m_EBO;
     };
 }
 

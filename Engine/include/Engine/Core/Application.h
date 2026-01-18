@@ -9,6 +9,7 @@
 #include <cstdint>
 
 #include "Engine/Renderer/RHI/IGraphicsDevice.h"
+#include "Engine/Core/Base.h"
 #include "Engine/Core/ResourceManager.h"
 #include "Engine/Core/Input.h"
 #include "Engine/Renderer/Renderer.h"
@@ -55,10 +56,10 @@ namespace Engine {
 
         uint64_t m_TicksPrevious;
         
-        std::unique_ptr<IGraphicsDevice> m_GraphicsDevice;
-        std::unique_ptr<Renderer> m_Renderer;
-        std::unique_ptr<ResourceManager> m_ResourceManager;
-        std::unique_ptr<Input> m_Input;
+        Scope<IGraphicsDevice> m_GraphicsDevice;
+        Scope<Renderer> m_Renderer;
+        Scope<ResourceManager> m_ResourceManager;
+        Scope<Input> m_Input;
     };
 } // namespace Engine
 

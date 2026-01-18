@@ -52,24 +52,24 @@ namespace Engine {
     };
 
     // Resource Creation
-    std::unique_ptr<IBuffer> OpenGLGraphicsDevice::CreateBuffer(const BufferDesc& desc) {
-        return std::make_unique<OpenGLBuffer>(desc);
+    Scope<IBuffer> OpenGLGraphicsDevice::CreateBuffer(const BufferDesc& desc) {
+        return CreateScope<OpenGLBuffer>(desc);
     }
 
-    std::unique_ptr<ITexture> OpenGLGraphicsDevice::CreateTexture(const TextureDesc& desc) {
-        return std::make_unique<OpenGLTexture>(desc);
+    Scope<ITexture> OpenGLGraphicsDevice::CreateTexture(const TextureDesc& desc) {
+        return CreateScope<OpenGLTexture>(desc);
     }
 
-    std::unique_ptr<IShader> OpenGLGraphicsDevice::CreateShader(const ShaderDesc& desc) {
-        return std::make_unique<OpenGLShader>(desc);
+    Scope<IShader> OpenGLGraphicsDevice::CreateShader(const ShaderDesc& desc) {
+        return CreateScope<OpenGLShader>(desc);
     }
 
-    std::unique_ptr<IVertexArray> OpenGLGraphicsDevice::CreateVertexArray(const VertexArrayDesc& desc) {
-        return std::make_unique<OpenGLVertexArray>(desc);
+    Scope<IVertexArray> OpenGLGraphicsDevice::CreateVertexArray(const VertexArrayDesc& desc) {
+        return CreateScope<OpenGLVertexArray>(desc);
     }
 
-    std::unique_ptr<IPipelineState> OpenGLGraphicsDevice::CreatePipelineState(const PipelineDesc& desc) {
-        return std::make_unique<OpenGLPipelineState>(desc);
+    Scope<IPipelineState> OpenGLGraphicsDevice::CreatePipelineState(const PipelineDesc& desc) {
+        return CreateScope<OpenGLPipelineState>(desc);
     }
 
     // Frame Management

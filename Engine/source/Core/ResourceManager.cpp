@@ -17,10 +17,10 @@ namespace Engine
         desc.sources[ShaderStage::Fragment] = fragSource;
 
         // Get shader (unique)
-        std::unique_ptr<IShader> shaderPtr = m_GraphicsDevice->CreateShader(desc);
+        Scope<IShader> shaderPtr = m_GraphicsDevice->CreateShader(desc);
 
         // Move it into a shared_ptr and store in map
-        std::shared_ptr<IShader> sharedShader = std::move(shaderPtr);
+        Ref<IShader> sharedShader = std::move(shaderPtr);
         m_Shaders[identifier] = sharedShader;
     }
 
@@ -46,13 +46,13 @@ namespace Engine
         }
 
         // Get texture (unique)
-        std::unique_ptr<ITexture> texturePtr = m_GraphicsDevice->CreateTexture(desc);
+        Scope<ITexture> texturePtr = m_GraphicsDevice->CreateTexture(desc);
 
         // Free pixels
         stbi_image_free(pixels);
 
         // Move it into a shared_ptr and store in map
-        std::shared_ptr<ITexture> sharedTexture = std::move(texturePtr);
+        Ref<ITexture> sharedTexture = std::move(texturePtr);
         m_Textures[identifier] = sharedTexture;
     }
 
@@ -66,45 +66,45 @@ namespace Engine
         eboDesc.type = BufferType::Index;
         vboDesc.isDynamic = vDynamic;
         eboDesc.isDynamic = iDynamic;
-        std::shared_ptr<IBuffer> vbo = m_GraphicsDevice->CreateBuffer(vboDesc);
-        std::shared_ptr<IBuffer> ebo = m_GraphicsDevice->CreateBuffer(eboDesc);
+        Ref<IBuffer> vbo = m_GraphicsDevice->CreateBuffer(vboDesc);
+        Ref<IBuffer> ebo = m_GraphicsDevice->CreateBuffer(eboDesc);
 
         VertexArrayDesc vaoDesc;
         vaoDesc.vbo = vbo;
         vaoDesc.ebo = ebo;
         vaoDesc.layout = layout;
 
-        std::shared_ptr<IVertexArray> vao = m_GraphicsDevice->CreateVertexArray(vaoDesc);
-        std::shared_ptr<Mesh> mesh = std::make_shared<Mesh>(vao, indexCount, layout);
+        Ref<IVertexArray> vao = m_GraphicsDevice->CreateVertexArray(vaoDesc);
+        Ref<Mesh> mesh = CreateRef<Mesh>(vao, indexCount, layout);
         m_Meshes[identifier] = mesh;
     }
 
-    void ResourceManager::CreateMaterial(const std::string& identifier, std::shared_ptr<IShader> shader) {
+    void ResourceManager::CreateMaterial(const std::string& identifier, Ref<IShader> shader) {
         if(!shader) {
             LOG_CORE_WARN("Resource Warning: Material: {0} was created with a null shader!", identifier);
         }
 
-        std::shared_ptr<Material> material = std::make_shared<Material>(shader);
+        Ref<Material> material = CreateRef<Material>(shader);
         m_Materials[identifier] = material;
     }
 
-    void ResourceManager::SetShader(const std::string& identifier, std::unique_ptr<IShader> shader) {
+    void ResourceManager::SetShader(const std::string& identifier, Scope<IShader> shader) {
         m_Shaders[identifier] = std::move(shader);
     }
 
-    void ResourceManager::SetTexture(const std::string& identifier, std::unique_ptr<ITexture> texture) {
+    void ResourceManager::SetTexture(const std::string& identifier, Scope<ITexture> texture) {
         m_Textures[identifier] = std::move(texture);
     }
 
-    void ResourceManager::SetMesh(const std::string& identifier, std::unique_ptr<Mesh> mesh) {
+    void ResourceManager::SetMesh(const std::string& identifier, Scope<Mesh> mesh) {
         m_Meshes[identifier] = std::move(mesh);
     }
 
-    void ResourceManager::SetMaterial(const std::string& identifier, std::unique_ptr<Material> material) {
+    void ResourceManager::SetMaterial(const std::string& identifier, Scope<Material> material) {
         m_Materials[identifier] = std::move(material);
     }
 
-    std::shared_ptr<IShader> ResourceManager::GetShader(const std::string& identifier) {
+    Ref<IShader> ResourceManager::GetShader(const std::string& identifier) {
         if (m_Shaders.count(identifier)) {
             if (auto ptr = m_Shaders[identifier]) {
                 return ptr;
@@ -114,7 +114,7 @@ namespace Engine
         return nullptr;
     }
 
-    std::shared_ptr<ITexture> ResourceManager::GetTexture(const std::string& identifier) {
+    Ref<ITexture> ResourceManager::GetTexture(const std::string& identifier) {
         if (m_Textures.count(identifier)) {
             if (auto ptr = m_Textures[identifier]) {
                 return ptr;
@@ -124,7 +124,7 @@ namespace Engine
         return nullptr;
     }
 
-    std::shared_ptr<Mesh> ResourceManager::GetMesh(const std::string& identifier){
+    Ref<Mesh> ResourceManager::GetMesh(const std::string& identifier){
         if (m_Meshes.count(identifier)) {
             if (auto ptr = m_Meshes[identifier]) {
                 return ptr;
@@ -134,7 +134,7 @@ namespace Engine
         return nullptr;
     }
 
-    std::shared_ptr<Material> ResourceManager::GetMaterial(const std::string& identifier){
+    Ref<Material> ResourceManager::GetMaterial(const std::string& identifier){
         if (m_Materials.count(identifier)) {
             if (auto ptr = m_Materials[identifier]) {
                 return ptr;

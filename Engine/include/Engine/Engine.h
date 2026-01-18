@@ -6,6 +6,7 @@
 #include "Engine/Core/ResourceManager.h"
 #include "Engine/Core/Input.h"
 #include "Engine/Core/Log.h"
+#include "Engine/Core/Base.h"
 
 #include "Engine/Renderer/RHI/IBuffer.h"
 #include "Engine/Renderer/RHI/IGraphicsDevice.h"

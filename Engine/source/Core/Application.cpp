@@ -56,7 +56,7 @@ namespace Engine {
 
         // Create input
         LOG_CORE_INFO("Initializing input...");
-        m_Input = std::make_unique<Input>();
+        m_Input = CreateScope<Input>();
         Input::s_Instance = m_Input.get(); // Engine is friend to Input class, we set it's instance for it.
 
         // Create graphics device
@@ -66,7 +66,7 @@ namespace Engine {
 
         // Create Renderer2D
         LOG_CORE_INFO("Initializing renderer...");
-        m_Renderer = std::make_unique<Renderer>(m_GraphicsDevice.get());
+        m_Renderer = CreateScope<Renderer>(m_GraphicsDevice.get());
 
         // Init filesystem (set base path)
         LOG_CORE_INFO("Initializing filesystem...");
@@ -74,7 +74,7 @@ namespace Engine {
 
         // Create resource manager
         LOG_CORE_INFO("Initializing resource manager...");
-        m_ResourceManager = std::make_unique<ResourceManager>(m_GraphicsDevice.get());
+        m_ResourceManager = CreateScope<ResourceManager>(m_GraphicsDevice.get());
 
         LOG_CORE_INFO("Initialization complete.");
     }

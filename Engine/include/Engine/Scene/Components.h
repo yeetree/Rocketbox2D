@@ -1,6 +1,7 @@
 #ifndef ENGINE_SCENE_COMPONENTS
 #define ENGINE_SCENE_COMPONENTS
 
+#include "Engine/Core/Base.h"
 #include "Engine/Scene/ScriptableEntity.h"
 #include "Engine/Math/Vector.h"
 #include "Engine/Renderer/RHI/ITexture.h"
@@ -9,7 +10,6 @@
 #include "Engine/Renderer/Camera.h"
 
 #include <string>
-#include <memory>
 
 namespace Engine
 {
@@ -24,17 +24,17 @@ namespace Engine
     };
 
     struct SpriteComponent {
-        std::shared_ptr<ITexture> texture;
+        Ref<ITexture> texture;
         Vec4 color{1.0f, 1.0f, 1.0f, 1.0f};
     };
 
     struct MeshComponent {
-        std::shared_ptr<Mesh> mesh;
+        Ref<Mesh> mesh;
     };
 
     struct MaterialComponent {
-        std::shared_ptr<MaterialInstance> material;
-        MaterialComponent(std::shared_ptr<Material> mat) : material(std::make_shared<MaterialInstance>(mat)) {};
+        Ref<MaterialInstance> material;
+        MaterialComponent(Ref<Material> mat) : material(CreateRef<MaterialInstance>(mat)) {};
     };
 
     struct CameraComponent {

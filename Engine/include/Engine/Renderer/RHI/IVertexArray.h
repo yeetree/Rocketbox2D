@@ -2,7 +2,7 @@
 #define ENGINE_RENDERER_RHI_IVERTEXARRAY
 
 #include <cstdint>
-#include <memory>
+#include "Engine/Core/Base.h"
 #include "Engine/Renderer/RHI/IBuffer.h"
 #include "Engine/Renderer/RHI/VertexLayout.h"
 
@@ -10,8 +10,8 @@ namespace Engine
 {
     // Decribes how a vertex array should be created
     struct VertexArrayDesc {
-        std::shared_ptr<IBuffer> vbo;
-        std::shared_ptr<IBuffer> ebo;
+        Ref<IBuffer> vbo;
+        Ref<IBuffer> ebo;
         VertexLayout layout;
     };
 

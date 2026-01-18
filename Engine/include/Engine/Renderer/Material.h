@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 
+#include "Engine/Core/Base.h"
 #include "Engine/Renderer/RHI/IShader.h"
 #include "Engine/Renderer/RHI/ITexture.h"
 #include "Engine/Renderer/RHI/IPipelineState.h"
@@ -14,20 +15,20 @@ namespace Engine
     class Material {
     public:
         Material() = default;
-        Material(std::shared_ptr<IShader> shader) : m_Shader(shader) {};
+        Material(Ref<IShader> shader) : m_Shader(shader) {};
 
         void Set(const std::string& name, ShaderUniformValue value) { m_Uniforms[name] = value; }
-        void SetTexture(const std::string& name, std::shared_ptr<ITexture> tex) { m_Textures[name] = tex; }
+        void SetTexture(const std::string& name, Ref<ITexture> tex) { m_Textures[name] = tex; }
 
-        std::shared_ptr<IShader> GetShader() const { return m_Shader; }
+        Ref<IShader> GetShader() const { return m_Shader; }
         std::map<std::string, ShaderUniformValue> GetUniforms() const { return m_Uniforms; }
-        std::map<std::string, std::shared_ptr<ITexture>> GetTextures() const { return m_Textures; }
+        std::map<std::string, Ref<ITexture>> GetTextures() const { return m_Textures; }
 
     private:
-        std::shared_ptr<IShader> m_Shader;
+        Ref<IShader> m_Shader;
         
         std::map<std::string, ShaderUniformValue> m_Uniforms;
-        std::map<std::string, std::shared_ptr<ITexture>> m_Textures;
+        std::map<std::string, Ref<ITexture>> m_Textures;
     };
 } // namespace Engine
 

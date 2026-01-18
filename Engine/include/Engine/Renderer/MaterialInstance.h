@@ -3,27 +3,28 @@
 
 #include "engine_export.h"
 
+#include "Engine/Core/Base.h"
 #include "Engine/Renderer/Material.h"
 
 namespace Engine {
     class MaterialInstance {
     public:
         MaterialInstance() = default;
-        MaterialInstance(std::shared_ptr<Material> parent) : m_Parent(parent) {}
+        MaterialInstance(Ref<Material> parent) : m_Parent(parent) {}
 
         // Overrides
         void Set(const std::string& name, ShaderUniformValue value) { m_UniformOverrides[name] = value; };
-        void SetTexture(const std::string& name, std::shared_ptr<ITexture> texture) { m_TextureOverrides[name] = texture; };
+        void SetTexture(const std::string& name, Ref<ITexture> texture) { m_TextureOverrides[name] = texture; };
 
         // Getters
-        std::shared_ptr<Material> GetParent() const { return m_Parent; }
+        Ref<Material> GetParent() const { return m_Parent; }
         const std::map<std::string, ShaderUniformValue>& GetUniformOverrides() const { return m_UniformOverrides; }
-        const std::map<std::string, std::shared_ptr<ITexture>>& GetTextureOverrides() const { return m_TextureOverrides; }
+        const std::map<std::string, Ref<ITexture>>& GetTextureOverrides() const { return m_TextureOverrides; }
 
     private:
-        std::shared_ptr<Material> m_Parent;
+        Ref<Material> m_Parent;
         std::map<std::string, ShaderUniformValue> m_UniformOverrides;
-        std::map<std::string, std::shared_ptr<ITexture>> m_TextureOverrides;
+        std::map<std::string, Ref<ITexture>> m_TextureOverrides;
     };
 }
 

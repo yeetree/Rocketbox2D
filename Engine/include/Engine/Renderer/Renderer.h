@@ -20,23 +20,23 @@ namespace Engine {
 
         void BeginScene(const Mat4& viewProjection);
         void EndScene();
-        void Submit(std::shared_ptr<Mesh> mesh, std::shared_ptr<Material> material, const Mat4& transform);
-        void Submit(std::shared_ptr<Mesh> mesh, std::shared_ptr<MaterialInstance> material, const Mat4& transform);
+        void Submit(Ref<Mesh> mesh, Ref<Material> material, const Mat4& transform);
+        void Submit(Ref<Mesh> mesh, Ref<MaterialInstance> material, const Mat4& transform);
 
-        void DrawQuad(const std::shared_ptr<ITexture>& texture, const Vec4& color, const Mat4& transform);
+        void DrawQuad(const Ref<ITexture>& texture, const Vec4& color, const Mat4& transform);
 
     private:
         void Flush();
-        std::shared_ptr<IPipelineState> GetOrCreatePSO(std::shared_ptr<Mesh> mesh, std::shared_ptr<IShader> shader);
+        Ref<IPipelineState> GetOrCreatePSO(Ref<Mesh> mesh, Ref<IShader> shader);
 
         struct RenderCommand {
-            std::shared_ptr<Mesh> mesh;
-            std::shared_ptr<IShader> shader;
+            Ref<Mesh> mesh;
+            Ref<IShader> shader;
 
             std::map<std::string, ShaderUniformValue> uniforms; 
-            std::map<std::string, std::shared_ptr<ITexture>> textures;
+            std::map<std::string, Ref<ITexture>> textures;
             std::map<std::string, ShaderUniformValue> uniformOverrides; 
-            std::map<std::string, std::shared_ptr<ITexture>> textureOverrides;
+            std::map<std::string, Ref<ITexture>> textureOverrides;
 
             Mat4 transform;
             
@@ -48,14 +48,14 @@ namespace Engine {
 
         Mat4 m_ViewProjection;
         std::vector<RenderCommand> m_CommandQueue;
-        std::map<uint64_t, std::shared_ptr<IPipelineState>> m_PSOCache;
+        std::map<uint64_t, Ref<IPipelineState>> m_PSOCache;
 
         // UBO
-        std::shared_ptr<IBuffer> m_UBO;
+        Ref<IBuffer> m_UBO;
 
         // Quads
-        std::shared_ptr<Mesh> m_QuadMesh;
-        std::shared_ptr<Material> m_QuadMaterial;
+        Ref<Mesh> m_QuadMesh;
+        Ref<Material> m_QuadMaterial;
     };
 }
 #endif // ENGINE_RENDERER_RENDERER

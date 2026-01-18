@@ -19,11 +19,11 @@ namespace Engine {
         OpenGLGraphicsDevice& operator=(const OpenGLGraphicsDevice&) = delete;
 
         // Resource Creation
-        std::unique_ptr<IBuffer> CreateBuffer(const BufferDesc& desc) override;
-        std::unique_ptr<ITexture> CreateTexture(const TextureDesc& desc) override;
-        std::unique_ptr<IShader> CreateShader(const ShaderDesc& desc) override;
-        std::unique_ptr<IPipelineState> CreatePipelineState(const PipelineDesc& desc) override;
-        std::unique_ptr<IVertexArray> CreateVertexArray(const VertexArrayDesc& desc) override;
+        Scope<IBuffer> CreateBuffer(const BufferDesc& desc) override;
+        Scope<ITexture> CreateTexture(const TextureDesc& desc) override;
+        Scope<IShader> CreateShader(const ShaderDesc& desc) override;
+        Scope<IPipelineState> CreatePipelineState(const PipelineDesc& desc) override;
+        Scope<IVertexArray> CreateVertexArray(const VertexArrayDesc& desc) override;
 
         // Frame Management
         void BeginFrame() override;
@@ -43,7 +43,7 @@ namespace Engine {
         SDL_Window* m_Window;
         SDL_GLContext m_Context;
 
-        std::unique_ptr<ITexture> m_BackBuffer;
+        Scope<ITexture> m_BackBuffer;
     };
 
 } // namespace Engine
