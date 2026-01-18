@@ -29,6 +29,7 @@ namespace Engine {
         void BeginFrame() override;
         void EndFrame() override;
         void Present() override;
+        void SetClearColor(Vec4 color) override;
 
         // Draw call
         void SubmitDraw(uint32_t indexCount) override;
@@ -43,7 +44,7 @@ namespace Engine {
         SDL_Window* m_Window;
         SDL_GLContext m_Context;
 
-        Scope<ITexture> m_BackBuffer;
+        // Scope<ITexture> m_BackBuffer;
     };
 
 } // namespace Engine

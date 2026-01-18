@@ -102,22 +102,34 @@ namespace Engine
         // Entity + Transform + Sprite
         for (auto [entity, transform, sprite] : m_Registry.view<TransformComponent, SpriteComponent>().each()) {
             if (sprite.texture) {
+                uint32_t layer = 0;
+                LayerComponent* layerComponent = m_Registry.try_get<LayerComponent>(entity);
+                if(layerComponent) {
+                    layer = layerComponent->layer;
+                }
+                
                 glm::mat4 transformMat = glm::mat4(1.0f);
                 transformMat = glm::translate(transformMat, Vec3(transform.position, 0.0f));
                 transformMat = glm::rotate(transformMat, transform.rotation, Vec3(0.0f, 0.0f, 1.0f));
                 transformMat = glm::scale(transformMat, Vec3(transform.scale, 1.0f));
-                renderer.DrawQuad(sprite.texture, sprite.color, transformMat);
+                renderer.DrawQuad(sprite.texture, sprite.color, transformMat, layer);
             }
         };
 
         // Entity + Transform + Mesh + Material
         for (auto [entity, transform, mesh, material] : m_Registry.view<TransformComponent, MeshComponent, MaterialComponent>().each()) {
             if (mesh.mesh && material.material) {
+                uint32_t layer = 0;
+                LayerComponent* layerComponent = m_Registry.try_get<LayerComponent>(entity);
+                if(layerComponent) {
+                    layer = layerComponent->layer;
+                }
+                
                 glm::mat4 transformMat = glm::mat4(1.0f);
                 transformMat = glm::translate(transformMat, Vec3(transform.position, 0.0f));
                 transformMat = glm::rotate(transformMat, transform.rotation, Vec3(0.0f, 0.0f, 1.0f));
                 transformMat = glm::scale(transformMat, Vec3(transform.scale, 1.0f));
-                renderer.Submit(mesh.mesh, material.material, transformMat);
+                renderer.Submit(mesh.mesh, material.material, transformMat, layer);
             }
         };
 

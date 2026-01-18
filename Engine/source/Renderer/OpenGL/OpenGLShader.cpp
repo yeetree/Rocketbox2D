@@ -90,6 +90,11 @@ namespace Engine
             LOG_CORE_ERROR("OpenGL: Shader linking failed! OpenGL: {0}", infoLog);
         }
 
+        // Bind Engine UBO
+        GLuint blockIndex = glGetUniformBlockIndex(m_ProgramID, "u_ViewData");
+        if (blockIndex != GL_INVALID_INDEX) {
+            glUniformBlockBinding(m_ProgramID, blockIndex, 0);
+        }
     }
 
     OpenGLShader::~OpenGLShader() {
@@ -130,10 +135,6 @@ namespace Engine
     
     void OpenGLShader::SetMat4(const std::string& name, Mat4 value) {
         glUniformMatrix4fv(glGetUniformLocation(m_ProgramID, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
-    }
-
-    void OpenGLShader::SetUniformBlockBinding(const std::string& name, uint32_t binding) {
-        glUniformBlockBinding(m_ProgramID, glGetUniformBlockIndex(m_ProgramID, name.c_str()), binding);
     }
     
 } // namespace Engine

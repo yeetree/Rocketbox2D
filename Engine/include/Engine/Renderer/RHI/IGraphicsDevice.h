@@ -39,6 +39,7 @@ namespace Engine {
         virtual void BeginFrame() = 0;
         virtual void EndFrame() = 0;
         virtual void Present() = 0;
+        virtual void SetClearColor(Vec4 color) = 0;
         
         // Draw call
         virtual void SubmitDraw(uint32_t indexCount) = 0;

@@ -23,6 +23,10 @@ namespace Engine
         std::string tag;
     };
 
+    struct LayerComponent {
+        uint32_t layer;
+    };
+
     struct SpriteComponent {
         Ref<ITexture> texture;
         Vec4 color{1.0f, 1.0f, 1.0f, 1.0f};

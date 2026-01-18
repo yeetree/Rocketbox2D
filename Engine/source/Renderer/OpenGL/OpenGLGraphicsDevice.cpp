@@ -48,7 +48,7 @@ namespace Engine {
     }
 
     OpenGLGraphicsDevice::~OpenGLGraphicsDevice() {
-
+        SDL_GL_DestroyContext(m_Context);
     };
 
     // Resource Creation
@@ -74,7 +74,6 @@ namespace Engine {
 
     // Frame Management
     void OpenGLGraphicsDevice::BeginFrame() {
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f); // Dark Grey
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
@@ -84,6 +83,10 @@ namespace Engine {
 
     void OpenGLGraphicsDevice::Present() {
         SDL_GL_SwapWindow(m_Window);
+    }
+
+    void OpenGLGraphicsDevice::SetClearColor(Vec4 color) {
+        glClearColor(color.r, color.g, color.b, color.a);
     }
 
     // Draw call

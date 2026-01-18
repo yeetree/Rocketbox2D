@@ -20,10 +20,10 @@ namespace Engine {
 
         void BeginScene(const Mat4& viewProjection);
         void EndScene();
-        void Submit(Ref<Mesh> mesh, Ref<Material> material, const Mat4& transform);
-        void Submit(Ref<Mesh> mesh, Ref<MaterialInstance> material, const Mat4& transform);
+        void Submit(Ref<Mesh> mesh, Ref<Material> material, const Mat4& transform, uint32_t layer);
+        void Submit(Ref<Mesh> mesh, Ref<MaterialInstance> material, const Mat4& transform, uint32_t layer);
 
-        void DrawQuad(const Ref<ITexture>& texture, const Vec4& color, const Mat4& transform);
+        void DrawQuad(const Ref<ITexture>& texture, const Vec4& color, const Mat4& transform, uint32_t layer);
 
     private:
         void Flush();
@@ -56,6 +56,9 @@ namespace Engine {
         // Quads
         Ref<Mesh> m_QuadMesh;
         Ref<Material> m_QuadMaterial;
+        
+        // Default
+        Ref<ITexture> m_DefaultTexture;
     };
 }
 #endif // ENGINE_RENDERER_RENDERER

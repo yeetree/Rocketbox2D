@@ -75,6 +75,7 @@ public:
         GetResourceManager().CreateMesh("shipMesh", shipVerts, sizeof(shipVerts), shipIndices, sizeof(shipIndices), sizeof(shipIndices), {VertexElement(VertexElementType::Vec2, "position")});
 
         rocket = scene.CreateEntity("Rocket");
+        rocket.AddComponent<LayerComponent>().layer = 1;
         rocket.AddComponent<MeshComponent>(GetResourceManager().GetMesh("shipMesh"));
         rocket.AddComponent<MaterialComponent>(GetResourceManager().GetMaterial("basicMaterial"));
         rocket.GetComponent<MaterialComponent>().material->Set("u_Color", Vec4(1.0f, 0.0f, 0.0f, 1.0f));
@@ -82,6 +83,7 @@ public:
         rocket.AddComponent<NativeScriptComponent>().Bind<RocketScript>();
 
         ref = scene.CreateEntity("RefEntity");
+        ref.AddComponent<LayerComponent>().layer = 0;
         ref.AddComponent<MeshComponent>(GetResourceManager().GetMesh("shipMesh"));
         ref.AddComponent<MaterialComponent>(GetResourceManager().GetMaterial("basicMaterial"));
         ref.GetComponent<MaterialComponent>().material->Set("u_Color", Vec4(1.0f, 1.0f, 0.0f, 1.0f));

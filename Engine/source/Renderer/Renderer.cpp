@@ -105,7 +105,7 @@ namespace Engine
         m_QuadMaterial = CreateRef<Material>(shader);
     }
 
-    void Renderer::Submit(Ref<Mesh> mesh, Ref<Material> material, const Mat4& transform) {
+    void Renderer::Submit(Ref<Mesh> mesh, Ref<Material> material, const Mat4& transform, uint32_t layer) {
         RenderCommand cmd;
         cmd.mesh = mesh;
         cmd.shader = material->GetShader();
@@ -113,13 +113,13 @@ namespace Engine
         cmd.textures = material->GetTextures();
         cmd.transform = transform;
         
-        // Shader/Mesh sort key
-        cmd.sortKey = ((uint64_t)cmd.shader->GetID() << 32) | (uint64_t)mesh->GetID();
+        // Layer/Shader/Mesh sort key
+        cmd.sortKey = ((uint64_t)layer << 48) | ((uint64_t)cmd.shader->GetID() << 16) | cmd.mesh->GetID();
 
         m_CommandQueue.push_back(cmd);
     }
 
-    void Renderer::Submit(Ref<Mesh> mesh, Ref<MaterialInstance> material, const Mat4& transform) {
+    void Renderer::Submit(Ref<Mesh> mesh, Ref<MaterialInstance> material, const Mat4& transform, uint32_t layer) {
         RenderCommand cmd;
         cmd.mesh = mesh;
         cmd.shader = material->GetParent()->GetShader();
@@ -129,16 +129,24 @@ namespace Engine
         cmd.textureOverrides = material->GetTextureOverrides();
         cmd.transform = transform;
         
-        // Shader/Mesh sort key
-        cmd.sortKey = ((uint64_t)cmd.shader->GetID() << 32) | (uint64_t)mesh->GetID();
+        // Layer/Shader/Mesh sort key
+        cmd.sortKey = ((uint64_t)layer << 48) | ((uint64_t)cmd.shader->GetID() << 16) | cmd.mesh->GetID();
         
         m_CommandQueue.push_back(cmd);
     }
 
-    void Renderer::DrawQuad(const Ref<ITexture>& texture, const Vec4& color, const Mat4& transform) {
-        m_QuadMaterial->SetTexture("u_Texture", texture);
-        m_QuadMaterial->Set("u_Tint", color);
-        Submit(m_QuadMesh, m_QuadMaterial, transform);
+    void Renderer::DrawQuad(const Ref<ITexture>& texture, const Vec4& color, const Mat4& transform, uint32_t layer) {
+        RenderCommand cmd;
+        cmd.mesh = m_QuadMesh;
+        cmd.shader = m_QuadMaterial->GetShader();
+        cmd.transform = transform;
+        
+        // Use overrides
+        cmd.textureOverrides["u_Texture"] = texture;
+        cmd.uniformOverrides["u_Tint"] = color;
+        
+        cmd.sortKey = ((uint64_t)layer << 48) | ((uint64_t)cmd.shader->GetID() << 16) | cmd.mesh->GetID();
+        m_CommandQueue.push_back(cmd);
     }
 
     void Renderer::BeginScene(const Mat4& viewProjection) {
@@ -147,10 +155,10 @@ namespace Engine
     }
 
     void Renderer::EndScene() {
-        // Sort by Shader/Mesh sort key
+        // Sort by Shader/Mesh sort key (lowest first)
         std::sort(m_CommandQueue.begin(), m_CommandQueue.end(), 
             [](const RenderCommand& a, const RenderCommand& b) {
-                return a.sortKey < b.sortKey;
+                return a.sortKey > b.sortKey;
         });
 
         Flush();
@@ -168,9 +176,6 @@ namespace Engine
             if (currentPSO != lastPSO) {
                 pso->Bind();
                 lastPSO = currentPSO;
-
-                // Apply Engine UBO
-                cmd.shader->SetUniformBlockBinding("u_ViewData", 0);
             }
 
             // Only switch Mesh if it's different
