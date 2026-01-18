@@ -59,6 +59,10 @@ namespace Engine {
         m_Input = CreateScope<Input>();
         Input::s_Instance = m_Input.get(); // Engine is friend to Input class, we set it's instance for it.
 
+        // Init filesystem (set base path)
+        LOG_CORE_INFO("Initializing filesystem...");
+        FileSystem::SetBasePath(SDL_GetBasePath());
+
         // Create graphics device
         LOG_CORE_INFO("Initializing graphics device...");
         m_GraphicsDevice = IGraphicsDevice::Create(GraphicsAPI::Vulkan, m_Window);
@@ -67,10 +71,6 @@ namespace Engine {
         // Create Renderer2D
         LOG_CORE_INFO("Initializing renderer...");
         m_Renderer = CreateScope<Renderer>(m_GraphicsDevice.get());
-
-        // Init filesystem (set base path)
-        LOG_CORE_INFO("Initializing filesystem...");
-        FileSystem::SetBasePath(SDL_GetBasePath());
 
         // Create resource manager
         LOG_CORE_INFO("Initializing resource manager...");

@@ -19,10 +19,29 @@
                 "_UNICODE"
             ],
             "windowsSdkVersion": "10.0.26100.0",
-            "compilerPath": "cl.exe",
+            "compilerPath": "/usr/bin/gcc",
             "cStandard": "c23",
             "cppStandard": "c++23",
             "intelliSenseMode": "windows-msvc-x64"
+        },
+        {
+            "name": "Linux",
+            "includePath": [
+                "/home/vinny/Desktop/Rocketbox2D/**",
+                "/home/vinny/Desktop/Rocketbox2D/Engine/include",
+                "/home/vinny/Desktop/Rocketbox2D/Engine/source",
+                "/home/vinny/Desktop/Rocketbox2D/build/Engine/gen",
+                "/home/vinny/Desktop/Rocketbox2D/vendor/glm",
+                "/home/vinny/Desktop/Rocketbox2D/vendor/glad/include",
+                "/home/vinny/Desktop/Rocketbox2D/vendor/SDL/include",
+                "/home/vinny/Desktop/Rocketbox2D/vendor/spdlog/include",
+                "/home/vinny/VulkanSDK/1.4.335.0/x86_64/include"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c23",
+            "cppStandard": "gnu++23",
+            "intelliSenseMode": "linux-gcc-x64"
         }
     ],
     "version": 4

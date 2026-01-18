@@ -18,15 +18,24 @@ std::vector<char> Engine::FileSystem::ReadFile(const std::string &path)
     std::ifstream file(path, std::ios::ate | std::ios::binary);
 
     if (!file.is_open()) {
-        LOG_CORE_ERROR("Could not open file! File not found: {0}", FileSystem::GetAbsolutePath(path));
+        LOG_CORE_ERROR("Could not open file: {0}", FileSystem::GetAbsolutePath(path));
         return {};
     }
 
-    std::vector<char> buffer(file.tellg());
+    std::streamsize fileSize = file.tellg();
+    if (fileSize <= 0) {
+        return {};
+    }
 
     file.seekg(0, std::ios::beg);
-    file.read(buffer.data(), static_cast<std::streamsize>(buffer.size()));
-    file.close();
+
+    std::vector<char> buffer;
+    buffer.resize(static_cast<size_t>(fileSize));
+
+    if (!file.read(buffer.data(), fileSize)) {
+        LOG_CORE_ERROR("Failed to read file: {0}", path);
+        return {};
+    }
 
     return buffer;
 }

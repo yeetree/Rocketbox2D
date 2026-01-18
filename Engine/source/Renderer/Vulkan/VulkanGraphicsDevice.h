@@ -70,12 +70,24 @@ namespace Engine {
         void CreateSwapChain();
         void CreateImageViews();
         void CreateGraphicsPipeline();
+        void CreateCommandPool();
+        void CreateCommandBuffer();
+        void CreateSyncObjects();
 
         // Utility
+        [[nodiscard]] vk::raii::ShaderModule CreateShaderModule(const std::vector<char>& code) const;
         static vk::SurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats);
         static vk::PresentModeKHR ChooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes);
         vk::Extent2D ChooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities);
         static uint32_t ChooseSwapMinImageCount(vk::SurfaceCapabilitiesKHR const &surfaceCapabilities);
+        void TransitionImageLayout(
+            uint32_t                imageIndex,
+            vk::ImageLayout         old_layout,
+            vk::ImageLayout         new_layout,
+            vk::AccessFlags2        src_access_mask,
+            vk::AccessFlags2        dst_access_mask,
+            vk::PipelineStageFlags2 src_stage_mask,
+            vk::PipelineStageFlags2 dst_stage_mask);
 
         SDL_Window* m_Window;
 
@@ -85,13 +97,25 @@ namespace Engine {
         vk::raii::SurfaceKHR m_Surface = nullptr;
         vk::raii::PhysicalDevice m_PhysicalDevice = nullptr;
         vk::raii::Device m_Device = nullptr;
-        vk::raii::Queue m_GraphicsQueue = nullptr;
-        vk::raii::Queue m_PresentQueue = nullptr;
-        vk::raii::SwapchainKHR m_SwapChain      = nullptr;
+        uint32_t m_QueueIndex = ~0;
+	    vk::raii::Queue m_Queue = nullptr;
+        vk::raii::SwapchainKHR m_SwapChain = nullptr;
         std::vector<vk::Image> m_SwapChainImages;
         vk::SurfaceFormatKHR m_SwapChainSurfaceFormat;
         vk::Extent2D m_SwapChainExtent;
         std::vector<vk::raii::ImageView> m_SwapChainImageViews;
+        vk::raii::PipelineLayout m_PipelineLayout = nullptr;
+        vk::raii::Pipeline m_GraphicsPipeline = nullptr;
+        vk::raii::CommandPool m_CommandPool = nullptr;  
+        vk::raii::CommandBuffer m_CommandBuffer = nullptr;
+        
+        uint32_t m_CurrentFrame = 0;
+        uint32_t m_ImageIndex = 0;
+    
+        // Sync objects
+        vk::raii::Semaphore m_PresentCompleteSemaphore = nullptr;
+        vk::raii::Semaphore m_RenderFinishedSemaphore  = nullptr;
+        vk::raii::Fence     m_DrawFence                = nullptr;
 
         // Scope<ITexture> m_BackBuffer;
     };
