@@ -12,6 +12,8 @@ namespace Engine {
 
         void Bind() override;
         void Unbind() override;
+        void BindBase(uint32_t index) override;
+        void UnbindBase(uint32_t index) override;
 
         size_t GetSize() const override;
         BufferType GetType() const override;
@@ -19,6 +21,8 @@ namespace Engine {
         void UpdateData(const void* data, size_t size, size_t offset = 0) override;
 
     private:
+        static GLenum GetGLBufferType(BufferType type);
+
         BufferType m_Type;
         size_t m_Size;
         GLuint m_RendererID;

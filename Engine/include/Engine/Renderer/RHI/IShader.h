@@ -47,6 +47,11 @@ namespace Engine {
         virtual void SetVec4(const std::string& name, Vec4 value) = 0;
         virtual void SetMat4(const std::string& name, Mat4 value) = 0;
 
+        // Block binding setter
+        // !! This will likely be deprecated in the future.
+        // !! This is just to keep compatibility with OpenGL 3.3 before Vulkan or Metal support is added
+        virtual void SetUniformBlockBinding(const std::string& name, uint32_t binding) = 0;
+
         void Set(const std::string& name, ShaderUniformValue value);
     private:
         uint32_t m_ID;

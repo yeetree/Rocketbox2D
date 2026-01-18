@@ -2,6 +2,7 @@
 #include "Engine/Core/Application.h"
 #include "Engine/Core/Log.h"
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 // Quad data
 const float quadVerts[] = {
@@ -23,7 +24,10 @@ const char* vertSource = R"(
 layout (location = 0) in vec2 a_Position;
 layout (location = 1) in vec2 a_TexCoord;
 
-uniform mat4 u_ViewProjection;
+layout (std140) uniform u_ViewData {
+    mat4 u_ViewProjection;
+};
+
 uniform mat4 u_Transform;
 
 out vec2 v_TexCoord;
@@ -56,9 +60,16 @@ void main()
 namespace Engine
 {
     Renderer::Renderer(IGraphicsDevice* device) : m_GraphicsDevice(device) {
-        // Create VBO and EBO for quad
-        BufferDesc vboDesc, eboDesc;
+        BufferDesc vboDesc, eboDesc, uboDesc;
 
+        // Create UBO
+        uboDesc.isDynamic = false;
+        uboDesc.size = sizeof(Mat4);
+        uboDesc.type = BufferType::Uniform;
+
+        m_UBO = m_GraphicsDevice->CreateBuffer(uboDesc);
+        
+        // Create VBO and EBO for quad
         vboDesc.data = quadVerts;
         vboDesc.isDynamic = false;
         vboDesc.size = sizeof(quadVerts);
@@ -131,7 +142,8 @@ namespace Engine
     }
 
     void Renderer::BeginScene(const Mat4& viewProjection) {
-        m_ViewProjection = viewProjection;
+        m_UBO->BindBase(0);
+        m_UBO->UpdateData(glm::value_ptr(viewProjection), sizeof(Mat4), 0);
     }
 
     void Renderer::EndScene() {
@@ -142,6 +154,7 @@ namespace Engine
         });
 
         Flush();
+        m_UBO->UnbindBase(0);
     }
 
     void Renderer::Flush() {
@@ -156,8 +169,8 @@ namespace Engine
                 pso->Bind();
                 lastPSO = currentPSO;
                 
-                // Set standard Engine uniforms (global)
-                cmd.shader->SetMat4("u_ViewProjection", m_ViewProjection);
+                // Apply Engine UBO
+                cmd.shader->SetUniformBlockBinding("u_ViewData", 0);
             }
 
             // Only switch Mesh if it's different

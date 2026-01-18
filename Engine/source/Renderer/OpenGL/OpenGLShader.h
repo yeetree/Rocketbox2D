@@ -22,6 +22,11 @@ namespace Engine {
         void SetVec4(const std::string& name, Vec4 value) override;
         void SetMat4(const std::string& name, Mat4 value) override;
 
+        // Block binding setter
+        // !! This will likely be deprecated in the future.
+        // !! This is just to keep compatibility with OpenGL 3.3 before Vulkan or Metal support is added
+        void SetUniformBlockBinding(const std::string& name, uint32_t binding) override;
+
     private:
         GLuint m_ProgramID;
     };

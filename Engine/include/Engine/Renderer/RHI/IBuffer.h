@@ -2,10 +2,11 @@
 #define ENGINE_RENDERER_RHI_IBUFFER
 
 #include <cstddef>
+#include <cstdint>
 
 namespace Engine {
     // BufferType: What kind of data the buffer stores
-    enum class BufferType { Vertex, Index, Uniform, Storage };
+    enum class BufferType { Vertex, Index, Uniform };
 
     // BufferDesc: Describes how a buffer should be created
     struct BufferDesc {
@@ -22,6 +23,8 @@ namespace Engine {
         
         virtual void Bind() = 0;
         virtual void Unbind() = 0;
+        virtual void BindBase(uint32_t index) = 0;
+        virtual void UnbindBase(uint32_t index) = 0;
 
         virtual size_t GetSize() const = 0;
         virtual BufferType GetType() const = 0;

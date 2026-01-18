@@ -50,6 +50,9 @@ namespace Engine {
         std::vector<RenderCommand> m_CommandQueue;
         std::map<uint64_t, std::shared_ptr<IPipelineState>> m_PSOCache;
 
+        // UBO
+        std::shared_ptr<IBuffer> m_UBO;
+
         // Quads
         std::shared_ptr<Mesh> m_QuadMesh;
         std::shared_ptr<Material> m_QuadMaterial;
