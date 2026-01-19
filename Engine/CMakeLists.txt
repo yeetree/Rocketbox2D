@@ -14,13 +14,6 @@ set(ENGINE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/RHI/IShader.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/RHI/VertexLayout.cpp
 
-    #${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/OpenGL/OpenGLGraphicsDevice.cpp
-    #${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/OpenGL/OpenGLPipelineState.cpp
-    #${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/OpenGL/OpenGLBuffer.cpp
-    #${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/OpenGL/OpenGLShader.cpp
-    #${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/OpenGL/OpenGLTexture.cpp
-    #${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/OpenGL/OpenGLVertexArray.cpp
-
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/Vulkan/VulkanGraphicsDevice.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/Renderer.cpp
