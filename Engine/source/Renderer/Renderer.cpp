@@ -174,7 +174,7 @@ namespace Engine
             auto pso = GetOrCreatePSO(cmd.mesh, cmd.shader);
             uint64_t currentPSO = pso->GetID();
             if (currentPSO != lastPSO) {
-                pso->Bind();
+                //pso->Bind();
                 lastPSO = currentPSO;
             }
 
@@ -188,11 +188,11 @@ namespace Engine
             // Bind Material uniforms and textures and overrides
             // Set uniforms
             for (const auto& [name, value] : cmd.uniforms) {
-                cmd.shader->Set(name, value);
+                //cmd.shader->Set(name, value);
             }
 
             for (const auto& [name, value] : cmd.uniformOverrides) {
-                cmd.shader->Set(name, value);
+                //cmd.shader->Set(name, value);
             }
 
             // Bind textures
@@ -201,7 +201,7 @@ namespace Engine
             for (const auto& [name, tex] : cmd.textures) {
                 texSlots[name] = slot;
                 tex->Bind(slot);
-                cmd.shader->SetInt(name, slot);
+                //cmd.shader->SetInt(name, slot);
                 slot++;
             }
 
@@ -214,11 +214,11 @@ namespace Engine
                     slot++;
                 }
                 tex->Bind(texSlot);
-                cmd.shader->SetInt(name, texSlot);
+                //cmd.shader->SetInt(name, texSlot);
             }
 
             // Set standard Engine uniforms (per object)
-            cmd.shader->SetMat4("u_Transform", cmd.transform);
+            //cmd.shader->SetMat4("u_Transform", cmd.transform);
 
             // Draw
             m_GraphicsDevice->SubmitDraw(cmd.mesh->GetIndexCount());

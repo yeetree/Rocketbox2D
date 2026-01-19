@@ -5,6 +5,8 @@
 #include <vulkan/vulkan_raii.hpp>
 
 #include "Engine/Renderer/RHI/IGraphicsDevice.h"
+#include "Engine/Renderer/RHI/IShader.h"
+#include "Engine/Renderer/RHI/IPipelineState.h"
 
 constexpr std::array<char const*, 1> validationLayers = {
     "VK_LAYER_KHRONOS_validation"
@@ -31,7 +33,7 @@ namespace Engine {
     public:
         // Constructor: Creates an VulkanGraphicsDevice with SDL_Window
         VulkanGraphicsDevice(SDL_Window* window);
-        virtual ~VulkanGraphicsDevice();
+        ~VulkanGraphicsDevice() override;
 
         // Prevent copying
         VulkanGraphicsDevice(const VulkanGraphicsDevice&) = delete;
@@ -106,10 +108,12 @@ namespace Engine {
         vk::SurfaceFormatKHR m_SwapChainSurfaceFormat;
         vk::Extent2D m_SwapChainExtent;
         std::vector<vk::raii::ImageView> m_SwapChainImageViews;
-        vk::raii::PipelineLayout m_PipelineLayout = nullptr;
-        vk::raii::Pipeline m_GraphicsPipeline = nullptr;
         vk::raii::CommandPool m_CommandPool = nullptr;  
         std::vector<vk::raii::CommandBuffer> m_CommandBuffers;
+
+        // Temp drawing
+        Scope<IShader> m_Shader;
+        Scope<IPipelineState> m_Pipeline;
         
         uint32_t m_CurrentFrame = 0;
         uint32_t m_FrameIndex = 0;

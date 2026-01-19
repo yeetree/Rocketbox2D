@@ -6,10 +6,17 @@
 #include "Engine/Renderer/RHI/VertexLayout.h"
 
 namespace Engine {
-    // How the triangles should be rendered
+
+    // Formats?
+    enum class Format { Undefined, RGBA8, RGB8, RGBA16F, Depth24Stencil8 };
+
+    // What are the shapes?
+    enum class PrimitiveTopology { PointList, LineList, TriangleList };
+
+    // How the shapes should be rendered
     enum class FillMode { Solid, Wireframe };
 
-    // How the triangles should be culled
+    // How the shapes should be culled
     enum class CullMode { None, Front, Back };
 
     // Describes how a Pipeline State Object should be created
@@ -17,6 +24,9 @@ namespace Engine {
         IShader* shader = nullptr;  // Shader to be used with pipeline
         VertexLayout layout;        // Vertex attributes
         
+        // Topology
+        PrimitiveTopology topology = PrimitiveTopology::TriangleList;
+
         // Rasterizer State
         FillMode fillMode = FillMode::Solid;
         CullMode cullMode = CullMode::Back;
@@ -38,8 +48,6 @@ namespace Engine {
         }
 
         virtual ~IPipelineState() = default;
-        virtual void Bind() = 0;
-        virtual void Unbind() = 0;
 
         uint32_t GetID() const { return m_ID; }
 

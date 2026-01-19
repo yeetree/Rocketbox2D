@@ -1,6 +1,8 @@
 #include "Renderer/Vulkan/VulkanGraphicsDevice.h"
 #include "Engine/Core/Log.h"
 #include "Engine/Core/FileSystem.h"
+#include "Renderer/Vulkan/VulkanPipelineState.h"
+#include "Renderer/Vulkan/VulkanShader.h"
 #include <SDL3/SDL_vulkan.h>
 
 namespace Engine {
@@ -282,85 +284,20 @@ namespace Engine {
 
     void VulkanGraphicsDevice::CreateGraphicsPipeline() {
         LOG_CORE_INFO("Vulkan: Creating Graphics Pipeline...");
-        vk::raii::ShaderModule shaderModule = CreateShaderModule(Engine::FileSystem::ReadFile(FileSystem::GetAbsolutePath("./shaders/slang.spv")));
         
-        vk::PipelineShaderStageCreateInfo vertShaderStageInfo;
-        vertShaderStageInfo.stage = vk::ShaderStageFlagBits::eVertex;
-        vertShaderStageInfo.module = shaderModule;
-        vertShaderStageInfo.pName = "vertMain";
-
-        vk::PipelineShaderStageCreateInfo fragShaderStageInfo;
-        fragShaderStageInfo.stage = vk::ShaderStageFlagBits::eFragment;
-        fragShaderStageInfo.module = shaderModule;
-        fragShaderStageInfo.pName = "fragMain";
-
-        vk::PipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
-
-        vk::PipelineVertexInputStateCreateInfo vertexInputInfo;
-        vk::PipelineInputAssemblyStateCreateInfo inputAssembly;
-        inputAssembly.topology = vk::PrimitiveTopology::eTriangleList;
-        vk::PipelineViewportStateCreateInfo viewportState;
-        viewportState.viewportCount = 1;
-        viewportState.scissorCount = 1;
-
-        vk::PipelineRasterizationStateCreateInfo rasterizer;
-        rasterizer.depthClampEnable = vk::False;
-        rasterizer.rasterizerDiscardEnable = vk::False;
-        rasterizer.polygonMode = vk::PolygonMode::eFill;
-        rasterizer.cullMode = vk::CullModeFlagBits::eBack;
-        rasterizer.frontFace = vk::FrontFace::eClockwise;
-        rasterizer.depthBiasEnable = vk::False;
-        rasterizer.depthBiasSlopeFactor = 1.0f;
-        rasterizer.lineWidth = 1.0f;
-
-		vk::PipelineMultisampleStateCreateInfo multisampling;
-        multisampling.rasterizationSamples = vk::SampleCountFlagBits::e1;
-        multisampling.sampleShadingEnable = vk::False;
-
-		vk::PipelineColorBlendAttachmentState colorBlendAttachment;
-        colorBlendAttachment.blendEnable = vk::False;
-        colorBlendAttachment.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
-
-		vk::PipelineColorBlendStateCreateInfo colorBlending;
-        colorBlending.logicOpEnable = vk::False;
-        colorBlending.logicOp = vk::LogicOp::eCopy;
-        colorBlending.attachmentCount = 1;
-        colorBlending.pAttachments = &colorBlendAttachment;
-
-        // Dynamic rendering
-		std::vector dynamicStates = {
-            vk::DynamicState::eViewport,
-		    vk::DynamicState::eScissor
-        };
-
-		vk::PipelineDynamicStateCreateInfo dynamicState;
-        dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
-        dynamicState.pDynamicStates = dynamicStates.data();
-
-        // Create pipeline layout
-		vk::PipelineLayoutCreateInfo pipelineLayoutInfo;
-		m_PipelineLayout = vk::raii::PipelineLayout(m_Device, pipelineLayoutInfo);
-
-        // Create pipelime
-        vk::PipelineRenderingCreateInfo pipelineRenderingCreateInfo; 
-        pipelineRenderingCreateInfo.colorAttachmentCount = 1;
-        pipelineRenderingCreateInfo.pColorAttachmentFormats = &m_SwapChainSurfaceFormat.format;
+        std::vector<char> shaderCode = Engine::FileSystem::ReadFile(FileSystem::GetAbsolutePath("./shaders/slang.spv"));
+        ShaderDesc shaderDesc;
+        shaderDesc.stages[ShaderStage::Vertex].byteCode = shaderCode;
+        shaderDesc.stages[ShaderStage::Vertex].entryPoint = "vertMain";
+        shaderDesc.stages[ShaderStage::Fragment].byteCode = shaderCode;
+        shaderDesc.stages[ShaderStage::Fragment].entryPoint = "fragMain";
         
-        vk::GraphicsPipelineCreateInfo pipelineInfo;
-        pipelineInfo.pNext = &pipelineRenderingCreateInfo;
-        pipelineInfo.stageCount = 2;
-        pipelineInfo.pStages = shaderStages;
-        pipelineInfo.pVertexInputState = &vertexInputInfo;
-        pipelineInfo.pInputAssemblyState = &inputAssembly,
-        pipelineInfo.pViewportState = &viewportState;
-        pipelineInfo.pRasterizationState = &rasterizer;
-        pipelineInfo.pMultisampleState = &multisampling;
-        pipelineInfo.pColorBlendState = &colorBlending;
-        pipelineInfo.pDynamicState = &dynamicState;
-        pipelineInfo.layout = m_PipelineLayout;
-        pipelineInfo.renderPass = nullptr;
+        m_Shader = CreateShader(shaderDesc);
 
-        m_GraphicsPipeline = m_Device.createGraphicsPipeline(nullptr, pipelineInfo);
+        PipelineDesc pipeDesc;
+        pipeDesc.shader = m_Shader.get();
+
+        m_Pipeline = CreatePipelineState(pipeDesc);
     }
 
     void VulkanGraphicsDevice::CreateCommandPool() {
@@ -488,7 +425,7 @@ namespace Engine {
     }
 
     Scope<IShader> VulkanGraphicsDevice::CreateShader(const ShaderDesc& desc) {
-        return nullptr;
+        return CreateScope<VulkanShader>(m_Device, desc);
     }
 
     Scope<IVertexArray> VulkanGraphicsDevice::CreateVertexArray(const VertexArrayDesc& desc) {
@@ -496,7 +433,7 @@ namespace Engine {
     }
 
     Scope<IPipelineState> VulkanGraphicsDevice::CreatePipelineState(const PipelineDesc& desc) {
-        return nullptr;
+        return CreateScope<VulkanPipelineState>(m_Device, m_SwapChainSurfaceFormat.format, desc);
     }
 
     // Frame Management
@@ -546,7 +483,8 @@ namespace Engine {
 
         // Begin rendering
         m_CommandBuffers[m_FrameIndex].beginRendering(renderingInfo);
-        m_CommandBuffers[m_FrameIndex].bindPipeline(vk::PipelineBindPoint::eGraphics, *m_GraphicsPipeline);
+        VulkanPipelineState* graphicsPipeline = static_cast<VulkanPipelineState*>(m_Pipeline.get());
+        m_CommandBuffers[m_FrameIndex].bindPipeline(vk::PipelineBindPoint::eGraphics, *graphicsPipeline->m_Pipeline);
 		m_CommandBuffers[m_FrameIndex].setViewport(0, vk::Viewport(0.0f, 0.0f, static_cast<float>(m_SwapChainExtent.width), static_cast<float>(m_SwapChainExtent.height), 0.0f, 1.0f));
 		m_CommandBuffers[m_FrameIndex].setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), m_SwapChainExtent));
 		m_CommandBuffers[m_FrameIndex].draw(3, 1, 0, 0);

@@ -13,8 +13,8 @@ namespace Engine
         std::vector<char> fragSource = FileSystem::ReadFile(FileSystem::GetAbsolutePath(fragPath));
 
         ShaderDesc desc;
-        desc.sources[ShaderStage::Vertex] = vertSource;
-        desc.sources[ShaderStage::Fragment] = fragSource;
+        //desc.sources[ShaderStage::Vertex] = vertSource;
+        //desc.sources[ShaderStage::Fragment] = fragSource;
 
         // Get shader (unique)
         Scope<IShader> shaderPtr = m_GraphicsDevice->CreateShader(desc);
