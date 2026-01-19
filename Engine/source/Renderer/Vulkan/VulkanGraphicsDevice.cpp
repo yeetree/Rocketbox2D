@@ -372,16 +372,28 @@ namespace Engine {
 	}
 
 	void VulkanGraphicsDevice::CreateCommandBuffer() {
-        LOG_CORE_INFO("Vulkan: Creating Command Buffer...");
-        vk::CommandBufferAllocateInfo allocInfo(m_CommandPool, vk::CommandBufferLevel::ePrimary, 1);
-		m_CommandBuffer = std::move(vk::raii::CommandBuffers(m_Device, allocInfo).front());
+        LOG_CORE_INFO("Vulkan: Creating Command Buffers...");
+        m_CommandBuffers.clear();
+        vk::CommandBufferAllocateInfo allocInfo(m_CommandPool, vk::CommandBufferLevel::ePrimary, MAX_FRAMES_IN_FLIGHT);
+        m_CommandBuffers = vk::raii::CommandBuffers( m_Device, allocInfo );
     }
 
     void VulkanGraphicsDevice::CreateSyncObjects() {
         LOG_CORE_INFO("Vulkan: Creating Sync Objects...");
-        m_PresentCompleteSemaphore = vk::raii::Semaphore(m_Device, vk::SemaphoreCreateInfo());
-		m_RenderFinishedSemaphore  = vk::raii::Semaphore(m_Device, vk::SemaphoreCreateInfo());
-		m_DrawFence                = vk::raii::Fence(m_Device, {vk::FenceCreateFlagBits::eSignaled});
+        m_RenderFinishedSemaphores.clear();
+        m_PresentCompleteSemaphores.clear();
+        m_InFlightFences.clear();
+
+        for (size_t i = 0; i < m_SwapChainImages.size(); i++)
+		{
+			m_RenderFinishedSemaphores.emplace_back(m_Device, vk::SemaphoreCreateInfo());
+		}
+
+		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+		{
+			m_PresentCompleteSemaphores.emplace_back(m_Device, vk::SemaphoreCreateInfo());
+			m_InFlightFences.emplace_back(m_Device, vk::FenceCreateInfo{vk::FenceCreateFlagBits::eSignaled});
+		}
     }
 
     // Utility
@@ -463,7 +475,7 @@ namespace Engine {
 		dependency_info.dependencyFlags         = {};
 		dependency_info.imageMemoryBarrierCount = 1;
 		dependency_info.pImageMemoryBarriers    = &barrier;
-		m_CommandBuffer.pipelineBarrier2(dependency_info);
+		m_CommandBuffers[m_FrameIndex].pipelineBarrier2(dependency_info);
 	}
 
     // Resource Creation
@@ -489,13 +501,20 @@ namespace Engine {
 
     // Frame Management
     void VulkanGraphicsDevice::BeginFrame() {
-        m_Queue.waitIdle(); 
+        // Wait for current draw fence
+        auto fenceResult = m_Device.waitForFences(*m_InFlightFences[m_FrameIndex], vk::True, UINT64_MAX);
+        if (fenceResult != vk::Result::eSuccess) {
+            LOG_CORE_ERROR("Vulkan: Failed to wait for fence!");
+        }
         
-        auto [result, imageIndex] = m_SwapChain.acquireNextImage(UINT64_MAX, *m_PresentCompleteSemaphore, nullptr);
-
+        auto [result, imageIndex] = m_SwapChain.acquireNextImage(UINT64_MAX, *m_PresentCompleteSemaphores[m_FrameIndex], nullptr);
         m_ImageIndex = imageIndex;
 
-        m_CommandBuffer.begin({});
+        m_Device.resetFences(*m_InFlightFences[m_FrameIndex]);
+
+        m_CommandBuffers[m_FrameIndex].reset();
+
+        m_CommandBuffers[m_FrameIndex].begin({});
 
         // Transition the image layout for rendering
         TransitionImageLayout(
@@ -526,12 +545,12 @@ namespace Engine {
         renderingInfo.pColorAttachments = &attachmentInfo;
 
         // Begin rendering
-        m_CommandBuffer.beginRendering(renderingInfo);
-        m_CommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *m_GraphicsPipeline);
-		m_CommandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, static_cast<float>(m_SwapChainExtent.width), static_cast<float>(m_SwapChainExtent.height), 0.0f, 1.0f));
-		m_CommandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), m_SwapChainExtent));
-		m_CommandBuffer.draw(3, 1, 0, 0);
-		m_CommandBuffer.endRendering();
+        m_CommandBuffers[m_FrameIndex].beginRendering(renderingInfo);
+        m_CommandBuffers[m_FrameIndex].bindPipeline(vk::PipelineBindPoint::eGraphics, *m_GraphicsPipeline);
+		m_CommandBuffers[m_FrameIndex].setViewport(0, vk::Viewport(0.0f, 0.0f, static_cast<float>(m_SwapChainExtent.width), static_cast<float>(m_SwapChainExtent.height), 0.0f, 1.0f));
+		m_CommandBuffers[m_FrameIndex].setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), m_SwapChainExtent));
+		m_CommandBuffers[m_FrameIndex].draw(3, 1, 0, 0);
+		m_CommandBuffers[m_FrameIndex].endRendering();
 		// After rendering, transition the swapchain image to PRESENT_SRC
 		TransitionImageLayout(
 		    m_ImageIndex,
@@ -542,38 +561,38 @@ namespace Engine {
 		    vk::PipelineStageFlagBits2::eColorAttachmentOutput,        // srcStage
 		    vk::PipelineStageFlagBits2::eBottomOfPipe                  // dstStage
 		);
-		m_CommandBuffer.end();
+		m_CommandBuffers[m_FrameIndex].end();
     }
 
     void VulkanGraphicsDevice::EndFrame() {
-        m_Device.resetFences(*m_DrawFence);
         vk::PipelineStageFlags waitDestinationStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
+    
         vk::SubmitInfo submitInfo;
         submitInfo.waitSemaphoreCount = 1;
-        submitInfo.pWaitSemaphores = &*m_PresentCompleteSemaphore;
+        submitInfo.pWaitSemaphores = &*m_PresentCompleteSemaphores[m_FrameIndex]; 
         submitInfo.pWaitDstStageMask = &waitDestinationStageMask;
+        
         submitInfo.commandBufferCount = 1;
-        submitInfo.pCommandBuffers = &*m_CommandBuffer;
+        submitInfo.pCommandBuffers = &*m_CommandBuffers[m_FrameIndex];
+        
         submitInfo.signalSemaphoreCount = 1;
-        submitInfo.pSignalSemaphores = &*m_RenderFinishedSemaphore;
-        m_Queue.submit(submitInfo, *m_DrawFence);
+        submitInfo.pSignalSemaphores = &*m_RenderFinishedSemaphores[m_ImageIndex]; 
+
+        m_Queue.submit(submitInfo, *m_InFlightFences[m_FrameIndex]);
     }
 
     void VulkanGraphicsDevice::Present() {
-        auto result = m_Device.waitForFences(*m_DrawFence, vk::True, UINT64_MAX);
-        if (result != vk::Result::eSuccess)
-        {
-            LOG_CORE_ERROR("Vulkan: Failed to wait for fence!");
-        }
-
-        vk::PresentInfoKHR presentInfoKHR;
+       vk::PresentInfoKHR presentInfoKHR;
         presentInfoKHR.waitSemaphoreCount = 1;
-        presentInfoKHR.pWaitSemaphores = &*m_RenderFinishedSemaphore;
+        // Wait for rendering to finish
+        presentInfoKHR.pWaitSemaphores = &*m_RenderFinishedSemaphores[m_ImageIndex]; 
         presentInfoKHR.swapchainCount = 1;
         presentInfoKHR.pSwapchains = &*m_SwapChain;
         presentInfoKHR.pImageIndices = &m_ImageIndex;
-        result = m_Queue.presentKHR(presentInfoKHR);
-		switch (result)
+
+        auto result = m_Queue.presentKHR(presentInfoKHR);
+        
+        switch (result)
 		{
 			case vk::Result::eSuccess:
 				break;
@@ -583,6 +602,8 @@ namespace Engine {
 			default:
 				break;        // an unexpected result is returned!
 		}
+
+        m_FrameIndex = (m_FrameIndex + 1) % MAX_FRAMES_IN_FLIGHT;
     }
 
     void VulkanGraphicsDevice::SetClearColor(Vec4 color) {
@@ -596,10 +617,11 @@ namespace Engine {
 
     // Resize
     void VulkanGraphicsDevice::Resize(int width, int height) {
-        // Wait for GPU to finish
+        if (width == 0 || height == 0) return;
+
         m_Device.waitIdle();
 
-        // Get capabilities and recreate swapchain
+        //Get capabilities and recreate swapchain
         vk::SurfaceCapabilitiesKHR surfaceCapabilities = m_PhysicalDevice.getSurfaceCapabilitiesKHR(m_Surface);
         m_SwapChainExtent = ChooseSwapExtent(surfaceCapabilities);
 
@@ -617,14 +639,21 @@ namespace Engine {
         swapChainCreateInfo.clipped = true;
         swapChainCreateInfo.oldSwapchain = *m_SwapChain;
 
-        // Destroys old m_SwapChain
+        // Set new swapchain (raii destroys old one)
         m_SwapChain = vk::raii::SwapchainKHR(m_Device, swapChainCreateInfo);
 
-        // Acquire the new images and recreate views
+        // Update the image list and views
         m_SwapChainImages = m_SwapChain.getImages();
         CreateImageViews();
 
-        LOG_CORE_INFO("Vulkan: Swapchain resized to {0}x{1}", m_SwapChainExtent.width, m_SwapChainExtent.height);
+        // Recreate sync objects because the image count may have changed
+        CreateSyncObjects();
+
+        // Reset frame indices to start fresh
+        m_FrameIndex = 0;
+
+        LOG_CORE_INFO("Vulkan: Swapchain resized to {0} x {1} with {2} images", 
+            m_SwapChainExtent.width, m_SwapChainExtent.height, m_SwapChainImages.size());
     }
 
 } // namespace Engine

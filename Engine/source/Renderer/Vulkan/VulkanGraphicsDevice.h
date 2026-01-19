@@ -17,6 +17,8 @@ constexpr std::array<const char*, 4> deviceExtensions = {
     vk::KHRCreateRenderpass2ExtensionName
 };
 
+constexpr int MAX_FRAMES_IN_FLIGHT = 2;
+
 #ifdef NDEBUG
 constexpr bool enableValidationLayers = false;
 #else
@@ -107,15 +109,16 @@ namespace Engine {
         vk::raii::PipelineLayout m_PipelineLayout = nullptr;
         vk::raii::Pipeline m_GraphicsPipeline = nullptr;
         vk::raii::CommandPool m_CommandPool = nullptr;  
-        vk::raii::CommandBuffer m_CommandBuffer = nullptr;
+        std::vector<vk::raii::CommandBuffer> m_CommandBuffers;
         
         uint32_t m_CurrentFrame = 0;
+        uint32_t m_FrameIndex = 0;
         uint32_t m_ImageIndex = 0;
     
         // Sync objects
-        vk::raii::Semaphore m_PresentCompleteSemaphore = nullptr;
-        vk::raii::Semaphore m_RenderFinishedSemaphore  = nullptr;
-        vk::raii::Fence     m_DrawFence                = nullptr;
+        std::vector<vk::raii::Semaphore> m_PresentCompleteSemaphores;
+        std::vector<vk::raii::Semaphore> m_RenderFinishedSemaphores;
+        std::vector<vk::raii::Fence> m_InFlightFences;
 
         // Scope<ITexture> m_BackBuffer;
     };
