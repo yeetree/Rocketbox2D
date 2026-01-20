@@ -3,7 +3,14 @@
 #include "Engine/Core/FileSystem.h"
 #include "Renderer/Vulkan/VulkanPipelineState.h"
 #include "Renderer/Vulkan/VulkanShader.h"
+#include "Renderer/Vulkan/VulkanBuffer.h"
 #include <SDL3/SDL_vulkan.h>
+
+const std::vector<float> vertices = {
+    0.0f, -0.5f, 1.0f, 0.0f, 0.0f,
+    0.5f, 0.5f, 0.0f, 1.0f, 0.0f,
+    -0.5f, 0.5f, 0.0f, 0.0f, 1.0f
+};
 
 namespace Engine {
     
@@ -296,8 +303,16 @@ namespace Engine {
 
         PipelineDesc pipeDesc;
         pipeDesc.shader = m_Shader.get();
+        pipeDesc.layout = VertexLayout{VertexElement(VertexElementType::Vec2, "inPosition"), VertexElement(VertexElementType::Vec3, "inColor")};
 
         m_Pipeline = CreatePipelineState(pipeDesc);
+
+        BufferDesc vbDesc;
+        vbDesc.data = vertices.data();
+        vbDesc.size = sizeof(vertices[0]) * vertices.size();
+        vbDesc.type = BufferType::Vertex;
+
+        m_VertexBuffer = CreateBuffer(vbDesc);
     }
 
     void VulkanGraphicsDevice::CreateCommandPool() {
@@ -417,7 +432,7 @@ namespace Engine {
 
     // Resource Creation
     Scope<IBuffer> VulkanGraphicsDevice::CreateBuffer(const BufferDesc& desc) {
-        return nullptr;
+        return CreateScope<VulkanBuffer>(m_Device, m_PhysicalDevice, desc);
     }
 
     Scope<ITexture> VulkanGraphicsDevice::CreateTexture(const TextureDesc& desc) {
@@ -483,12 +498,23 @@ namespace Engine {
 
         // Begin rendering
         m_CommandBuffers[m_FrameIndex].beginRendering(renderingInfo);
+
+        // <TEST>
         VulkanPipelineState* graphicsPipeline = static_cast<VulkanPipelineState*>(m_Pipeline.get());
+        VulkanBuffer* vertexBuffer = static_cast<VulkanBuffer*>(m_VertexBuffer.get());
         m_CommandBuffers[m_FrameIndex].bindPipeline(vk::PipelineBindPoint::eGraphics, *graphicsPipeline->m_Pipeline);
-		m_CommandBuffers[m_FrameIndex].setViewport(0, vk::Viewport(0.0f, 0.0f, static_cast<float>(m_SwapChainExtent.width), static_cast<float>(m_SwapChainExtent.height), 0.0f, 1.0f));
+		m_CommandBuffers[m_FrameIndex].bindVertexBuffers(0, *vertexBuffer->m_Buffer, {0});
+        
+        m_CommandBuffers[m_FrameIndex].setViewport(0, vk::Viewport(0.0f, 0.0f, static_cast<float>(m_SwapChainExtent.width), static_cast<float>(m_SwapChainExtent.height), 0.0f, 1.0f));
 		m_CommandBuffers[m_FrameIndex].setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), m_SwapChainExtent));
-		m_CommandBuffers[m_FrameIndex].draw(3, 1, 0, 0);
+		
+        m_CommandBuffers[m_FrameIndex].draw(3, 1, 0, 0);
+        // </TEST>
+
+
 		m_CommandBuffers[m_FrameIndex].endRendering();
+
+
 		// After rendering, transition the swapchain image to PRESENT_SRC
 		TransitionImageLayout(
 		    m_ImageIndex,

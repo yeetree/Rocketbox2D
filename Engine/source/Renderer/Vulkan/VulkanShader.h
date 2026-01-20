@@ -12,7 +12,7 @@ namespace Engine {
         ~VulkanShader() override;
 
         // Stage to name + module
-        std::map<ShaderStage, std::pair<const char*, std::shared_ptr<vk::raii::ShaderModule>>> m_Stages;
+        std::map<ShaderStage, std::pair<std::string, std::shared_ptr<vk::raii::ShaderModule>>> m_Stages;
         
         // Layout
         vk::raii::PipelineLayout m_Layout = nullptr;

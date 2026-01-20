@@ -73,7 +73,9 @@ namespace Engine {
         void CreateLogicalDevice();
         void CreateSwapChain();
         void CreateImageViews();
+        // <TEST>
         void CreateGraphicsPipeline();
+        // </TEST>
         void CreateCommandPool();
         void CreateCommandBuffer();
         void CreateSyncObjects();
@@ -114,6 +116,7 @@ namespace Engine {
         // Temp drawing
         Scope<IShader> m_Shader;
         Scope<IPipelineState> m_Pipeline;
+        Scope<IBuffer> m_VertexBuffer;
         
         uint32_t m_CurrentFrame = 0;
         uint32_t m_FrameIndex = 0;

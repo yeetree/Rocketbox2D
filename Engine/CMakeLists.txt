@@ -16,6 +16,7 @@ set(ENGINE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/Vulkan/VulkanGraphicsDevice.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/Vulkan/VulkanShader.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/Vulkan/VulkanPipelineState.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/Vulkan/VulkanBuffer.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/Renderer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/Camera.cpp

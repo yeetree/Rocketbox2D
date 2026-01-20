@@ -1,5 +1,5 @@
-#ifndef ENGINE_RENDERER_ISHADER
-#define ENGINE_RENDERER_ISHADER
+#ifndef ENGINE_RENDERER_RHI_ISHADER
+#define ENGINE_RENDERER_RHI_ISHADER
 
 #include "engine_export.h"
 
@@ -12,15 +12,15 @@
 #include "Engine/Math/Matrix.h"
 
 namespace Engine {
+
+    using ShaderUniformValue = std::variant<int, float, Vec2, Vec3, Vec4, Mat4>;
+
     // What shader stage the current source is
-
-    using ShaderUniformValue = std::variant<bool, int, float, Vec2, Vec3, Vec4, Mat4>;
-
     enum class ShaderStage { Vertex, Fragment, Geometry };
 
     struct ShaderModuleBlob {
         std::vector<char> byteCode;
-        const char* entryPoint = "main";
+        std::string entryPoint = "main";
     };
 
     struct ShaderDesc {
@@ -46,4 +46,4 @@ namespace Engine {
     };
 }
 
-#endif // ENGINE_RENDERER_ISHADER
+#endif // ENGINE_RENDERER_RHI_ISHADER

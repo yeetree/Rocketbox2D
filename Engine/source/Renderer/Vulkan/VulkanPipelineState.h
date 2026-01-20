@@ -14,6 +14,7 @@ namespace Engine {
         vk::raii::Pipeline m_Pipeline = nullptr;
 
     private:
+        static vk::Format GetVulkanFormat(VertexElementType type);
         static vk::ShaderStageFlagBits GetVulkanShaderStage(ShaderStage stage);
     };
 } // namespace Engine

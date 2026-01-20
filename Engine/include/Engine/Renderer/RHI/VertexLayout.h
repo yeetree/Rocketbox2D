@@ -8,14 +8,13 @@
 #include <cstdint>
 
 namespace Engine {
-    // Type of vertex element
-    enum class VertexElementType { Int, Float, Bool, Vec2, Vec3, Vec4, Mat4 };
+    // Type of vertex element (We do not support passing matrices as vertex data)
+    enum class VertexElementType { Int, Float, Vec2, Vec3, Vec4 };
 
     // Describes a vertex element
     struct ENGINE_EXPORT VertexElement {
         std::string name;
         VertexElementType type;
-        uint32_t components;
         uint32_t size;
         uint32_t offset;
         bool normalized;

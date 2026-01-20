@@ -150,8 +150,8 @@ namespace Engine
     }
 
     void Renderer::BeginScene(const Mat4& viewProjection) {
-        m_UBO->BindBase(0);
-        m_UBO->UpdateData(glm::value_ptr(viewProjection), sizeof(Mat4), 0);
+        //m_UBO->BindBase(0);
+        //m_UBO->UpdateData(glm::value_ptr(viewProjection), sizeof(Mat4), 0);
     }
 
     void Renderer::EndScene() {
@@ -162,7 +162,7 @@ namespace Engine
         });
 
         Flush();
-        m_UBO->UnbindBase(0);
+        //m_UBO->UnbindBase(0);
     }
 
     void Renderer::Flush() {

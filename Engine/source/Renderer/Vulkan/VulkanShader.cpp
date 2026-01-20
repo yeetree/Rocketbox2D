@@ -4,18 +4,18 @@ namespace Engine
 {
     VulkanShader::VulkanShader(const vk::raii::Device& device, const ShaderDesc& desc) {
         
-        // Key by the address of the vector to find duplicates within this Desc
-        std::map<const std::vector<char>*, std::shared_ptr<vk::raii::ShaderModule>> uniqueModules;
+        // Key by the bytecode data to find duplicates within this Desc
+        std::map<std::vector<char>, std::shared_ptr<vk::raii::ShaderModule>> uniqueModules;
 
         for (auto const& [stage, blob] : desc.stages) {
             if (blob.byteCode.empty()) continue;
 
-            auto it = uniqueModules.find(&blob.byteCode);
+            auto it = uniqueModules.find(blob.byteCode);
             std::shared_ptr<vk::raii::ShaderModule> modulePtr;
 
             if (it == uniqueModules.end()) {
                 modulePtr = std::make_shared<vk::raii::ShaderModule>(CreateShaderModule(device, blob.byteCode));
-                uniqueModules[&blob.byteCode] = modulePtr;
+                uniqueModules[blob.byteCode] = modulePtr;
             } else {
                 modulePtr = it->second;
             }

@@ -21,11 +21,11 @@ namespace Engine
         };
 
         void Bind() {
-            m_VAO->Bind();
+            //m_VAO->Bind();
         }
 
         void Unbind() {
-            m_VAO->Unbind();
+            //m_VAO->Unbind();
         }
 
         uint32_t GetIndexCount() const { return m_IndexCount; }
