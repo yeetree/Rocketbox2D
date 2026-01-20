@@ -7,6 +7,7 @@
 #include "Engine/Renderer/RHI/IGraphicsDevice.h"
 #include "Engine/Renderer/RHI/IShader.h"
 #include "Engine/Renderer/RHI/IPipelineState.h"
+#include "Renderer/Vulkan/VulkanBuffer.h"
 
 constexpr std::array<char const*, 1> validationLayers = {
     "VK_LAYER_KHRONOS_validation"
@@ -61,9 +62,47 @@ namespace Engine {
         // Resize
         void Resize(int width, int height) override;
 
+        // Vulkan-Specific
+
+        // Helper function for VulkanBuffer
+        void StageBufferUploadData(VulkanBuffer* dstBuffer, const void* data, size_t size, size_t dstOffset);
+
+        // Public So Vulkan* classes can access them
+        vk::raii::Context  m_Context;
+        vk::raii::Instance m_Instance = nullptr;
+        vk::raii::DebugUtilsMessengerEXT m_DebugMessenger = nullptr;
+        vk::raii::SurfaceKHR m_Surface = nullptr;
+        vk::raii::PhysicalDevice m_PhysicalDevice = nullptr;
+        vk::raii::Device m_Device = nullptr;
+        uint32_t m_QueueIndex = ~0;
+	    vk::raii::Queue m_Queue = nullptr;
+        vk::raii::SwapchainKHR m_SwapChain = nullptr;
+        std::vector<vk::Image> m_SwapChainImages;
+        vk::SurfaceFormatKHR m_SwapChainSurfaceFormat;
+        vk::Extent2D m_SwapChainExtent;
+        std::vector<vk::raii::ImageView> m_SwapChainImageViews;
+        vk::raii::CommandPool m_CommandPool = nullptr;  
+        std::vector<vk::raii::CommandBuffer> m_CommandBuffers;
+
+        // Temp drawing
+        Scope<IShader> m_Shader;
+        Scope<IPipelineState> m_Pipeline;
+        Scope<IBuffer> m_VertexBuffer;
+        
+        uint32_t m_CurrentFrame = 0;
+        uint32_t m_FrameIndex = 0;
+        uint32_t m_ImageIndex = 0;
+    
+        // Sync objects
+        std::vector<vk::raii::Semaphore> m_PresentCompleteSemaphores;
+        std::vector<vk::raii::Semaphore> m_RenderFinishedSemaphores;
+        std::vector<vk::raii::Fence> m_InFlightFences;
+
     private:
         // Debug Callback
         static VKAPI_ATTR vk::Bool32 VKAPI_CALL DebugCallback(vk::DebugUtilsMessageSeverityFlagBitsEXT severity, vk::DebugUtilsMessageTypeFlagsEXT type, const vk::DebugUtilsMessengerCallbackDataEXT* pCallbackData, void*);
+
+        SDL_Window* m_Window;
 
         // Setup functions
         void CreateInstance();
@@ -94,38 +133,6 @@ namespace Engine {
             vk::AccessFlags2        dst_access_mask,
             vk::PipelineStageFlags2 src_stage_mask,
             vk::PipelineStageFlags2 dst_stage_mask);
-
-        SDL_Window* m_Window;
-
-        vk::raii::Context  m_Context;
-        vk::raii::Instance m_Instance = nullptr;
-        vk::raii::DebugUtilsMessengerEXT m_DebugMessenger = nullptr;
-        vk::raii::SurfaceKHR m_Surface = nullptr;
-        vk::raii::PhysicalDevice m_PhysicalDevice = nullptr;
-        vk::raii::Device m_Device = nullptr;
-        uint32_t m_QueueIndex = ~0;
-	    vk::raii::Queue m_Queue = nullptr;
-        vk::raii::SwapchainKHR m_SwapChain = nullptr;
-        std::vector<vk::Image> m_SwapChainImages;
-        vk::SurfaceFormatKHR m_SwapChainSurfaceFormat;
-        vk::Extent2D m_SwapChainExtent;
-        std::vector<vk::raii::ImageView> m_SwapChainImageViews;
-        vk::raii::CommandPool m_CommandPool = nullptr;  
-        std::vector<vk::raii::CommandBuffer> m_CommandBuffers;
-
-        // Temp drawing
-        Scope<IShader> m_Shader;
-        Scope<IPipelineState> m_Pipeline;
-        Scope<IBuffer> m_VertexBuffer;
-        
-        uint32_t m_CurrentFrame = 0;
-        uint32_t m_FrameIndex = 0;
-        uint32_t m_ImageIndex = 0;
-    
-        // Sync objects
-        std::vector<vk::raii::Semaphore> m_PresentCompleteSemaphores;
-        std::vector<vk::raii::Semaphore> m_RenderFinishedSemaphores;
-        std::vector<vk::raii::Fence> m_InFlightFences;
 
         // Scope<ITexture> m_BackBuffer;
     };

@@ -6,16 +6,30 @@
 #include "Engine/Renderer/RHI/IBuffer.h"
 
 namespace Engine {
+    class VulkanGraphicsDevice;
+
     struct VulkanBuffer : public IBuffer {
     public:
-        VulkanBuffer(const vk::raii::Device& device, const vk::raii::PhysicalDevice& physicalDevice, const BufferDesc& desc);
+        VulkanBuffer(VulkanGraphicsDevice* graphicsDevice, const BufferDesc& desc);
         ~VulkanBuffer() override;
 
-        // Layout
+        void UpdateData(const void* data, size_t size, size_t offset) override;
+
+        // Buffer
         vk::raii::Buffer m_Buffer = nullptr;
         vk::raii::DeviceMemory m_BufferMemory = nullptr;
+        vk::DeviceSize m_BufferSize; // Buffer size
+        BufferType m_Type;
+
     private:
-        static vk::BufferUsageFlagBits GetVulkanBufferUsage(BufferType type);
+        VulkanGraphicsDevice* m_GraphicsDevice;
+
+        bool m_IsHostVisible; // Dynamic or static
+
+        // Mapped memory pointer for dynamic
+        void* m_MappedPtr = nullptr;
+
+        static vk::Flags<vk::BufferUsageFlagBits> GetVulkanBufferUsage(BufferType type);
         static uint32_t FindMemoryType(uint32_t typeFilter, vk::PhysicalDeviceMemoryProperties memProperties, vk::MemoryPropertyFlags properties);
     };
 } // namespace Engine

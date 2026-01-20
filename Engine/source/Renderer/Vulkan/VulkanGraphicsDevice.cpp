@@ -3,7 +3,6 @@
 #include "Engine/Core/FileSystem.h"
 #include "Renderer/Vulkan/VulkanPipelineState.h"
 #include "Renderer/Vulkan/VulkanShader.h"
-#include "Renderer/Vulkan/VulkanBuffer.h"
 #include <SDL3/SDL_vulkan.h>
 
 const std::vector<float> vertices = {
@@ -40,9 +39,9 @@ namespace Engine {
         CreateLogicalDevice();
         CreateSwapChain();
         CreateImageViews();
-        CreateGraphicsPipeline();
         CreateCommandPool();
         CreateCommandBuffer();
+        CreateGraphicsPipeline();
         CreateSyncObjects();
     }
 
@@ -432,7 +431,7 @@ namespace Engine {
 
     // Resource Creation
     Scope<IBuffer> VulkanGraphicsDevice::CreateBuffer(const BufferDesc& desc) {
-        return CreateScope<VulkanBuffer>(m_Device, m_PhysicalDevice, desc);
+        return CreateScope<VulkanBuffer>(this, desc);
     }
 
     Scope<ITexture> VulkanGraphicsDevice::CreateTexture(const TextureDesc& desc) {
@@ -449,6 +448,36 @@ namespace Engine {
 
     Scope<IPipelineState> VulkanGraphicsDevice::CreatePipelineState(const PipelineDesc& desc) {
         return CreateScope<VulkanPipelineState>(m_Device, m_SwapChainSurfaceFormat.format, desc);
+    }
+
+    void VulkanGraphicsDevice::StageBufferUploadData(VulkanBuffer* dstBuffer, const void* data, size_t size, size_t dstOffset) {
+        // Create a staging buffer
+        BufferDesc stagingDesc;
+        stagingDesc.size = size;
+        stagingDesc.type = BufferType::Vertex;
+        stagingDesc.isDynamic = true;
+        stagingDesc.data = data; 
+        VulkanBuffer stagingBuffer(this, stagingDesc);
+
+        // Setup the Command Buffer
+        vk::CommandBufferAllocateInfo allocInfo(*m_CommandPool, vk::CommandBufferLevel::ePrimary, 1);
+        vk::raii::CommandBuffers cmds(m_Device, allocInfo);
+        vk::raii::CommandBuffer& cmd = cmds[0];
+
+        cmd.begin({ vk::CommandBufferUsageFlagBits::eOneTimeSubmit });
+
+        // Buffer Copy Region
+        vk::BufferCopy copyRegion(0, dstOffset, size);
+        
+        cmd.copyBuffer(*stagingBuffer.m_Buffer, *dstBuffer->m_Buffer, copyRegion);
+        cmd.end();
+
+        // Submit and Wait
+        vk::SubmitInfo submit;
+        submit.commandBufferCount = 1;
+        submit.pCommandBuffers = &*cmd;
+        m_Queue.submit(submit);
+        m_Queue.waitIdle();
     }
 
     // Frame Management

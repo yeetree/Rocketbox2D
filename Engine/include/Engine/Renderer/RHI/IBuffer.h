@@ -20,6 +20,8 @@ namespace Engine {
     class IBuffer {
     public:
         virtual ~IBuffer() = default;
+
+        virtual void UpdateData(const void* data, size_t size, size_t offset) = 0;
     };
 
 } // namespace Engine
