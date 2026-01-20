@@ -6,9 +6,11 @@
 #include "Engine/Renderer/RHI/IShader.h"
 
 namespace Engine {
+    class VulkanGraphicsDevice;
+
     struct VulkanShader : public IShader {
     public:
-        VulkanShader(const vk::raii::Device& device, const ShaderDesc& desc);
+        VulkanShader(VulkanGraphicsDevice* graphicsDevice, const ShaderDesc& desc);
         ~VulkanShader() override;
 
         // Stage to name + module

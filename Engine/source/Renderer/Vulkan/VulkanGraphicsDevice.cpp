@@ -3,12 +3,18 @@
 #include "Engine/Core/FileSystem.h"
 #include "Renderer/Vulkan/VulkanPipelineState.h"
 #include "Renderer/Vulkan/VulkanShader.h"
+#include "Renderer/Vulkan/VulkanBuffer.h"
 #include <SDL3/SDL_vulkan.h>
 
 const std::vector<float> vertices = {
-    0.0f, -0.5f, 1.0f, 0.0f, 0.0f,
-    0.5f, 0.5f, 0.0f, 1.0f, 0.0f,
-    -0.5f, 0.5f, 0.0f, 0.0f, 1.0f
+    -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
+    0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
+    0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
+    -0.5f, 0.5f, 1.0f, 1.0f, 1.0f
+};
+
+const std::vector<uint16_t> indices = {
+    0, 1, 2, 2, 3, 0
 };
 
 namespace Engine {
@@ -312,6 +318,13 @@ namespace Engine {
         vbDesc.type = BufferType::Vertex;
 
         m_VertexBuffer = CreateBuffer(vbDesc);
+
+        BufferDesc ibDesc;
+        ibDesc.data = indices.data();
+        ibDesc.size = sizeof(indices[0]) * indices.size();
+        ibDesc.type = BufferType::Index;
+
+        m_IndexBuffer = CreateBuffer(ibDesc);
     }
 
     void VulkanGraphicsDevice::CreateCommandPool() {
@@ -439,7 +452,7 @@ namespace Engine {
     }
 
     Scope<IShader> VulkanGraphicsDevice::CreateShader(const ShaderDesc& desc) {
-        return CreateScope<VulkanShader>(m_Device, desc);
+        return CreateScope<VulkanShader>(this, desc);
     }
 
     Scope<IVertexArray> VulkanGraphicsDevice::CreateVertexArray(const VertexArrayDesc& desc) {
@@ -447,7 +460,7 @@ namespace Engine {
     }
 
     Scope<IPipelineState> VulkanGraphicsDevice::CreatePipelineState(const PipelineDesc& desc) {
-        return CreateScope<VulkanPipelineState>(m_Device, m_SwapChainSurfaceFormat.format, desc);
+        return CreateScope<VulkanPipelineState>(this, desc);
     }
 
     void VulkanGraphicsDevice::StageBufferUploadData(VulkanBuffer* dstBuffer, const void* data, size_t size, size_t dstOffset) {
@@ -530,14 +543,21 @@ namespace Engine {
 
         // <TEST>
         VulkanPipelineState* graphicsPipeline = static_cast<VulkanPipelineState*>(m_Pipeline.get());
-        VulkanBuffer* vertexBuffer = static_cast<VulkanBuffer*>(m_VertexBuffer.get());
         m_CommandBuffers[m_FrameIndex].bindPipeline(vk::PipelineBindPoint::eGraphics, *graphicsPipeline->m_Pipeline);
-		m_CommandBuffers[m_FrameIndex].bindVertexBuffers(0, *vertexBuffer->m_Buffer, {0});
+
+        VulkanBuffer* vertexBuffer = static_cast<VulkanBuffer*>(m_VertexBuffer.get());
+        m_CommandBuffers[m_FrameIndex].bindVertexBuffers(0, *vertexBuffer->m_Buffer, {0});
+	
+        VulkanBuffer* indexBuffer = static_cast<VulkanBuffer*>(m_IndexBuffer.get());
+        m_CommandBuffers[m_FrameIndex].bindIndexBuffer( *indexBuffer->m_Buffer, 0, vk::IndexType::eUint16 );
+
+
+        
         
         m_CommandBuffers[m_FrameIndex].setViewport(0, vk::Viewport(0.0f, 0.0f, static_cast<float>(m_SwapChainExtent.width), static_cast<float>(m_SwapChainExtent.height), 0.0f, 1.0f));
 		m_CommandBuffers[m_FrameIndex].setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), m_SwapChainExtent));
 		
-        m_CommandBuffers[m_FrameIndex].draw(3, 1, 0, 0);
+        m_CommandBuffers[m_FrameIndex].drawIndexed(indices.size(), 1, 0, 0, 0);
         // </TEST>
 
 

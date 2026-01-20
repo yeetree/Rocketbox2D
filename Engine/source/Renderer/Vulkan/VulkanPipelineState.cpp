@@ -1,10 +1,11 @@
 #include "Renderer/Vulkan/VulkanPipelineState.h"
 #include "Renderer/Vulkan/VulkanShader.h"
+#include "Renderer/Vulkan/VulkanGraphicsDevice.h"
 #include "Engine/Core/Log.h"
 
 namespace Engine
 {
-    VulkanPipelineState::VulkanPipelineState(const vk::raii::Device& device, const vk::Format& colorAttachmentFormat, const PipelineDesc& desc) {
+    VulkanPipelineState::VulkanPipelineState(VulkanGraphicsDevice* graphicsDevice, const PipelineDesc& desc) {
         // Get Vulkan Shader
         VulkanShader* shader = static_cast<VulkanShader*>(desc.shader);
 
@@ -79,7 +80,7 @@ namespace Engine
         // Create pipelime
         vk::PipelineRenderingCreateInfo pipelineRenderingCreateInfo{}; 
         pipelineRenderingCreateInfo.colorAttachmentCount = 1;
-        pipelineRenderingCreateInfo.pColorAttachmentFormats = &colorAttachmentFormat;
+        pipelineRenderingCreateInfo.pColorAttachmentFormats = &graphicsDevice->m_SwapChainSurfaceFormat.format;
         
         vk::GraphicsPipelineCreateInfo pipelineInfo{};
         pipelineInfo.pNext = &pipelineRenderingCreateInfo;
@@ -95,7 +96,7 @@ namespace Engine
         pipelineInfo.layout = shader->m_Layout;
         pipelineInfo.renderPass = nullptr;
 
-        m_Pipeline = device.createGraphicsPipeline(nullptr, pipelineInfo);
+        m_Pipeline = graphicsDevice->m_Device.createGraphicsPipeline(nullptr, pipelineInfo);
     }
 
     VulkanPipelineState::~VulkanPipelineState() {

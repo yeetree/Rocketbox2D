@@ -7,28 +7,11 @@
 #include "Engine/Renderer/RHI/IGraphicsDevice.h"
 #include "Engine/Renderer/RHI/IShader.h"
 #include "Engine/Renderer/RHI/IPipelineState.h"
-#include "Renderer/Vulkan/VulkanBuffer.h"
-
-constexpr std::array<char const*, 1> validationLayers = {
-    "VK_LAYER_KHRONOS_validation"
-};
-
-constexpr std::array<const char*, 4> deviceExtensions = {
-    vk::KHRSwapchainExtensionName,
-    vk::KHRSpirv14ExtensionName,
-    vk::KHRSynchronization2ExtensionName,
-    vk::KHRCreateRenderpass2ExtensionName
-};
-
-constexpr int MAX_FRAMES_IN_FLIGHT = 2;
-
-#ifdef NDEBUG
-constexpr bool enableValidationLayers = false;
-#else
-constexpr bool enableValidationLayers = true;
-#endif
 
 namespace Engine {
+    // Fwd:
+    class VulkanBuffer;
+
     // Vulkan Implementation of IGraphicsDevice
     class VulkanGraphicsDevice : public IGraphicsDevice {
     public:
@@ -56,9 +39,6 @@ namespace Engine {
         // Draw call
         void SubmitDraw(uint32_t indexCount) override;
 
-        // Utility
-        //ITexture* GetBackBuffer() override { return m_BackBuffer.get(); }
-
         // Resize
         void Resize(int width, int height) override;
 
@@ -66,6 +46,8 @@ namespace Engine {
 
         // Helper function for VulkanBuffer
         void StageBufferUploadData(VulkanBuffer* dstBuffer, const void* data, size_t size, size_t dstOffset);
+
+        const int MAX_FRAMES_IN_FLIGHT = 2;
 
         // Public So Vulkan* classes can access them
         vk::raii::Context  m_Context;
@@ -88,6 +70,7 @@ namespace Engine {
         Scope<IShader> m_Shader;
         Scope<IPipelineState> m_Pipeline;
         Scope<IBuffer> m_VertexBuffer;
+        Scope<IBuffer> m_IndexBuffer;
         
         uint32_t m_CurrentFrame = 0;
         uint32_t m_FrameIndex = 0;
@@ -134,7 +117,24 @@ namespace Engine {
             vk::PipelineStageFlags2 src_stage_mask,
             vk::PipelineStageFlags2 dst_stage_mask);
 
-        // Scope<ITexture> m_BackBuffer;
+        // Vulkan
+
+        #ifdef NDEBUG
+        const bool enableValidationLayers = false;
+        #else
+        const bool enableValidationLayers = true;
+        #endif
+
+        const std::array<char const*, 1> validationLayers = {
+            "VK_LAYER_KHRONOS_validation"
+        };
+
+        const std::array<const char*, 4> deviceExtensions = {
+            vk::KHRSwapchainExtensionName,
+            vk::KHRSpirv14ExtensionName,
+            vk::KHRSynchronization2ExtensionName,
+            vk::KHRCreateRenderpass2ExtensionName
+        };
     };
 
 } // namespace Engine

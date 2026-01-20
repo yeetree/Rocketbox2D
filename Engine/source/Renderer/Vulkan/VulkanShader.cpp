@@ -1,8 +1,9 @@
 #include "Renderer/Vulkan/VulkanShader.h"
+#include "Renderer/Vulkan/VulkanGraphicsDevice.h"
 
 namespace Engine
 {
-    VulkanShader::VulkanShader(const vk::raii::Device& device, const ShaderDesc& desc) {
+    VulkanShader::VulkanShader(VulkanGraphicsDevice* graphicsDevice, const ShaderDesc& desc) {
         
         // Key by the bytecode data to find duplicates within this Desc
         std::map<std::vector<char>, std::shared_ptr<vk::raii::ShaderModule>> uniqueModules;
@@ -14,7 +15,7 @@ namespace Engine
             std::shared_ptr<vk::raii::ShaderModule> modulePtr;
 
             if (it == uniqueModules.end()) {
-                modulePtr = std::make_shared<vk::raii::ShaderModule>(CreateShaderModule(device, blob.byteCode));
+                modulePtr = std::make_shared<vk::raii::ShaderModule>(CreateShaderModule(graphicsDevice->m_Device, blob.byteCode));
                 uniqueModules[blob.byteCode] = modulePtr;
             } else {
                 modulePtr = it->second;
@@ -26,7 +27,7 @@ namespace Engine
 
         // Create pipeline layout
 		vk::PipelineLayoutCreateInfo pipelineLayoutInfo;
-		m_Layout = vk::raii::PipelineLayout(device, pipelineLayoutInfo);
+		m_Layout = vk::raii::PipelineLayout(graphicsDevice->m_Device, pipelineLayoutInfo);
     }
 
     VulkanShader::~VulkanShader() {
