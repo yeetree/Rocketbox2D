@@ -5,7 +5,6 @@ project(Rocketbox2D_Workspace VERSION 1.0)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/CMake")
 
 # Vulkan
@@ -16,9 +15,6 @@ find_package (VulkanHpp REQUIRED)
 
 # SlangC
 find_program(SLANGC_EXECUTABLE slangc REQUIRED)
-
-# OpenGL
-# find_package(OpenGL REQUIRED)
 
 # GLM
 add_subdirectory(vendor/glm)
@@ -38,14 +34,5 @@ add_subdirectory(vendor/spdlog)
 
 # Engine library
 add_subdirectory(Engine)
-
-# Rocketbox2D
-#add_subdirectory(Rocketbox2D)
-
-option(RB2D_BUILD_ENGINE_TEST_APP "Build the engine test app" ON)
-
-if(RB2D_BUILD_ENGINE_TEST_APP)
-#    add_subdirectory(EngineTestApp)
-endif()
 
 add_subdirectory(VKTestApp)

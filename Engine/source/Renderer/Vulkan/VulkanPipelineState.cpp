@@ -77,6 +77,25 @@ namespace Engine
         dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
         dynamicState.pDynamicStates = dynamicStates.data();
 
+        // !!!!!!!!!!!!!!!!
+        // <TEMP>
+
+        // Fuck it... I'll implement this shit when I actually need it.
+
+        // Uniform Buffer Object Descriptor
+        //vk::DescriptorSetLayoutBinding uboLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex, nullptr);
+        //vk::DescriptorSetLayoutCreateInfo layoutInfo;
+        //layoutInfo.bindingCount = 1;
+        //layoutInfo.pBindings = &uboLayoutBinding;
+        //vk::raii::DescriptorSetLayout descriptorSetLayout = vk::raii::DescriptorSetLayout(graphicsDevice->m_Device, layoutInfo);
+        //vk::PipelineLayoutCreateInfo pipelineLayoutInfo;
+        //pipelineLayoutInfo.setLayoutCount = 1;
+        //pipelineLayoutInfo.pSetLayouts = &*descriptorSetLayout;
+        //pipelineLayoutInfo.pushConstantRangeCount = 0;
+
+        // </TEMP>
+        // !!!!!!!!!!!!!!!!!
+
         // Create pipelime
         vk::PipelineRenderingCreateInfo pipelineRenderingCreateInfo{}; 
         pipelineRenderingCreateInfo.colorAttachmentCount = 1;
