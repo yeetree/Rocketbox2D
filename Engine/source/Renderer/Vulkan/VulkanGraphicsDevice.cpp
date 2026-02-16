@@ -6,17 +6,6 @@
 #include "Renderer/Vulkan/VulkanBuffer.h"
 #include <SDL3/SDL_vulkan.h>
 
-const std::vector<float> vertices = {
-    -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
-    0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
-    0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
-    -0.5f, 0.5f, 1.0f, 1.0f, 1.0f
-};
-
-const std::vector<uint16_t> indices = {
-    0, 1, 2, 2, 3, 0
-};
-
 namespace Engine {
     
     VKAPI_ATTR vk::Bool32 VKAPI_CALL VulkanGraphicsDevice::DebugCallback(vk::DebugUtilsMessageSeverityFlagBitsEXT severity, vk::DebugUtilsMessageTypeFlagsEXT type, const vk::DebugUtilsMessengerCallbackDataEXT* pCallbackData, void*) {
@@ -47,7 +36,6 @@ namespace Engine {
         CreateImageViews();
         CreateCommandPool();
         CreateCommandBuffer();
-        CreateGraphicsPipeline();
         CreateSyncObjects();
     }
 
@@ -294,39 +282,6 @@ namespace Engine {
 		}
     }
 
-    void VulkanGraphicsDevice::CreateGraphicsPipeline() {
-        LOG_CORE_INFO("Vulkan: Creating Graphics Pipeline...");
-        
-        std::vector<char> shaderCode = Engine::FileSystem::ReadFile(FileSystem::GetAbsolutePath("./shaders/slang.spv"));
-        ShaderDesc shaderDesc;
-        shaderDesc.stages[ShaderStage::Vertex].byteCode = shaderCode;
-        shaderDesc.stages[ShaderStage::Vertex].entryPoint = "vertMain";
-        shaderDesc.stages[ShaderStage::Fragment].byteCode = shaderCode;
-        shaderDesc.stages[ShaderStage::Fragment].entryPoint = "fragMain";
-        
-        m_Shader = CreateShader(shaderDesc);
-
-        PipelineDesc pipeDesc;
-        pipeDesc.shader = m_Shader.get();
-        pipeDesc.layout = VertexLayout{VertexElement(VertexElementType::Vec2, "inPosition"), VertexElement(VertexElementType::Vec3, "inColor")};
-
-        m_Pipeline = CreatePipelineState(pipeDesc);
-
-        BufferDesc vbDesc;
-        vbDesc.data = vertices.data();
-        vbDesc.size = sizeof(vertices[0]) * vertices.size();
-        vbDesc.type = BufferType::Vertex;
-
-        m_VertexBuffer = CreateBuffer(vbDesc);
-
-        BufferDesc ibDesc;
-        ibDesc.data = indices.data();
-        ibDesc.size = sizeof(indices[0]) * indices.size();
-        ibDesc.type = BufferType::Index;
-
-        m_IndexBuffer = CreateBuffer(ibDesc);
-    }
-
     void VulkanGraphicsDevice::CreateCommandPool() {
         LOG_CORE_INFO("Vulkan: Creating Command Pool...");
 		vk::CommandPoolCreateInfo poolInfo;
@@ -543,12 +498,6 @@ namespace Engine {
 
         m_CommandBuffers[m_FrameIndex].setViewport(0, vk::Viewport(0.0f, 0.0f, static_cast<float>(m_SwapChainExtent.width), static_cast<float>(m_SwapChainExtent.height), 0.0f, 1.0f));
 		m_CommandBuffers[m_FrameIndex].setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), m_SwapChainExtent));
-		
-
-        // <TEST>
-        // Submit draw call for our shit
-        SubmitDraw(*m_VertexBuffer, *m_IndexBuffer, *m_Pipeline, indices.size());
-        // </TEST>
     }
 
     void VulkanGraphicsDevice::EndFrame() {

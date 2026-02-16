@@ -65,12 +65,6 @@ namespace Engine {
         std::vector<vk::raii::ImageView> m_SwapChainImageViews;
         vk::raii::CommandPool m_CommandPool = nullptr;  
         std::vector<vk::raii::CommandBuffer> m_CommandBuffers;
-
-        // Temp drawing
-        Scope<IShader> m_Shader;
-        Scope<IPipelineState> m_Pipeline;
-        Scope<IBuffer> m_VertexBuffer;
-        Scope<IBuffer> m_IndexBuffer;
         
         uint32_t m_CurrentFrame = 0;
         uint32_t m_FrameIndex = 0;
@@ -95,9 +89,6 @@ namespace Engine {
         void CreateLogicalDevice();
         void CreateSwapChain();
         void CreateImageViews();
-        // <TEST>
-        void CreateGraphicsPipeline();
-        // </TEST>
         void CreateCommandPool();
         void CreateCommandBuffer();
         void CreateSyncObjects();
