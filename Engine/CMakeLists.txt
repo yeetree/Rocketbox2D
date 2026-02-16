@@ -14,6 +14,10 @@ set(ENGINE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/RHI/VertexLayout.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/Vulkan/VulkanGraphicsDevice.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/Vulkan/VulkanContext.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/Vulkan/VulkanDevice.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/Vulkan/VulkanSwapchain.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/Vulkan/VulkanFrame.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/Vulkan/VulkanShader.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/Vulkan/VulkanPipelineState.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/Vulkan/VulkanBuffer.cpp

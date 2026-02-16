@@ -18,11 +18,11 @@ namespace Engine
             bufferInfo.usage |= vk::BufferUsageFlagBits::eTransferDst;
         }
         bufferInfo.sharingMode = vk::SharingMode::eExclusive;
-        m_Buffer = vk::raii::Buffer(m_GraphicsDevice->m_Device, bufferInfo);
+        m_Buffer = vk::raii::Buffer(m_GraphicsDevice->m_Device->GetDevice(), bufferInfo);
 
         // Get memory requirements and properties
         vk::MemoryRequirements memRequirements = m_Buffer.getMemoryRequirements();
-        vk::PhysicalDeviceMemoryProperties memProperties = m_GraphicsDevice->m_PhysicalDevice.getMemoryProperties();
+        vk::PhysicalDeviceMemoryProperties memProperties = m_GraphicsDevice->m_Context->GetPhysicalDevice().getMemoryProperties();
 
         // Allocate memory for buffer
         vk::MemoryAllocateInfo memoryAllocateInfo;
@@ -35,7 +35,7 @@ namespace Engine
             : vk::MemoryPropertyFlagBits::eDeviceLocal;
 
         memoryAllocateInfo.memoryTypeIndex = FindMemoryType(memRequirements.memoryTypeBits, memProperties, memoryPropertyBits);
-        m_BufferMemory = vk::raii::DeviceMemory( m_GraphicsDevice->m_Device, memoryAllocateInfo );
+        m_BufferMemory = vk::raii::DeviceMemory( m_GraphicsDevice->m_Device->GetDevice(), memoryAllocateInfo );
 
         // Bind memory to buffer
         m_Buffer.bindMemory( *m_BufferMemory, 0 );

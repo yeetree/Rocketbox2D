@@ -15,7 +15,7 @@ namespace Engine
             std::shared_ptr<vk::raii::ShaderModule> modulePtr;
 
             if (it == uniqueModules.end()) {
-                modulePtr = std::make_shared<vk::raii::ShaderModule>(CreateShaderModule(graphicsDevice->m_Device, blob.byteCode));
+                modulePtr = std::make_shared<vk::raii::ShaderModule>(CreateShaderModule(graphicsDevice->m_Device->GetDevice(), blob.byteCode));
                 uniqueModules[blob.byteCode] = modulePtr;
             } else {
                 modulePtr = it->second;
@@ -27,7 +27,7 @@ namespace Engine
 
         // Create pipeline layout
 		vk::PipelineLayoutCreateInfo pipelineLayoutInfo;
-		m_Layout = vk::raii::PipelineLayout(graphicsDevice->m_Device, pipelineLayoutInfo);
+		m_Layout = vk::raii::PipelineLayout(graphicsDevice->m_Device->GetDevice(), pipelineLayoutInfo);
     }
 
     VulkanShader::~VulkanShader() {

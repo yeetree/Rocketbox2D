@@ -97,9 +97,10 @@ namespace Engine
         // !!!!!!!!!!!!!!!!!
 
         // Create pipelime
+        vk::Format colorFormat = graphicsDevice->m_Swapchain->GetSurfaceFormat().format;
         vk::PipelineRenderingCreateInfo pipelineRenderingCreateInfo{}; 
         pipelineRenderingCreateInfo.colorAttachmentCount = 1;
-        pipelineRenderingCreateInfo.pColorAttachmentFormats = &graphicsDevice->m_SwapChainSurfaceFormat.format;
+        pipelineRenderingCreateInfo.pColorAttachmentFormats = &colorFormat;
         
         vk::GraphicsPipelineCreateInfo pipelineInfo{};
         pipelineInfo.pNext = &pipelineRenderingCreateInfo;
@@ -115,7 +116,7 @@ namespace Engine
         pipelineInfo.layout = shader->m_Layout;
         pipelineInfo.renderPass = nullptr;
 
-        m_Pipeline = graphicsDevice->m_Device.createGraphicsPipeline(nullptr, pipelineInfo);
+        m_Pipeline = graphicsDevice->m_Device->GetDevice().createGraphicsPipeline(nullptr, pipelineInfo);
     }
 
     VulkanPipelineState::~VulkanPipelineState() {
