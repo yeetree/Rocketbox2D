@@ -42,7 +42,7 @@ namespace Engine {
         virtual void SetClearColor(Vec4 color) = 0;
         
         // Draw call
-        virtual void SubmitDraw(uint32_t indexCount) = 0;
+        virtual void SubmitDraw(IBuffer& vbo, IBuffer& ebo, IPipelineState& pipeline, uint32_t indexCount) = 0;
 
         // Get back buffer
         //virtual ITexture* GetBackBuffer() = 0;

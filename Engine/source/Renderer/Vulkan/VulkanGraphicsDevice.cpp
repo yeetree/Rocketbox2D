@@ -541,28 +541,19 @@ namespace Engine {
         // Begin rendering
         m_CommandBuffers[m_FrameIndex].beginRendering(renderingInfo);
 
-        // <TEST>
-        VulkanPipelineState* graphicsPipeline = static_cast<VulkanPipelineState*>(m_Pipeline.get());
-        m_CommandBuffers[m_FrameIndex].bindPipeline(vk::PipelineBindPoint::eGraphics, *graphicsPipeline->m_Pipeline);
-
-        VulkanBuffer* vertexBuffer = static_cast<VulkanBuffer*>(m_VertexBuffer.get());
-        m_CommandBuffers[m_FrameIndex].bindVertexBuffers(0, *vertexBuffer->m_Buffer, {0});
-	
-        VulkanBuffer* indexBuffer = static_cast<VulkanBuffer*>(m_IndexBuffer.get());
-        m_CommandBuffers[m_FrameIndex].bindIndexBuffer( *indexBuffer->m_Buffer, 0, vk::IndexType::eUint16 );
-
-
-        
-        
         m_CommandBuffers[m_FrameIndex].setViewport(0, vk::Viewport(0.0f, 0.0f, static_cast<float>(m_SwapChainExtent.width), static_cast<float>(m_SwapChainExtent.height), 0.0f, 1.0f));
 		m_CommandBuffers[m_FrameIndex].setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), m_SwapChainExtent));
 		
-        m_CommandBuffers[m_FrameIndex].drawIndexed(indices.size(), 1, 0, 0, 0);
+
+        // <TEST>
+        // Submit draw call for our shit
+        SubmitDraw(*m_VertexBuffer, *m_IndexBuffer, *m_Pipeline, indices.size());
         // </TEST>
+    }
 
-
-		m_CommandBuffers[m_FrameIndex].endRendering();
-
+    void VulkanGraphicsDevice::EndFrame() {
+        // End Rendering
+        m_CommandBuffers[m_FrameIndex].endRendering();
 
 		// After rendering, transition the swapchain image to PRESENT_SRC
 		TransitionImageLayout(
@@ -575,9 +566,9 @@ namespace Engine {
 		    vk::PipelineStageFlagBits2::eBottomOfPipe                  // dstStage
 		);
 		m_CommandBuffers[m_FrameIndex].end();
-    }
 
-    void VulkanGraphicsDevice::EndFrame() {
+        // Submit
+
         vk::PipelineStageFlags waitDestinationStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
     
         vk::SubmitInfo submitInfo;
@@ -595,7 +586,7 @@ namespace Engine {
     }
 
     void VulkanGraphicsDevice::Present() {
-       vk::PresentInfoKHR presentInfoKHR;
+        vk::PresentInfoKHR presentInfoKHR;
         presentInfoKHR.waitSemaphoreCount = 1;
         // Wait for rendering to finish
         presentInfoKHR.pWaitSemaphores = &*m_RenderFinishedSemaphores[m_ImageIndex]; 
@@ -624,8 +615,17 @@ namespace Engine {
     }
 
     // Draw call
-    void VulkanGraphicsDevice::SubmitDraw(uint32_t indexCount) {
+    void VulkanGraphicsDevice::SubmitDraw(IBuffer& vbo, IBuffer& ebo, IPipelineState& pipeline, uint32_t indexCount) {
+        VulkanPipelineState* graphicsPipeline = static_cast<VulkanPipelineState*>(&pipeline);
+        m_CommandBuffers[m_FrameIndex].bindPipeline(vk::PipelineBindPoint::eGraphics, *graphicsPipeline->m_Pipeline);
+
+        VulkanBuffer* vertexBuffer = static_cast<VulkanBuffer*>(&vbo);
+        m_CommandBuffers[m_FrameIndex].bindVertexBuffers(0, *vertexBuffer->m_Buffer, {0});
+	
+        VulkanBuffer* indexBuffer = static_cast<VulkanBuffer*>(&ebo);
+        m_CommandBuffers[m_FrameIndex].bindIndexBuffer( *indexBuffer->m_Buffer, 0, vk::IndexType::eUint16 );
         
+        m_CommandBuffers[m_FrameIndex].drawIndexed(indexCount, 1, 0, 0, 0);
     }
 
     // Resize

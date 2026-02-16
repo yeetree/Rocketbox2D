@@ -37,7 +37,7 @@ namespace Engine {
         void SetClearColor(Vec4 color) override;
 
         // Draw call
-        void SubmitDraw(uint32_t indexCount) override;
+        void SubmitDraw(IBuffer& vbo, IBuffer& ebo, IPipelineState& pipeline, uint32_t indexCount) override;
 
         // Resize
         void Resize(int width, int height) override;

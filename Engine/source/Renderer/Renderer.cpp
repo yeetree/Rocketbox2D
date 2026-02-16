@@ -221,7 +221,7 @@ namespace Engine
             //cmd.shader->SetMat4("u_Transform", cmd.transform);
 
             // Draw
-            m_GraphicsDevice->SubmitDraw(cmd.mesh->GetIndexCount());
+            //m_GraphicsDevice->SubmitDraw(cmd.mesh->GetIndexCount());
         }
         m_CommandQueue.clear();
     }
