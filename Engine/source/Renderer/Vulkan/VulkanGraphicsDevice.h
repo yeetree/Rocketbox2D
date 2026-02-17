@@ -64,6 +64,8 @@ namespace Engine {
         uint32_t m_ImageIndex;
 
     private:
+        // Gives GraphicsDevice chance to finish work before app can destroy
+        void OnDestroy() override;
 
         // Utility
         [[nodiscard]] vk::raii::ShaderModule CreateShaderModule(const std::vector<char>& code) const;

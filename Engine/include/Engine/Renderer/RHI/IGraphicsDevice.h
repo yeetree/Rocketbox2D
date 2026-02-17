@@ -52,6 +52,10 @@ namespace Engine {
 
         // Resize
         virtual void Resize(int width, int height) = 0;
+    private:
+        friend class Application;
+        // Gives GraphicsDevice chance to finish current work before app can destroy
+        virtual void OnDestroy() = 0;
     };
 } // namespace Engine
 

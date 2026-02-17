@@ -25,9 +25,9 @@ struct PushData {
 
 class EngineTestApp : public Application {
 public:
-    Ref<IShader> m_Shader;
     Ref<IBuffer> m_VertexBuffer;
     Ref<IBuffer> m_IndexBuffer;
+    Ref<IShader> m_Shader;
     Ref<IPipelineState> m_Pipeline;
 
     PushData data;
@@ -78,7 +78,14 @@ public:
     }
 
     void OnDestroy() override {
-
+        // Manually destroy our objects because this class technically outlives the rest
+        // of the engine and vulkan is NOT happy with us.
+        LOG_TRACE("Client destroying...");
+        m_Pipeline.reset();
+        m_Shader.reset();
+        m_VertexBuffer.reset();
+        m_IndexBuffer.reset();
+        LOG_TRACE("Client done destroying.");
     }
 };
 

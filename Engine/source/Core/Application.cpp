@@ -125,6 +125,7 @@ namespace Engine {
             m_TicksPrevious = ticksNow;
         }
         LOG_CORE_INFO("Shutting down...");
+        m_GraphicsDevice->OnDestroy();
         OnDestroy();
     }
 

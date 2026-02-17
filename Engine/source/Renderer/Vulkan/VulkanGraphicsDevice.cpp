@@ -282,4 +282,9 @@ namespace Engine {
         m_Swapchain->Resize(*m_Context, *m_Device, width, height);
     }
 
+    // Gives GraphicsDevice chance to finish work before app can destroy
+    void VulkanGraphicsDevice::OnDestroy() {
+        m_Device->GetQueue().waitIdle();
+    }
+
 } // namespace Engine
