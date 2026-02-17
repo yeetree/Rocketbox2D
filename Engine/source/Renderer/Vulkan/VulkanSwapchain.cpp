@@ -8,11 +8,14 @@
 VulkanSwapchain::VulkanSwapchain(VulkanContext& context, VulkanDevice& device) {
     CreateSwapChain(context, device);
     CreateImageViews(device);
+    CreateSyncObjects(device);
 
     // Create frames
-    LOG_CORE_INFO("Vulkan: Creating frames...");
-    for(int i = 0; i < m_Frames.size(); i++) {
-        m_Frames[i] = Engine::CreateScope<VulkanFrame>(device);
+    m_Frames.clear();
+    LOG_CORE_INFO("Vulkan: Creating {0} frames...", k_MaxFramesInFlight);
+    
+    for(uint32_t i = 0; i < k_MaxFramesInFlight; i++) {
+        m_Frames.emplace_back(Engine::CreateScope<VulkanFrame>(device));
     }
 }
 
@@ -67,6 +70,20 @@ void VulkanSwapchain::CreateImageViews(VulkanDevice& device) {
     }
 }
 
+void VulkanSwapchain::CreateSyncObjects(VulkanDevice& device) {
+    m_ImageAvailableSemaphores.clear();
+    m_RenderFinishedSemaphores.clear();
+    m_ImageAvailableSemaphores.clear();
+    m_RenderFinishedSemaphores.clear();
+    
+    uint32_t imageCount = static_cast<uint32_t>(m_SwapchainImages.size());
+    
+    for(uint32_t i = 0; i < imageCount; i++) {
+        m_ImageAvailableSemaphores.emplace_back(device.GetDevice(), vk::SemaphoreCreateInfo());
+        m_RenderFinishedSemaphores.emplace_back(device.GetDevice(), vk::SemaphoreCreateInfo());
+    }
+}
+
 vk::SurfaceFormatKHR VulkanSwapchain::ChooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats) {
     for (const auto& availableFormat : availableFormats) {
         if (availableFormat.format == vk::Format::eB8G8R8A8Srgb && availableFormat.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) {
@@ -104,10 +121,6 @@ uint32_t VulkanSwapchain::ChooseSwapMinImageCount(vk::SurfaceCapabilitiesKHR con
         minImageCount = surfaceCapabilities.maxImageCount;
     }
     return minImageCount;
-}
-
-void VulkanSwapchain::AdvanceFrame() {
-    m_CurrentFrameIndex = (m_CurrentFrameIndex + 1) % m_Frames.size();
 }
 
 std::pair<vk::Result, uint32_t> VulkanSwapchain::AcquireNextImage(vk::raii::Semaphore& waitSem) {
@@ -149,16 +162,14 @@ void VulkanSwapchain::Resize(VulkanContext& context, VulkanDevice& device, int w
     for(int i = 0; i < m_Frames.size(); i++) {
         m_Frames[i]->CreateSyncObjects(device);
     }
-
-    // Reset frame index
-    m_CurrentFrameIndex = 0;
+    CreateSyncObjects(device);
 
     LOG_CORE_INFO("Vulkan: Swapchain resized to {0} x {1} with {2} images", 
         m_SwapchainExtent.width, m_SwapchainExtent.height, m_SwapchainImages.size());
 }
 
-VulkanFrame& VulkanSwapchain::GetCurrentFrame() {
-    return *m_Frames[m_CurrentFrameIndex];
+VulkanFrame& VulkanSwapchain::GetFrame(uint32_t index) {
+    return *m_Frames[index];
 }
 
 vk::Extent2D VulkanSwapchain::GetExtent() const {
@@ -179,4 +190,12 @@ vk::raii::SwapchainKHR& VulkanSwapchain::GetSwapchain() {
 
 vk::SurfaceFormatKHR VulkanSwapchain::GetSurfaceFormat() {
     return m_SwapchainSurfaceFormat;
+}
+
+vk::raii::Semaphore& VulkanSwapchain::GetImageAvailableSemaphore(uint32_t index) {
+    return m_ImageAvailableSemaphores[index];
+}
+
+vk::raii::Semaphore& VulkanSwapchain::GetRenderFinishedSemaphore(uint32_t index) {
+    return m_RenderFinishedSemaphores[index];
 }

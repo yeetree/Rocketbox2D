@@ -21,6 +21,6 @@ const std::array<const char*, 4> k_DeviceExtensions = {
     vk::KHRCreateRenderpass2ExtensionName
 };
 
-const int k_MaxFramesInFlight = 2;
+const int k_MaxFramesInFlight = 3;
 
 #endif // RENDERER_VULKAN_VULKANCONSTANTS

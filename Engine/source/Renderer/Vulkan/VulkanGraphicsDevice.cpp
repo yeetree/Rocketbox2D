@@ -8,7 +8,7 @@
 
 namespace Engine {
 
-    VulkanGraphicsDevice::VulkanGraphicsDevice(SDL_Window* window) {
+    VulkanGraphicsDevice::VulkanGraphicsDevice(SDL_Window* window) : m_FrameIndex(0), m_ImageIndex(0) {
         LOG_CORE_INFO("Vulkan: Creating Vulkan graphics device...");
         
         m_Context = CreateScope<VulkanContext>(window);
@@ -17,7 +17,12 @@ namespace Engine {
     }
 
     VulkanGraphicsDevice::~VulkanGraphicsDevice() {
-        // Nothing
+        // Destructor destroys m_Swapchain before m_Device, so we wait
+        // for GPU to be done before proceeding with destruction.
+        m_Device->GetQueue().waitIdle();
+
+        // Actually we kill m_Swapchain NOW
+        m_Swapchain.reset();
     };
 
     // Utility
@@ -114,17 +119,31 @@ namespace Engine {
     }
 
     // Frame Management
-    void VulkanGraphicsDevice::BeginFrame() {
-        auto& frame = m_Swapchain->GetCurrentFrame();
-        auto& device = m_Device->GetDevice();
+    void VulkanGraphicsDevice::BeginFrame() {    
+        // Get frame
+        auto& frame = m_Swapchain->GetFrame(m_FrameIndex);
+        auto& device = m_Device->GetDevice(); 
 
-        // Wait for fences
+        // Wait to finish
         (void)device.waitForFences({*frame.GetInFlightFence()}, vk::True, UINT64_MAX);
-        device.resetFences({*frame.GetInFlightFence()});
 
-        // Get image
-        auto [result, imageIndex] = m_Swapchain->AcquireNextImage(frame.GetImageAvailableSemaphore());
-        m_ImageIndex = imageIndex;
+        // Get semaphore
+        auto& imageAvailableSem = m_Swapchain->GetImageAvailableSemaphore(m_FrameIndex);
+
+        // Get image index to draw on
+        auto [result, imageIndex] = m_Swapchain->AcquireNextImage(imageAvailableSem);
+
+        // Resize logic
+        if (result == vk::Result::eErrorOutOfDateKHR) {
+            int w, h;
+            SDL_GetWindowSize(m_Context->GetWindow(), &w, &h);
+            Resize(w, h);
+            return;
+        }
+
+        // Reset fence
+        device.resetFences({*frame.GetInFlightFence()});
+        m_ImageIndex = imageIndex; // Destination image
 
         // Start recording commands
         auto& cmd = frame.GetCommandBuffer();
@@ -167,7 +186,7 @@ namespace Engine {
     }
 
     void VulkanGraphicsDevice::EndFrame() {
-        auto& frame = m_Swapchain->GetCurrentFrame();
+        auto& frame = m_Swapchain->GetFrame(m_FrameIndex);
         auto& cmd = frame.GetCommandBuffer();
 
         cmd.endRendering();
@@ -177,6 +196,7 @@ namespace Engine {
             vk::AccessFlagBits2::eColorAttachmentWrite, {},
             vk::PipelineStageFlagBits2::eColorAttachmentOutput, vk::PipelineStageFlagBits2::eBottomOfPipe
         );
+
         cmd.end();
 
         vk::PipelineStageFlags waitStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
@@ -184,30 +204,36 @@ namespace Engine {
         // Use the semaphores from the Frame object
         vk::SubmitInfo submitInfo;
         submitInfo.waitSemaphoreCount = 1;
-        submitInfo.pWaitSemaphores = &*frame.GetImageAvailableSemaphore(); 
+        submitInfo.pWaitSemaphores = &*m_Swapchain->GetImageAvailableSemaphore(m_FrameIndex);
         submitInfo.pWaitDstStageMask = &waitStage;
         submitInfo.commandBufferCount = 1;
         submitInfo.pCommandBuffers = &*cmd;
         submitInfo.signalSemaphoreCount = 1;
-        submitInfo.pSignalSemaphores = &*frame.GetRenderFinishedSemaphore(); 
+        submitInfo.pSignalSemaphores = &*m_Swapchain->GetRenderFinishedSemaphore(m_ImageIndex);
 
         // Submit to the queue (which should be a getter in m_Device)
         m_Device->GetQueue().submit(submitInfo, *frame.GetInFlightFence());
     }
 
     void VulkanGraphicsDevice::Present() {
-        auto& frame = m_Swapchain->GetCurrentFrame();
+        auto& frame = m_Swapchain->GetFrame(m_FrameIndex);
 
         vk::PresentInfoKHR presentInfo;
         presentInfo.waitSemaphoreCount = 1;
-        presentInfo.pWaitSemaphores = &*frame.GetRenderFinishedSemaphore(); 
+        presentInfo.pWaitSemaphores = &*m_Swapchain->GetRenderFinishedSemaphore(m_ImageIndex);
         presentInfo.swapchainCount = 1;
         presentInfo.pSwapchains = &*m_Swapchain->GetSwapchain();
         presentInfo.pImageIndices = &m_ImageIndex;
 
-        (void)m_Device->GetQueue().presentKHR(presentInfo);
+        try {
+            (void)m_Device->GetQueue().presentKHR(presentInfo);
+        } catch (const vk::OutOfDateKHRError&) {
+            int w, h;
+            SDL_GetWindowSize(m_Context->GetWindow(), &w, &h);
+            Resize(w, h);
+        }
 
-        m_Swapchain->AdvanceFrame();
+        m_FrameIndex = (m_FrameIndex + 1) % k_MaxFramesInFlight;
     }
 
     void VulkanGraphicsDevice::SetClearColor(Vec4 color) {
@@ -216,7 +242,7 @@ namespace Engine {
 
     // Draw call
     void VulkanGraphicsDevice::SubmitDraw(IBuffer& vbo, IBuffer& ebo, IPipelineState& pipeline, uint32_t indexCount) {
-        auto& frame = m_Swapchain->GetCurrentFrame();
+        auto& frame = m_Swapchain->GetFrame(m_FrameIndex);
         auto& cmd = frame.GetCommandBuffer();
         
         VulkanPipelineState* graphicsPipeline = static_cast<VulkanPipelineState*>(&pipeline);

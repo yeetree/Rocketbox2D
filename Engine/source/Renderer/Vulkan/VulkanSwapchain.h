@@ -22,26 +22,28 @@ public:
     VulkanSwapchain& operator=(const VulkanSwapchain&) = delete;
 
     // Swapchain logic
-    void AdvanceFrame();
     std::pair<vk::Result, uint32_t> AcquireNextImage(vk::raii::Semaphore& waitSem);
 
     // Getters
-    VulkanFrame& GetCurrentFrame();
+    VulkanFrame& GetFrame(uint32_t index);
     vk::Extent2D GetExtent() const;
     vk::Image GetImage(uint32_t index) const;
     vk::raii::ImageView& GetImageView(uint32_t index);
     vk::raii::SwapchainKHR& GetSwapchain();
     vk::SurfaceFormatKHR GetSurfaceFormat();
+    vk::raii::Semaphore& GetImageAvailableSemaphore(uint32_t index);
+    vk::raii::Semaphore& GetRenderFinishedSemaphore(uint32_t index);
 
     // Public member function to resize swapchain
     void Resize(VulkanContext& context, VulkanDevice& device, int width, int height);
 
 private:
     // Members
-    std::array<Engine::Scope<VulkanFrame>, k_MaxFramesInFlight> m_Frames; // Managed array of frames
-    uint32_t m_CurrentFrameIndex = 0;
+    std::vector<Engine::Scope<VulkanFrame>> m_Frames; // Managed array of frames
 
     // Vulkan members
+    std::vector<vk::raii::Semaphore> m_ImageAvailableSemaphores;
+    std::vector<vk::raii::Semaphore> m_RenderFinishedSemaphores;
     vk::raii::SwapchainKHR m_Swapchain = nullptr;
     std::vector<vk::Image> m_SwapchainImages;
     vk::SurfaceFormatKHR m_SwapchainSurfaceFormat;
@@ -51,6 +53,7 @@ private:
     // Private helper functions
     void CreateSwapChain(VulkanContext& context, VulkanDevice& device);
     void CreateImageViews(VulkanDevice& device);
+    void CreateSyncObjects(VulkanDevice& device);
 
     // Static private utility functions
     static vk::SurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats);

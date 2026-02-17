@@ -22,17 +22,7 @@ void VulkanFrame::CreateCommandBuffer(VulkanDevice& device) {
 }
 
 void VulkanFrame::CreateSyncObjects(VulkanDevice& device) {
-    m_RenderFinishedSemaphore = vk::raii::Semaphore(device.GetDevice(), vk::SemaphoreCreateInfo());
-    m_ImageAvailableSemaphore = vk::raii::Semaphore(device.GetDevice(), vk::SemaphoreCreateInfo());
     m_InFlightFence = vk::raii::Fence(device.GetDevice(), vk::FenceCreateInfo{vk::FenceCreateFlagBits::eSignaled});
-}
-
-vk::raii::Semaphore& VulkanFrame::GetImageAvailableSemaphore() {
-    return m_ImageAvailableSemaphore;
-}
-
-vk::raii::Semaphore& VulkanFrame::GetRenderFinishedSemaphore() {
-    return m_RenderFinishedSemaphore;
 }
 
 vk::raii::Fence& VulkanFrame::GetInFlightFence() {

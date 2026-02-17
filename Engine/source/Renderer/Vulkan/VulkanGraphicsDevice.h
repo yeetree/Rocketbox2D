@@ -56,7 +56,8 @@ namespace Engine {
         Scope<VulkanContext> m_Context;
         Scope<VulkanDevice> m_Device;
         Scope<VulkanSwapchain> m_Swapchain;
-
+    
+        uint32_t m_FrameIndex;
         uint32_t m_ImageIndex;
 
     private:

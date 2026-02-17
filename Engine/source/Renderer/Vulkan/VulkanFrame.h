@@ -17,15 +17,11 @@ public:
     VulkanFrame& operator=(const VulkanFrame&) = delete;
 
     // Getters
-    vk::raii::Semaphore& GetImageAvailableSemaphore();
-    vk::raii::Semaphore& GetRenderFinishedSemaphore();
     vk::raii::Fence& GetInFlightFence();
     vk::raii::CommandBuffer& GetCommandBuffer();
 
 private:
     // Vulkan members
-    vk::raii::Semaphore m_ImageAvailableSemaphore = nullptr;
-    vk::raii::Semaphore m_RenderFinishedSemaphore = nullptr;
     vk::raii::Fence     m_InFlightFence = nullptr;
     vk::raii::CommandBuffer m_CommandBuffer = nullptr;
     
