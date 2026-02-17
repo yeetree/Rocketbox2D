@@ -6,11 +6,17 @@
 VulkanDevice::VulkanDevice(VulkanContext& context) {
     CreateLogicalDevice(context);
     CreateCommandPool();
+    CreateAllocator(context);
 }
 
 VulkanDevice::~VulkanDevice() {
     if (*m_Device) {
         m_Device.waitIdle();
+    }
+    // m_Allocator is not raii
+    if (m_Allocator) {
+        vmaDestroyAllocator(m_Allocator);
+        m_Allocator = nullptr;
     }
 }
 
@@ -86,6 +92,53 @@ void VulkanDevice::CreateCommandPool() {
     m_CommandPool = vk::raii::CommandPool(m_Device, poolInfo);
 }
 
+void VulkanDevice::CreateAllocator(VulkanContext& context) {
+    // Setup VMA allocator
+    // We're configuring VMA for Vulkan 1.3 because 1.4 is scary :(
+    VmaAllocatorCreateInfo allocatorInfo = {};
+    allocatorInfo.vulkanApiVersion = VK_API_VERSION_1_3;
+    allocatorInfo.physicalDevice = *context.GetPhysicalDevice();
+    allocatorInfo.device = *m_Device;
+    allocatorInfo.instance = *context.GetInstance();
+
+    // Setup vulkanFunctions for VMA allocator
+    auto &instance = context.GetInstance();
+    VmaVulkanFunctions vulkanFunctions = {};
+    vulkanFunctions.vkGetInstanceProcAddr = (PFN_vkGetInstanceProcAddr)instance.getProcAddr("vkGetInstanceProcAddr");
+    vulkanFunctions.vkGetDeviceProcAddr   = (PFN_vkGetDeviceProcAddr)m_Device.getProcAddr("vkGetDeviceProcAddr");
+
+    vulkanFunctions.vkGetPhysicalDeviceProperties       = (PFN_vkGetPhysicalDeviceProperties)instance.getProcAddr("vkGetPhysicalDeviceProperties");
+    vulkanFunctions.vkGetPhysicalDeviceMemoryProperties = (PFN_vkGetPhysicalDeviceMemoryProperties)instance.getProcAddr("vkGetPhysicalDeviceMemoryProperties");
+    vulkanFunctions.vkGetPhysicalDeviceMemoryProperties2KHR = (PFN_vkGetPhysicalDeviceMemoryProperties2)instance.getProcAddr("vkGetPhysicalDeviceMemoryProperties2");
+
+    vulkanFunctions.vkAllocateMemory                    = (PFN_vkAllocateMemory)m_Device.getProcAddr("vkAllocateMemory");
+    vulkanFunctions.vkFreeMemory                        = (PFN_vkFreeMemory)m_Device.getProcAddr("vkFreeMemory");
+    vulkanFunctions.vkMapMemory                         = (PFN_vkMapMemory)m_Device.getProcAddr("vkMapMemory");
+    vulkanFunctions.vkUnmapMemory                       = (PFN_vkUnmapMemory)m_Device.getProcAddr("vkUnmapMemory");
+    vulkanFunctions.vkFlushMappedMemoryRanges           = (PFN_vkFlushMappedMemoryRanges)m_Device.getProcAddr("vkFlushMappedMemoryRanges");
+    vulkanFunctions.vkInvalidateMappedMemoryRanges      = (PFN_vkInvalidateMappedMemoryRanges)m_Device.getProcAddr("vkInvalidateMappedMemoryRanges");
+    vulkanFunctions.vkBindBufferMemory                  = (PFN_vkBindBufferMemory)m_Device.getProcAddr("vkBindBufferMemory");
+    vulkanFunctions.vkBindImageMemory                   = (PFN_vkBindImageMemory)m_Device.getProcAddr("vkBindImageMemory");
+    vulkanFunctions.vkGetBufferMemoryRequirements       = (PFN_vkGetBufferMemoryRequirements)m_Device.getProcAddr("vkGetBufferMemoryRequirements");
+    vulkanFunctions.vkGetImageMemoryRequirements        = (PFN_vkGetImageMemoryRequirements)m_Device.getProcAddr("vkGetImageMemoryRequirements");
+    vulkanFunctions.vkCreateBuffer                      = (PFN_vkCreateBuffer)m_Device.getProcAddr("vkCreateBuffer");
+    vulkanFunctions.vkDestroyBuffer                     = (PFN_vkDestroyBuffer)m_Device.getProcAddr("vkDestroyBuffer");
+    vulkanFunctions.vkCreateImage                       = (PFN_vkCreateImage)m_Device.getProcAddr("vkCreateImage");
+    vulkanFunctions.vkDestroyImage                      = (PFN_vkDestroyImage)m_Device.getProcAddr("vkDestroyImage");
+    vulkanFunctions.vkCmdCopyBuffer                     = (PFN_vkCmdCopyBuffer)m_Device.getProcAddr("vkCmdCopyBuffer");
+    
+    vulkanFunctions.vkGetBufferMemoryRequirements2KHR = (PFN_vkGetBufferMemoryRequirements2)m_Device.getProcAddr("vkGetBufferMemoryRequirements2");
+    vulkanFunctions.vkGetImageMemoryRequirements2KHR  = (PFN_vkGetImageMemoryRequirements2)m_Device.getProcAddr("vkGetImageMemoryRequirements2");
+    vulkanFunctions.vkBindBufferMemory2KHR            = (PFN_vkBindBufferMemory2)m_Device.getProcAddr("vkBindBufferMemory2");
+    vulkanFunctions.vkBindImageMemory2KHR             = (PFN_vkBindImageMemory2)m_Device.getProcAddr("vkBindImageMemory2");
+
+    allocatorInfo.pVulkanFunctions = &vulkanFunctions;
+    
+    if (vmaCreateAllocator(&allocatorInfo, &m_Allocator) != VK_SUCCESS) {
+        LOG_CORE_ERROR("Vulkan: Failed to create VMA Allocator!");
+    }
+}
+
 vk::raii::Device& VulkanDevice::GetDevice() {
     return m_Device;
 }
@@ -96,4 +149,8 @@ vk::raii::Queue& VulkanDevice::GetQueue() {
 
 vk::raii::CommandPool& VulkanDevice::GetCommandPool() {
     return m_CommandPool;
+}
+
+VmaAllocator& VulkanDevice::GetAllocator() {
+    return m_Allocator;
 }

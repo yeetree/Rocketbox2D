@@ -35,7 +35,8 @@
                 "/home/vinny/Desktop/Rocketbox2D/vendor/glad/include",
                 "/home/vinny/Desktop/Rocketbox2D/vendor/SDL/include",
                 "/home/vinny/Desktop/Rocketbox2D/vendor/spdlog/include",
-                "/home/vinny/VulkanSDK/1.4.335.0/x86_64/include"
+                "/home/vinny/VulkanSDK/1.4.335.0/x86_64/include",
+                "/home/vinny/VulkanSDK/1.4.335.0/x86_64/include/vma"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

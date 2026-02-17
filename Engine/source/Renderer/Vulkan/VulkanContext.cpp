@@ -159,6 +159,10 @@ void VulkanContext::PickPhysicalDevice() {
     }
 }
 
+vk::raii::Instance& VulkanContext::GetInstance() {
+    return m_Instance;
+}
+
 vk::raii::PhysicalDevice& VulkanContext::GetPhysicalDevice() {
     return m_PhysicalDevice;
 }

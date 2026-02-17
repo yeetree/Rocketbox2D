@@ -2,10 +2,12 @@
 #define RENDERER_VULKAN_VULKANBUFFER
 
 #include <vulkan/vulkan_raii.hpp>
+#include <vk_mem_alloc.h>
 
 #include "Engine/Renderer/RHI/IBuffer.h"
 
 namespace Engine {
+    // fwd
     class VulkanGraphicsDevice;
 
     struct VulkanBuffer : public IBuffer {
@@ -15,22 +17,19 @@ namespace Engine {
 
         void UpdateData(const void* data, size_t size, size_t offset) override;
 
-        // Buffer
-        vk::raii::Buffer m_Buffer = nullptr;
-        vk::raii::DeviceMemory m_BufferMemory = nullptr;
-        vk::DeviceSize m_BufferSize; // Buffer size
+        // Handles
+        VkBuffer m_Buffer = VK_NULL_HANDLE;
+        VmaAllocation m_Allocation = VK_NULL_HANDLE;
+        
+        vk::DeviceSize m_BufferSize;
         BufferType m_Type;
 
     private:
         VulkanGraphicsDevice* m_GraphicsDevice;
-
-        bool m_IsHostVisible; // Dynamic or static
-
-        // Mapped memory pointer for dynamic
+        bool m_IsHostVisible;
         void* m_MappedPtr = nullptr;
 
-        static vk::Flags<vk::BufferUsageFlagBits> GetVulkanBufferUsage(BufferType type);
-        static uint32_t FindMemoryType(uint32_t typeFilter, vk::PhysicalDeviceMemoryProperties memProperties, vk::MemoryPropertyFlags properties);
+        static VkBufferUsageFlags GetVulkanBufferUsage(BufferType type);
     };
 } // namespace Engine
 

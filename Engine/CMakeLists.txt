@@ -13,6 +13,7 @@ set(ENGINE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/RHI/IGraphicsDevice.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/RHI/VertexLayout.cpp
 
+    ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/Vulkan/VulkanAllocator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/Vulkan/VulkanGraphicsDevice.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/Vulkan/VulkanContext.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/source/Renderer/Vulkan/VulkanDevice.cpp
@@ -38,6 +39,7 @@ set(ENGINE_PUBLIC_INCLUDES
 set(ENGINE_PRIVATE_INCLUDES
     ${CMAKE_CURRENT_SOURCE_DIR}/source
     ${CMAKE_CURRENT_SOURCE_DIR}/../vendor/stb
+    ${VMA_INCLUDE_DIR}
 )
 
 # Build and link Engine

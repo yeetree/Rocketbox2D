@@ -89,33 +89,37 @@ namespace Engine {
     }
 
     void VulkanGraphicsDevice::StageBufferUploadData(VulkanBuffer* dstBuffer, const void* data, size_t size, size_t dstOffset) {
-        // Create a staging buffer
+        // Create the staging buffer
         BufferDesc stagingDesc;
         stagingDesc.size = size;
         stagingDesc.type = BufferType::Vertex;
-        stagingDesc.isDynamic = true;
+        stagingDesc.isDynamic = true; // map memory
         stagingDesc.data = data; 
         VulkanBuffer stagingBuffer(this, stagingDesc);
 
-        // Setup the Command Buffer
+        // Setup a command buffer to transfer
         vk::CommandBufferAllocateInfo allocInfo(*m_Device->GetCommandPool(), vk::CommandBufferLevel::ePrimary, 1);
         vk::raii::CommandBuffers cmds(m_Device->GetDevice(), allocInfo);
         vk::raii::CommandBuffer& cmd = cmds[0];
 
         cmd.begin({ vk::CommandBufferUsageFlagBits::eOneTimeSubmit });
 
-        // Buffer Copy Region
+        // Copy
         vk::BufferCopy copyRegion(0, dstOffset, size);
-        
-        cmd.copyBuffer(*stagingBuffer.m_Buffer, *dstBuffer->m_Buffer, copyRegion);
+        cmd.copyBuffer(
+            static_cast<vk::Buffer>(stagingBuffer.m_Buffer), 
+            static_cast<vk::Buffer>(dstBuffer->m_Buffer), 
+            copyRegion
+        );
         cmd.end();
 
-        // Submit and Wait
+        // Submit and wait
         vk::SubmitInfo submit;
         submit.commandBufferCount = 1;
         submit.pCommandBuffers = &*cmd;
+        
         m_Device->GetQueue().submit(submit);
-        m_Device->GetQueue().waitIdle();
+        m_Device->GetQueue().waitIdle(); 
     }
 
     // Frame Management
@@ -249,10 +253,10 @@ namespace Engine {
         cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, *graphicsPipeline->GetPipeline());
 
         VulkanBuffer* vertexBuffer = static_cast<VulkanBuffer*>(&vbo);
-        cmd.bindVertexBuffers(0, *vertexBuffer->m_Buffer, {0});
+        cmd.bindVertexBuffers(0, { static_cast<vk::Buffer>(vertexBuffer->m_Buffer) }, {0});
 	
         VulkanBuffer* indexBuffer = static_cast<VulkanBuffer*>(&ebo);
-        cmd.bindIndexBuffer( *indexBuffer->m_Buffer, 0, vk::IndexType::eUint16 );
+        cmd.bindIndexBuffer(static_cast<vk::Buffer>(indexBuffer->m_Buffer), 0, vk::IndexType::eUint16);
         
         cmd.drawIndexed(indexCount, 1, 0, 0, 0);
     }

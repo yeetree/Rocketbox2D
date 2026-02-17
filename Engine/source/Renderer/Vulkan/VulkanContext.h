@@ -16,6 +16,7 @@ public:
     VulkanContext& operator=(const VulkanContext&) = delete;
 
     // Getters
+    vk::raii::Instance& GetInstance();
     vk::raii::PhysicalDevice& GetPhysicalDevice();
     vk::raii::SurfaceKHR& GetSurface();
     SDL_Window* GetWindow();

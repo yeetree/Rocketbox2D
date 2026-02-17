@@ -10,8 +10,22 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/CMake")
 # Vulkan
 find_package(Vulkan 1.4.335 REQUIRED)
 
-# find_package (KTX REQUIRED)
-find_package (VulkanHpp REQUIRED)
+if(Vulkan_FOUND)
+    message(STATUS "Vulkan Found: ${Vulkan_LIBRARY}")
+    message(STATUS "Vulkan Version: ${Vulkan_VERSION}")
+else()
+    message(FATAL_ERROR "Vulkan SDK not found. Did you source setup-env.sh?")
+endif()
+
+find_path(VMA_INCLUDE_DIR 
+    NAMES vk_mem_alloc.h 
+    HINTS "${Vulkan_INCLUDE_DIRS}"
+    PATH_SUFFIXES vma
+)
+
+if(NOT VMA_INCLUDE_DIR)
+    message(FATAL_ERROR "Could not find VMA (vk_mem_alloc.h) in ${Vulkan_INCLUDE_DIRS}")
+endif()
 
 # SlangC
 find_program(SLANGC_EXECUTABLE slangc REQUIRED)
