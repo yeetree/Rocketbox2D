@@ -8,7 +8,7 @@
 namespace Engine {
     class VulkanGraphicsDevice;
 
-    struct VulkanShader : public IShader {
+    class VulkanShader : public IShader {
     public:
         VulkanShader(VulkanGraphicsDevice* graphicsDevice, const ShaderDesc& desc);
         ~VulkanShader() override;

@@ -38,7 +38,7 @@ namespace Engine
         vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 
         vk::PipelineInputAssemblyStateCreateInfo inputAssembly{};
-        inputAssembly.topology = vk::PrimitiveTopology::eTriangleList;
+        inputAssembly.topology = GetVulkanTopology(desc.topology);
         vk::PipelineViewportStateCreateInfo viewportState;
         viewportState.viewportCount = 1;
         viewportState.scissorCount = 1;
@@ -77,24 +77,12 @@ namespace Engine
         dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
         dynamicState.pDynamicStates = dynamicStates.data();
 
-        // !!!!!!!!!!!!!!!!
-        // <TEMP>
-
-        // Fuck it... I'll implement this shit when I actually need it.
-
-        // Uniform Buffer Object Descriptor
-        //vk::DescriptorSetLayoutBinding uboLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex, nullptr);
-        //vk::DescriptorSetLayoutCreateInfo layoutInfo;
-        //layoutInfo.bindingCount = 1;
-        //layoutInfo.pBindings = &uboLayoutBinding;
-        //vk::raii::DescriptorSetLayout descriptorSetLayout = vk::raii::DescriptorSetLayout(graphicsDevice->m_Device, layoutInfo);
-        //vk::PipelineLayoutCreateInfo pipelineLayoutInfo;
-        //pipelineLayoutInfo.setLayoutCount = 1;
-        //pipelineLayoutInfo.pSetLayouts = &*descriptorSetLayout;
-        //pipelineLayoutInfo.pushConstantRangeCount = 0;
-
-        // </TEMP>
-        // !!!!!!!!!!!!!!!!!
+        std::vector<vk::DescriptorSetLayout> setLayouts;
+        for (uint32_t i = 0; i < desc.numUniformBuffers; ++i) {
+            // We have UBO layout in Graphics Device
+            // Redundant? Yes. Do I care?? No.
+            setLayouts.push_back(graphicsDevice->GetUBODescriptorSetLayout());
+        }
 
         // Create pipelime
         vk::Format colorFormat = graphicsDevice->m_Swapchain->GetSurfaceFormat().format;
@@ -108,12 +96,15 @@ namespace Engine
         vk::PushConstantRange pushRange;
         pushRange.stageFlags = vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment;
         pushRange.offset = 0;
-        pushRange.size = 128; // Generic max size
+        pushRange.size = desc.pushConstantSize;
 
         vk::PipelineLayoutCreateInfo layoutInfo;
-        layoutInfo.pushConstantRangeCount = 1;
-        layoutInfo.pPushConstantRanges = &pushRange;
-        
+        layoutInfo.setLayoutCount = static_cast<uint32_t>(setLayouts.size());
+        layoutInfo.pSetLayouts = setLayouts.data();
+        // Include pushConstants if size > 0
+        layoutInfo.pushConstantRangeCount = (desc.pushConstantSize > 0) ? 1 : 0;
+        layoutInfo.pPushConstantRanges = (desc.pushConstantSize > 0) ? &pushRange : nullptr;
+
         m_Layout = vk::raii::PipelineLayout(graphicsDevice->m_Device->GetDevice(), layoutInfo);
 
         vk::GraphicsPipelineCreateInfo pipelineInfo{};
@@ -155,6 +146,15 @@ namespace Engine
             case ShaderStage::Geometry: return vk::ShaderStageFlagBits::eGeometry; break;
         }
         return vk::ShaderStageFlagBits::eVertex; // Should never really happen
+    }
+
+    vk::PrimitiveTopology VulkanPipelineState::GetVulkanTopology(PrimitiveTopology topology) {
+        switch(topology) {
+            case PrimitiveTopology::TriangleList:   return vk::PrimitiveTopology::eTriangleList; break;
+            case PrimitiveTopology::LineList:       return vk::PrimitiveTopology::eLineList; break;
+            case PrimitiveTopology::PointList:      return vk::PrimitiveTopology::ePointList; break;
+        }
+        return vk::PrimitiveTopology::eTriangleList; // Should never really happen
     }
 
     vk::raii::Pipeline& VulkanPipelineState::GetPipeline() {

@@ -23,6 +23,10 @@ namespace Engine {
     struct PipelineDesc {
         IShader* shader = nullptr;  // Shader to be used with pipeline
         VertexLayout layout;        // Vertex attributes
+
+        // Uniform buffers and push constants
+        uint32_t numUniformBuffers;
+        uint32_t pushConstantSize;
         
         // Topology
         PrimitiveTopology topology = PrimitiveTopology::TriangleList;

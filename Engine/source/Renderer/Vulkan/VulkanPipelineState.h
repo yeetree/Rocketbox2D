@@ -8,7 +8,7 @@
 namespace Engine {
     class VulkanGraphicsDevice;
 
-    struct VulkanPipelineState : public IPipelineState {
+    class VulkanPipelineState : public IPipelineState {
     public:
         VulkanPipelineState(VulkanGraphicsDevice* graphicsDevice, const PipelineDesc& desc);
         ~VulkanPipelineState() override;
@@ -24,6 +24,7 @@ namespace Engine {
 
         static vk::Format GetVulkanFormat(VertexElementType type);
         static vk::ShaderStageFlagBits GetVulkanShaderStage(ShaderStage stage);
+        static vk::PrimitiveTopology GetVulkanTopology(PrimitiveTopology topology);
     };
 } // namespace Engine
 

@@ -4,6 +4,7 @@
 #include "Renderer/Vulkan/VulkanPipelineState.h"
 #include "Renderer/Vulkan/VulkanShader.h"
 #include "Renderer/Vulkan/VulkanBuffer.h"
+#include "Renderer/Vulkan/VulkanUniformBuffer.h"
 #include <SDL3/SDL_vulkan.h>
 
 namespace Engine {
@@ -14,6 +15,32 @@ namespace Engine {
         m_Context = CreateScope<VulkanContext>(window);
         m_Device = CreateScope<VulkanDevice>(*m_Context);
         m_Swapchain = CreateScope<VulkanSwapchain>(*m_Context, *m_Device);
+
+        // Create descriptor layout binding
+        vk::DescriptorSetLayoutBinding uboBinding{};
+        uboBinding.binding = 0;
+        uboBinding.descriptorType = vk::DescriptorType::eUniformBuffer;
+        uboBinding.descriptorCount = 1;
+        uboBinding.stageFlags = vk::ShaderStageFlagBits::eAllGraphics;
+
+        vk::DescriptorSetLayoutCreateInfo layoutInfo{};
+        layoutInfo.bindingCount = 1;
+        layoutInfo.pBindings = &uboBinding;
+
+        m_UBOLayout = vk::raii::DescriptorSetLayout(m_Device->GetDevice(), layoutInfo);
+
+        // Create descriptor pool
+        vk::DescriptorPoolSize poolSize{};
+        poolSize.type = vk::DescriptorType::eUniformBuffer;
+        poolSize.descriptorCount = 1000; // Arbitrary big number
+
+        vk::DescriptorPoolCreateInfo poolInfo{};
+        poolInfo.flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet;
+        poolInfo.maxSets = 1000; // Arbitrary big number
+        poolInfo.poolSizeCount = 1;
+        poolInfo.pPoolSizes = &poolSize;
+
+        m_DescriptorPool = vk::raii::DescriptorPool(m_Device->GetDevice(), poolInfo);
     }
 
     VulkanGraphicsDevice::~VulkanGraphicsDevice() {
@@ -70,6 +97,10 @@ namespace Engine {
     // Resource Creation
     Scope<IBuffer> VulkanGraphicsDevice::CreateBuffer(const BufferDesc& desc) {
         return CreateScope<VulkanBuffer>(this, desc);
+    }
+
+    Scope<IUniformBuffer> VulkanGraphicsDevice::CreateUniformBuffer(const UniformBufferDesc& desc) {
+        return CreateScope<VulkanUniformBuffer>(this, desc);
     }
 
     Scope<ITexture> VulkanGraphicsDevice::CreateTexture(const TextureDesc& desc) {
@@ -244,13 +275,23 @@ namespace Engine {
 
     }
 
-    // Draw call
-    void VulkanGraphicsDevice::SubmitDraw(IBuffer& vbo, IBuffer& ebo, IPipelineState& pipeline, uint32_t indexCount) {
+    void VulkanGraphicsDevice::BindPipelineState(IPipelineState& pipeline) {
+        m_CurrentPipelineState = static_cast<VulkanPipelineState*>(&pipeline);
         auto& frame = m_Swapchain->GetFrame(m_FrameIndex);
         auto& cmd = frame.GetCommandBuffer();
         
-        VulkanPipelineState* graphicsPipeline = static_cast<VulkanPipelineState*>(&pipeline);
-        cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, *graphicsPipeline->GetPipeline());
+        cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, *m_CurrentPipelineState->GetPipeline());
+    }
+
+    // Draw call
+    void VulkanGraphicsDevice::SubmitDraw(IBuffer& vbo, IBuffer& ebo, uint32_t indexCount) {
+        if (!m_CurrentPipelineState) {
+            LOG_CORE_ERROR("Vulkan: Attempted to draw without a bound Pipeline State!");
+            return;
+        }
+        
+        auto& frame = m_Swapchain->GetFrame(m_FrameIndex);
+        auto& cmd = frame.GetCommandBuffer();
 
         VulkanBuffer* vertexBuffer = static_cast<VulkanBuffer*>(&vbo);
         cmd.bindVertexBuffers(0, { static_cast<vk::Buffer>(vertexBuffer->m_Buffer) }, {0});
@@ -262,18 +303,42 @@ namespace Engine {
     }
 
     // Push constants
-    void VulkanGraphicsDevice::PushConstants(IPipelineState& pipeline, const void* data, uint32_t size) {
+    void VulkanGraphicsDevice::PushConstants(const void* data, uint32_t size) {
+        if (!m_CurrentPipelineState) {
+            LOG_CORE_ERROR("Vulkan: Attempted to push constants without a bound Pipeline State!");
+            return;
+        }
+
         auto& frame = m_Swapchain->GetFrame(m_FrameIndex);
         auto& cmd = frame.GetCommandBuffer();
-        
-        // We need the PipelineLayout created during Pipeline initialization
-        auto* vkPipeline = static_cast<VulkanPipelineState*>(&pipeline);
 
         cmd.pushConstants(
-            *vkPipeline->GetLayout(),
+            *m_CurrentPipelineState->GetLayout(),
             vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
             0,
             vk::ArrayProxy<const uint8_t>(size, static_cast<const uint8_t*>(data))
+        );
+    }
+
+    // Bind uniform buffer
+    void VulkanGraphicsDevice::BindUniformBuffer(IUniformBuffer& buffer, uint32_t binding) {
+        if (!m_CurrentPipelineState) {
+            LOG_CORE_ERROR("Vulkan: Attempted to bind uniform buffer without a bound Pipeline State!");
+            return;
+        }
+        
+        auto& frame = m_Swapchain->GetFrame(m_FrameIndex);
+        auto& cmd = frame.GetCommandBuffer();
+
+        auto* vkUniformBuffer = static_cast<VulkanUniformBuffer*>(&buffer);
+        vk::DescriptorSet set = vkUniformBuffer->GetDescriptorSet(m_FrameIndex);
+
+        cmd.bindDescriptorSets(
+            vk::PipelineBindPoint::eGraphics,
+            *m_CurrentPipelineState->GetLayout(), 
+            binding,
+            set,
+            nullptr
         );
     }
 
@@ -285,6 +350,18 @@ namespace Engine {
     // Gives GraphicsDevice chance to finish work before app can destroy
     void VulkanGraphicsDevice::OnDestroy() {
         m_Device->GetQueue().waitIdle();
+    }
+
+    uint32_t VulkanGraphicsDevice::GetFrameIndex() {
+        return m_FrameIndex;
+    }
+
+    vk::raii::DescriptorPool& VulkanGraphicsDevice::GetDescriptorPool() {
+        return m_DescriptorPool;
+    }
+
+    vk::DescriptorSetLayout VulkanGraphicsDevice::GetUBODescriptorSetLayout() {
+        return *m_UBOLayout;
     }
 
 } // namespace Engine

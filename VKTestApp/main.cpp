@@ -20,6 +20,10 @@ const std::vector<uint16_t> indices = {
 // Push constant struct
 struct PushData {
     alignas(16) glm::mat4 transform;
+};
+
+// Uniform constant struct
+struct UniformData {
     alignas(16) glm::vec4 tint;
 };
 
@@ -27,10 +31,12 @@ class EngineTestApp : public Application {
 public:
     Ref<IBuffer> m_VertexBuffer;
     Ref<IBuffer> m_IndexBuffer;
+    Ref<IUniformBuffer> m_UniformBuffer;
     Ref<IShader> m_Shader;
     Ref<IPipelineState> m_Pipeline;
 
-    PushData data;
+    PushData push;
+    UniformData uni;
 
     void OnStart() override {
        std::vector<char> shaderCode = Engine::FileSystem::ReadFile(FileSystem::GetAbsolutePath("./shaders/slang.spv"));
@@ -43,6 +49,8 @@ public:
         m_Shader = GetGraphicsDevice().CreateShader(shaderDesc);
 
         PipelineDesc pipeDesc;
+        pipeDesc.pushConstantSize = sizeof(PushData);
+        pipeDesc.numUniformBuffers = 1;
         pipeDesc.shader = m_Shader.get();
         pipeDesc.layout = VertexLayout{VertexElement(VertexElementType::Vec2, "inPosition"), VertexElement(VertexElementType::Vec3, "inColor")};
 
@@ -61,6 +69,12 @@ public:
         ibDesc.type = BufferType::Index;
 
         m_IndexBuffer = GetGraphicsDevice().CreateBuffer(ibDesc);
+
+        UniformBufferDesc ubDesc;
+        ubDesc.size = sizeof(UniformData);
+        ubDesc.data = &uni;
+        // Need a CreateUniformBuffer or similar in your GraphicsDevice
+        m_UniformBuffer = GetGraphicsDevice().CreateUniformBuffer(ubDesc);
     }
 
     void OnInput(SDL_Event event) override {
@@ -68,13 +82,16 @@ public:
     }
 
     void OnUpdate(float dt) override {
-        data.transform = glm::rotate(glm::mat4(1.0f), (float)SDL_GetTicks() / 1000.0f, glm::vec3(0, 0, 1));
-        data.tint = glm::vec4(1.0f, 0.5f, 0.2f, 1.0f); // Bright Orange
+        push.transform = glm::rotate(glm::mat4(1.0f), (float)SDL_GetTicks() / 1000.0f, glm::vec3(0, 0, 1));
+        uni.tint = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f); // Red
     }
 
     void OnRender() override {
-        GetGraphicsDevice().PushConstants(*m_Pipeline, &data, sizeof(PushData));
-        GetGraphicsDevice().SubmitDraw(*m_VertexBuffer, *m_IndexBuffer, *m_Pipeline, indices.size());
+        GetGraphicsDevice().BindPipelineState(*m_Pipeline);
+        GetGraphicsDevice().BindUniformBuffer(*m_UniformBuffer, 0);
+        m_UniformBuffer->UpdateData(&uni, sizeof(UniformData), 0);
+        GetGraphicsDevice().PushConstants(&push, sizeof(PushData));
+        GetGraphicsDevice().SubmitDraw(*m_VertexBuffer, *m_IndexBuffer, indices.size());
     }
 
     void OnDestroy() override {
@@ -85,6 +102,7 @@ public:
         m_Shader.reset();
         m_VertexBuffer.reset();
         m_IndexBuffer.reset();
+        m_UniformBuffer.reset();
         LOG_TRACE("Client done destroying.");
     }
 };

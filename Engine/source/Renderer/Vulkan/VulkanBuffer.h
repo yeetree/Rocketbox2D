@@ -10,7 +10,7 @@ namespace Engine {
     // fwd
     class VulkanGraphicsDevice;
 
-    struct VulkanBuffer : public IBuffer {
+    class VulkanBuffer : public IBuffer {
     public:
         VulkanBuffer(VulkanGraphicsDevice* graphicsDevice, const BufferDesc& desc);
         ~VulkanBuffer() override;
@@ -20,9 +20,6 @@ namespace Engine {
         // Handles
         VkBuffer m_Buffer = VK_NULL_HANDLE;
         VmaAllocation m_Allocation = VK_NULL_HANDLE;
-        
-        vk::DeviceSize m_BufferSize;
-        BufferType m_Type;
 
     private:
         VulkanGraphicsDevice* m_GraphicsDevice;

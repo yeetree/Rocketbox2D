@@ -11,10 +11,13 @@
 #include "Engine/Renderer/RHI/IGraphicsDevice.h"
 #include "Engine/Renderer/RHI/IShader.h"
 #include "Engine/Renderer/RHI/IPipelineState.h"
+#include "Engine/Renderer/RHI/IUniformBuffer.h"
 
 namespace Engine {
     // Fwd:
     class VulkanBuffer;
+    class VulkanUniformBuffer;
+    class VulkanPipelineState;
 
     // Vulkan Implementation of IGraphicsDevice
     class VulkanGraphicsDevice : public IGraphicsDevice {
@@ -29,6 +32,7 @@ namespace Engine {
 
         // Resource Creation
         Scope<IBuffer> CreateBuffer(const BufferDesc& desc) override;
+        Scope<IUniformBuffer> CreateUniformBuffer(const UniformBufferDesc& desc) override;
         Scope<ITexture> CreateTexture(const TextureDesc& desc) override;
         Scope<IShader> CreateShader(const ShaderDesc& desc) override;
         Scope<IPipelineState> CreatePipelineState(const PipelineDesc& desc) override;
@@ -40,11 +44,17 @@ namespace Engine {
         void Present() override;
         void SetClearColor(Vec4 color) override;
 
+        // Bind Pipeline state
+        void BindPipelineState(IPipelineState& pipeline) override;
+
         // Draw call
-        void SubmitDraw(IBuffer& vbo, IBuffer& ebo, IPipelineState& pipeline, uint32_t indexCount) override;
+        void SubmitDraw(IBuffer& vbo, IBuffer& ebo, uint32_t indexCount) override;
 
         // Push constants
-        void PushConstants(IPipelineState& pipeline, const void* data, uint32_t size) override;
+        void PushConstants(const void* data, uint32_t size) override;
+
+        // Bind uniform buffer
+        void BindUniformBuffer(IUniformBuffer& buffer, uint32_t binding) override;
 
         // Resize
         void Resize(int width, int height) override;
@@ -54,14 +64,15 @@ namespace Engine {
         // Helper function for VulkanBuffer
         void StageBufferUploadData(VulkanBuffer* dstBuffer, const void* data, size_t size, size_t dstOffset);
 
+        // Getters for Vulkan* classes (Not declared in IGraphicsDevice)
+        uint32_t GetFrameIndex();
+        vk::raii::DescriptorPool& GetDescriptorPool();
+        vk::DescriptorSetLayout GetUBODescriptorSetLayout();
         
-        // Public So Vulkan* classes can access them
+        // Public So Vulkan* classes can access them (move to getters soon!)
         Scope<VulkanContext> m_Context;
         Scope<VulkanDevice> m_Device;
         Scope<VulkanSwapchain> m_Swapchain;
-    
-        uint32_t m_FrameIndex;
-        uint32_t m_ImageIndex;
 
     private:
         // Gives GraphicsDevice chance to finish work before app can destroy
@@ -78,6 +89,17 @@ namespace Engine {
             vk::AccessFlags2        dst_access_mask,
             vk::PipelineStageFlags2 src_stage_mask,
             vk::PipelineStageFlags2 dst_stage_mask);
+
+        // Frame info
+        uint32_t m_FrameIndex;
+        uint32_t m_ImageIndex;
+
+        // Descriptors
+        vk::raii::DescriptorPool m_DescriptorPool = nullptr;
+        vk::raii::DescriptorSetLayout m_UBOLayout = nullptr;
+
+        // Current PSO
+        VulkanPipelineState* m_CurrentPipelineState;
     };
 
 } // namespace Engine

@@ -4,11 +4,11 @@
 
 namespace Engine {
     VulkanBuffer::VulkanBuffer(VulkanGraphicsDevice* graphicsDevice, const BufferDesc& desc) 
-        : m_GraphicsDevice(graphicsDevice), m_BufferSize(desc.size), 
-          m_IsHostVisible(desc.isDynamic), m_Type(desc.type) 
+        : m_GraphicsDevice(graphicsDevice), 
+          m_IsHostVisible(desc.isDynamic)
     {
         VkBufferCreateInfo bufferInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
-        bufferInfo.size = m_BufferSize;
+        bufferInfo.size = desc.size;
         bufferInfo.usage = GetVulkanBufferUsage(desc.type);
         
         // If not dynamic, set able to be copied to
