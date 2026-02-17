@@ -53,6 +53,8 @@ set_target_properties(Engine PROPERTIES
     VISIBILITY_INLINES_HIDDEN YES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+    INSTALL_RPATH "$ORIGIN"
+    BUILD_WITH_INSTALL_RPATH TRUE
 )
 
 # Generate export header
@@ -94,6 +96,8 @@ function(engine_add_project PROJECT_NAME SOURCES ASSET_DIR)
             "$<TARGET_FILE:Engine::Engine>"
             "$<TARGET_FILE:SDL3::SDL3>"
             "${APP_OUTPUT_DIR}"
+        # Create symlink because linux hates us now
+        COMMAND ${CMAKE_COMMAND} -E create_symlink "$<TARGET_FILE_NAME:SDL3::SDL3>" "${APP_OUTPUT_DIR}/libSDL3.so.0"
         # Copy assets if the directory exists
         COMMAND ${CMAKE_COMMAND} -E copy_directory
             "${ASSET_DIR}"

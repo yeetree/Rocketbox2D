@@ -102,6 +102,20 @@ namespace Engine
         pipelineRenderingCreateInfo.colorAttachmentCount = 1;
         pipelineRenderingCreateInfo.pColorAttachmentFormats = &colorFormat;
         
+        // Create pipeline layout
+
+		// Push constants range
+        vk::PushConstantRange pushRange;
+        pushRange.stageFlags = vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment;
+        pushRange.offset = 0;
+        pushRange.size = 128; // Generic max size
+
+        vk::PipelineLayoutCreateInfo layoutInfo;
+        layoutInfo.pushConstantRangeCount = 1;
+        layoutInfo.pPushConstantRanges = &pushRange;
+        
+        m_Layout = vk::raii::PipelineLayout(graphicsDevice->m_Device->GetDevice(), layoutInfo);
+
         vk::GraphicsPipelineCreateInfo pipelineInfo{};
         pipelineInfo.pNext = &pipelineRenderingCreateInfo;
         pipelineInfo.stageCount = stages.size();
@@ -113,7 +127,7 @@ namespace Engine
         pipelineInfo.pMultisampleState = &multisampling;
         pipelineInfo.pColorBlendState = &colorBlending;
         pipelineInfo.pDynamicState = &dynamicState;
-        pipelineInfo.layout = shader->m_Layout;
+        pipelineInfo.layout = m_Layout;
         pipelineInfo.renderPass = nullptr;
 
         m_Pipeline = graphicsDevice->m_Device->GetDevice().createGraphicsPipeline(nullptr, pipelineInfo);
@@ -141,5 +155,13 @@ namespace Engine
             case ShaderStage::Geometry: return vk::ShaderStageFlagBits::eGeometry; break;
         }
         return vk::ShaderStageFlagBits::eVertex; // Should never really happen
+    }
+
+    vk::raii::Pipeline& VulkanPipelineState::GetPipeline() {
+        return m_Pipeline;
+    }
+
+    vk::raii::PipelineLayout& VulkanPipelineState::GetLayout() {
+        return m_Layout;
     }
 } // namespace Engine

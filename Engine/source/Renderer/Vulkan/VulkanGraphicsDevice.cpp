@@ -246,7 +246,7 @@ namespace Engine {
         auto& cmd = frame.GetCommandBuffer();
         
         VulkanPipelineState* graphicsPipeline = static_cast<VulkanPipelineState*>(&pipeline);
-        cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, *graphicsPipeline->m_Pipeline);
+        cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, *graphicsPipeline->GetPipeline());
 
         VulkanBuffer* vertexBuffer = static_cast<VulkanBuffer*>(&vbo);
         cmd.bindVertexBuffers(0, *vertexBuffer->m_Buffer, {0});
@@ -255,6 +255,22 @@ namespace Engine {
         cmd.bindIndexBuffer( *indexBuffer->m_Buffer, 0, vk::IndexType::eUint16 );
         
         cmd.drawIndexed(indexCount, 1, 0, 0, 0);
+    }
+
+    // Push constants
+    void VulkanGraphicsDevice::PushConstants(IPipelineState& pipeline, const void* data, uint32_t size) {
+        auto& frame = m_Swapchain->GetFrame(m_FrameIndex);
+        auto& cmd = frame.GetCommandBuffer();
+        
+        // We need the PipelineLayout created during Pipeline initialization
+        auto* vkPipeline = static_cast<VulkanPipelineState*>(&pipeline);
+
+        cmd.pushConstants(
+            *vkPipeline->GetLayout(),
+            vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
+            0,
+            vk::ArrayProxy<const uint8_t>(size, static_cast<const uint8_t*>(data))
+        );
     }
 
     // Resize

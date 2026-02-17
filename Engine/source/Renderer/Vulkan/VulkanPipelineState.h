@@ -13,9 +13,15 @@ namespace Engine {
         VulkanPipelineState(VulkanGraphicsDevice* graphicsDevice, const PipelineDesc& desc);
         ~VulkanPipelineState() override;
 
-        vk::raii::Pipeline m_Pipeline = nullptr;
+        // Getters
+        vk::raii::Pipeline& GetPipeline();
+        vk::raii::PipelineLayout& GetLayout();
 
     private:
+        // Vulkan members
+        vk::raii::Pipeline m_Pipeline = nullptr;
+        vk::raii::PipelineLayout m_Layout = nullptr;
+
         static vk::Format GetVulkanFormat(VertexElementType type);
         static vk::ShaderStageFlagBits GetVulkanShaderStage(ShaderStage stage);
     };

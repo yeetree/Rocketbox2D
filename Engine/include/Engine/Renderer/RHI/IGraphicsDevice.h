@@ -44,6 +44,9 @@ namespace Engine {
         // Draw call
         virtual void SubmitDraw(IBuffer& vbo, IBuffer& ebo, IPipelineState& pipeline, uint32_t indexCount) = 0;
 
+        // Push constants
+        virtual void PushConstants(IPipelineState& pipeline, const void* data, uint32_t size) = 0;
+
         // Get back buffer
         //virtual ITexture* GetBackBuffer() = 0;
 

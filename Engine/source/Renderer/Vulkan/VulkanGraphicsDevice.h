@@ -43,6 +43,9 @@ namespace Engine {
         // Draw call
         void SubmitDraw(IBuffer& vbo, IBuffer& ebo, IPipelineState& pipeline, uint32_t indexCount) override;
 
+        // Push constants
+        void PushConstants(IPipelineState& pipeline, const void* data, uint32_t size) override;
+
         // Resize
         void Resize(int width, int height) override;
 

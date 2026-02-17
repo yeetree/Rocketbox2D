@@ -24,10 +24,6 @@ namespace Engine
             // Store stage info: entryPoint & modulePtr
             m_Stages[stage] = { blob.entryPoint, modulePtr };
         }
-
-        // Create pipeline layout
-		vk::PipelineLayoutCreateInfo pipelineLayoutInfo;
-		m_Layout = vk::raii::PipelineLayout(graphicsDevice->m_Device->GetDevice(), pipelineLayoutInfo);
     }
 
     VulkanShader::~VulkanShader() {

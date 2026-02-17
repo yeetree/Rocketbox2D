@@ -1,6 +1,7 @@
 #include <iostream>
 #include "Engine/Engine.h"
 #include <SDL3/SDL_main.h>
+#include <glm/ext/matrix_transform.hpp>
 #include <cmath>
 
 using namespace Engine;
@@ -16,12 +17,20 @@ const std::vector<uint16_t> indices = {
     0, 1, 2, 2, 3, 0
 };
 
+// Push constant struct
+struct PushData {
+    alignas(16) glm::mat4 transform;
+    alignas(16) glm::vec4 tint;
+};
+
 class EngineTestApp : public Application {
 public:
     Ref<IShader> m_Shader;
     Ref<IBuffer> m_VertexBuffer;
     Ref<IBuffer> m_IndexBuffer;
     Ref<IPipelineState> m_Pipeline;
+
+    PushData data;
 
     void OnStart() override {
        std::vector<char> shaderCode = Engine::FileSystem::ReadFile(FileSystem::GetAbsolutePath("./shaders/slang.spv"));
@@ -59,10 +68,12 @@ public:
     }
 
     void OnUpdate(float dt) override {
-
+        data.transform = glm::rotate(glm::mat4(1.0f), (float)SDL_GetTicks() / 1000.0f, glm::vec3(0, 0, 1));
+        data.tint = glm::vec4(1.0f, 0.5f, 0.2f, 1.0f); // Bright Orange
     }
 
     void OnRender() override {
+        GetGraphicsDevice().PushConstants(*m_Pipeline, &data, sizeof(PushData));
         GetGraphicsDevice().SubmitDraw(*m_VertexBuffer, *m_IndexBuffer, *m_Pipeline, indices.size());
     }
 
