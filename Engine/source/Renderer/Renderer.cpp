@@ -200,7 +200,7 @@ namespace Engine
             std::unordered_map<std::string, uint32_t> texSlots;
             for (const auto& [name, tex] : cmd.textures) {
                 texSlots[name] = slot;
-                tex->Bind(slot);
+                //tex->Bind(slot);
                 //cmd.shader->SetInt(name, slot);
                 slot++;
             }
@@ -213,7 +213,7 @@ namespace Engine
                 else {
                     slot++;
                 }
-                tex->Bind(texSlot);
+                //tex->Bind(texSlot);
                 //cmd.shader->SetInt(name, texSlot);
             }
 

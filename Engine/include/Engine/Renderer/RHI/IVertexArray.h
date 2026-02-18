@@ -23,8 +23,6 @@ namespace Engine
         }
 
         virtual ~IVertexArray() = default;
-        virtual void Bind() = 0;
-        virtual void Unbind() = 0;
 
     private:
         uint32_t m_ID;

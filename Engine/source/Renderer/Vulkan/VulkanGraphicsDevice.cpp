@@ -5,6 +5,7 @@
 #include "Renderer/Vulkan/VulkanShader.h"
 #include "Renderer/Vulkan/VulkanBuffer.h"
 #include "Renderer/Vulkan/VulkanUniformBuffer.h"
+#include "Renderer/Vulkan/VulkanTexture.h"
 #include <SDL3/SDL_vulkan.h>
 
 namespace Engine {
@@ -64,34 +65,35 @@ namespace Engine {
 
     void VulkanGraphicsDevice::TransitionImageLayout(
         vk::raii::CommandBuffer& cmd,
-        uint32_t imageIndex,
-	    vk::ImageLayout         old_layout,
-	    vk::ImageLayout         new_layout,
-	    vk::AccessFlags2        src_access_mask,
-	    vk::AccessFlags2        dst_access_mask,
-	    vk::PipelineStageFlags2 src_stage_mask,
-	    vk::PipelineStageFlags2 dst_stage_mask)
-	{
+        vk::Image               image, // Take raw image handle
+        vk::ImageLayout         oldLayout,
+        vk::ImageLayout         newLayout,
+        vk::AccessFlags2        srcAccess,
+        vk::AccessFlags2        dstAccess,
+        vk::PipelineStageFlags2 srcStage,
+        vk::PipelineStageFlags2 dstStage)
+    {
 		vk::ImageMemoryBarrier2 barrier;
-        barrier.srcStageMask        = src_stage_mask;
-	    barrier.srcAccessMask       = src_access_mask;
-		barrier.dstStageMask        = dst_stage_mask;
-		barrier.dstAccessMask       = dst_access_mask;
-		barrier.oldLayout           = old_layout;
-		barrier.newLayout           = new_layout;
-		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrier.image               = m_Swapchain->GetImage(imageIndex);
-		barrier.subresourceRange.aspectMask     = vk::ImageAspectFlagBits::eColor;
-		barrier.subresourceRange.baseMipLevel   = 0;
-		barrier.subresourceRange.levelCount     = 1;
-		barrier.subresourceRange.baseArrayLayer = 0;
-		barrier.subresourceRange.layerCount     = 1;
-		vk::DependencyInfo dependency_info;
-		dependency_info.dependencyFlags         = {};
-		dependency_info.imageMemoryBarrierCount = 1;
-		dependency_info.pImageMemoryBarriers    = &barrier;
-		cmd.pipelineBarrier2(dependency_info);
+        barrier.srcStageMask        = srcStage;
+        barrier.srcAccessMask       = srcAccess;
+        barrier.dstStageMask        = dstStage;
+        barrier.dstAccessMask       = dstAccess;
+        barrier.oldLayout           = oldLayout;
+        barrier.newLayout           = newLayout;
+        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.image               = image;
+        barrier.subresourceRange.aspectMask     = vk::ImageAspectFlagBits::eColor;
+        barrier.subresourceRange.baseMipLevel   = 0;
+        barrier.subresourceRange.levelCount     = 1;
+        barrier.subresourceRange.baseArrayLayer = 0;
+        barrier.subresourceRange.layerCount     = 1;
+
+        vk::DependencyInfo dependencyInfo;
+        dependencyInfo.imageMemoryBarrierCount = 1;
+        dependencyInfo.pImageMemoryBarriers    = &barrier;
+        
+        cmd.pipelineBarrier2(dependencyInfo);
 	}
 
     // Resource Creation
@@ -104,7 +106,7 @@ namespace Engine {
     }
 
     Scope<ITexture> VulkanGraphicsDevice::CreateTexture(const TextureDesc& desc) {
-        return nullptr;
+        return CreateScope<VulkanTexture>(this, desc);
     }
 
     Scope<IShader> VulkanGraphicsDevice::CreateShader(const ShaderDesc& desc) {
@@ -153,7 +155,7 @@ namespace Engine {
 
         TransitionImageLayout(
             cmd,
-            m_ImageIndex,
+            m_Swapchain->GetImage(m_ImageIndex),
             vk::ImageLayout::eUndefined,
             vk::ImageLayout::eColorAttachmentOptimal,
             {},
@@ -192,7 +194,7 @@ namespace Engine {
 
         cmd.endRendering();
 
-        TransitionImageLayout(cmd, m_ImageIndex,
+        TransitionImageLayout(cmd, m_Swapchain->GetImage(m_ImageIndex),
             vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::ePresentSrcKHR,
             vk::AccessFlagBits2::eColorAttachmentWrite, {},
             vk::PipelineStageFlagBits2::eColorAttachmentOutput, vk::PipelineStageFlagBits2::eBottomOfPipe

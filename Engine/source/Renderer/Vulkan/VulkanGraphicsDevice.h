@@ -65,6 +65,17 @@ namespace Engine {
         vk::raii::CommandBuffer BeginOneTimeCommands();
         void EndOneTimeCommands(vk::raii::CommandBuffer& commandBuffer);
 
+        // Public helper function for transitioning image layouts
+        void TransitionImageLayout(
+            vk::raii::CommandBuffer& cmd,
+            vk::Image               image, // Take raw image handle
+            vk::ImageLayout         oldLayout,
+            vk::ImageLayout         newLayout,
+            vk::AccessFlags2        srcAccess,
+            vk::AccessFlags2        dstAccess,
+            vk::PipelineStageFlags2 srcStage,
+            vk::PipelineStageFlags2 dstStage);
+
         // Getters for Vulkan* classes (Not declared in IGraphicsDevice)
         uint32_t GetFrameIndex();
         vk::raii::DescriptorPool& GetDescriptorPool();
@@ -81,15 +92,6 @@ namespace Engine {
 
         // Utility
         [[nodiscard]] vk::raii::ShaderModule CreateShaderModule(const std::vector<char>& code) const;
-        void TransitionImageLayout(
-            vk::raii::CommandBuffer& cmd,
-            uint32_t imageIndex,
-            vk::ImageLayout         old_layout,
-            vk::ImageLayout         new_layout,
-            vk::AccessFlags2        src_access_mask,
-            vk::AccessFlags2        dst_access_mask,
-            vk::PipelineStageFlags2 src_stage_mask,
-            vk::PipelineStageFlags2 dst_stage_mask);
 
         // Frame info
         uint32_t m_FrameIndex;
