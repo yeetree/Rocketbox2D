@@ -3,6 +3,7 @@
 #include "Engine/Core/Log.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <algorithm>
 
 // Quad data
 const float quadVerts[] = {
