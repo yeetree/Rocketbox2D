@@ -61,8 +61,9 @@ namespace Engine {
 
         // Vulkan-Specific
 
-        // Helper function for VulkanBuffer
-        void StageBufferUploadData(VulkanBuffer* dstBuffer, const void* data, size_t size, size_t dstOffset);
+        // Public helper function to begin/end one time command buffers
+        vk::raii::CommandBuffer BeginOneTimeCommands();
+        void EndOneTimeCommands(vk::raii::CommandBuffer& commandBuffer);
 
         // Getters for Vulkan* classes (Not declared in IGraphicsDevice)
         uint32_t GetFrameIndex();

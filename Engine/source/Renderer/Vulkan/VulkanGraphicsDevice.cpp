@@ -119,40 +119,6 @@ namespace Engine {
         return CreateScope<VulkanPipelineState>(this, desc);
     }
 
-    void VulkanGraphicsDevice::StageBufferUploadData(VulkanBuffer* dstBuffer, const void* data, size_t size, size_t dstOffset) {
-        // Create the staging buffer
-        BufferDesc stagingDesc;
-        stagingDesc.size = size;
-        stagingDesc.type = BufferType::Vertex;
-        stagingDesc.isDynamic = true; // map memory
-        stagingDesc.data = data; 
-        VulkanBuffer stagingBuffer(this, stagingDesc);
-
-        // Setup a command buffer to transfer
-        vk::CommandBufferAllocateInfo allocInfo(*m_Device->GetCommandPool(), vk::CommandBufferLevel::ePrimary, 1);
-        vk::raii::CommandBuffers cmds(m_Device->GetDevice(), allocInfo);
-        vk::raii::CommandBuffer& cmd = cmds[0];
-
-        cmd.begin({ vk::CommandBufferUsageFlagBits::eOneTimeSubmit });
-
-        // Copy
-        vk::BufferCopy copyRegion(0, dstOffset, size);
-        cmd.copyBuffer(
-            static_cast<vk::Buffer>(stagingBuffer.m_Buffer), 
-            static_cast<vk::Buffer>(dstBuffer->m_Buffer), 
-            copyRegion
-        );
-        cmd.end();
-
-        // Submit and wait
-        vk::SubmitInfo submit;
-        submit.commandBufferCount = 1;
-        submit.pCommandBuffers = &*cmd;
-        
-        m_Device->GetQueue().submit(submit);
-        m_Device->GetQueue().waitIdle(); 
-    }
-
     // Frame Management
     void VulkanGraphicsDevice::BeginFrame() {    
         // Get frame
@@ -273,6 +239,30 @@ namespace Engine {
 
     void VulkanGraphicsDevice::SetClearColor(Vec4 color) {
 
+    }
+
+    vk::raii::CommandBuffer VulkanGraphicsDevice::BeginOneTimeCommands() {
+        vk::CommandBufferAllocateInfo allocInfo;
+        allocInfo.commandPool = m_Device->GetCommandPool();
+        allocInfo.level = vk::CommandBufferLevel::ePrimary;
+        allocInfo.commandBufferCount = 1;
+        vk::raii::CommandBuffer commandBuffer = std::move(m_Device->GetDevice().allocateCommandBuffers(allocInfo).front());
+
+        vk::CommandBufferBeginInfo beginInfo;
+        beginInfo.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
+        commandBuffer.begin(beginInfo);
+
+        return commandBuffer;
+    }
+
+    void VulkanGraphicsDevice::EndOneTimeCommands(vk::raii::CommandBuffer& commandBuffer) {
+        commandBuffer.end();
+
+        vk::SubmitInfo submitInfo;
+        submitInfo.commandBufferCount = 1;
+        submitInfo.pCommandBuffers = &*commandBuffer;
+        m_Device->GetQueue().submit(submitInfo, nullptr);
+        m_Device->GetQueue().waitIdle();
     }
 
     void VulkanGraphicsDevice::BindPipelineState(IPipelineState& pipeline) {

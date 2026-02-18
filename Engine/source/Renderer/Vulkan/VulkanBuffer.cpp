@@ -56,7 +56,25 @@ namespace Engine {
         if (m_IsHostVisible) {
             memcpy((uint8_t*)m_MappedPtr + offset, data, size);
         } else {
-            m_GraphicsDevice->StageBufferUploadData(this, data, size, offset);
+            // Create the staging buffer
+            BufferDesc stagingDesc;
+            stagingDesc.size = size;
+            stagingDesc.type = BufferType::Vertex;
+            stagingDesc.isDynamic = true; // map memory
+            stagingDesc.data = data; 
+            VulkanBuffer stagingBuffer(m_GraphicsDevice, stagingDesc);
+
+            // Copy
+            vk::raii::CommandBuffer cmd = m_GraphicsDevice->BeginOneTimeCommands();
+
+            vk::BufferCopy copyRegion(0, offset, size);
+            cmd.copyBuffer(
+                static_cast<vk::Buffer>(stagingBuffer.m_Buffer), 
+                static_cast<vk::Buffer>(m_Buffer), 
+                copyRegion
+            );
+
+            m_GraphicsDevice->EndOneTimeCommands(cmd);
         }
     }
 
