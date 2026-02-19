@@ -1,6 +1,8 @@
 #ifndef ENGINE_RENDERER_RHI_IUNIFORMBUFFER
 #define ENGINE_RENDERER_RHI_IUNIFORMBUFFER
 
+#include "engine_export.h"
+
 #include <cstddef>
 #include <cstdint>
 
@@ -14,7 +16,7 @@ namespace Engine
 
     // Very similar to IBuffer, but separate object for simplicity
     // (Vulkan is holding me at gunpoint)
-    class IUniformBuffer {
+    class ENGINE_EXPORT IUniformBuffer {
     public:
         virtual ~IUniformBuffer() = default;
 

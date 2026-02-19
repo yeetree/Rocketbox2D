@@ -1,11 +1,11 @@
-#include "Renderer/Vulkan/VulkanGraphicsDevice.h"
+#include "Renderer/Vulkan/RHI/VulkanGraphicsDevice.h"
 #include "Engine/Core/Log.h"
 #include "Engine/Core/FileSystem.h"
-#include "Renderer/Vulkan/VulkanPipelineState.h"
-#include "Renderer/Vulkan/VulkanShader.h"
-#include "Renderer/Vulkan/VulkanBuffer.h"
-#include "Renderer/Vulkan/VulkanUniformBuffer.h"
-#include "Renderer/Vulkan/VulkanTexture.h"
+#include "Renderer/Vulkan/RHI/VulkanBuffer.h"
+#include "Renderer/Vulkan/RHI/VulkanPipelineState.h"
+#include "Renderer/Vulkan/RHI/VulkanShader.h"
+#include "Renderer/Vulkan/RHI/VulkanUniformBuffer.h"
+#include "Renderer/Vulkan/RHI/VulkanTexture.h"
 #include <SDL3/SDL_vulkan.h>
 
 namespace Engine {
@@ -66,16 +66,6 @@ namespace Engine {
         // Actually we kill m_Swapchain NOW
         m_Swapchain.reset();
     };
-
-    // Utility
-
-    [[nodiscard]] vk::raii::ShaderModule VulkanGraphicsDevice::CreateShaderModule(const std::vector<char>& code) const {
-        vk::ShaderModuleCreateInfo createInfo;
-        createInfo.codeSize = code.size() * sizeof(char);
-        createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
-        vk::raii::ShaderModule shaderModule{ m_Device->GetDevice(), createInfo };
-        return shaderModule;
-    }
 
     void VulkanGraphicsDevice::TransitionImageLayout(
         vk::raii::CommandBuffer& cmd,
@@ -226,7 +216,7 @@ namespace Engine {
         submitInfo.commandBufferCount = 1;
         submitInfo.pCommandBuffers = &*cmd;
         submitInfo.signalSemaphoreCount = 1;
-        submitInfo.pSignalSemaphores = &*m_Swapchain->GetRenderFinishedSemaphore(m_ImageIndex);
+        submitInfo.pSignalSemaphores = &*m_Swapchain->GetRenderFinishedSemaphore(m_FrameIndex);
 
         // Submit to the queue (which should be a getter in m_Device)
         m_Device->GetQueue().submit(submitInfo, *frame.GetInFlightFence());
@@ -237,7 +227,7 @@ namespace Engine {
 
         vk::PresentInfoKHR presentInfo;
         presentInfo.waitSemaphoreCount = 1;
-        presentInfo.pWaitSemaphores = &*m_Swapchain->GetRenderFinishedSemaphore(m_ImageIndex);
+        presentInfo.pWaitSemaphores = &*m_Swapchain->GetRenderFinishedSemaphore(m_FrameIndex);
         presentInfo.swapchainCount = 1;
         presentInfo.pSwapchains = &*m_Swapchain->GetSwapchain();
         presentInfo.pImageIndices = &m_ImageIndex;
@@ -292,7 +282,7 @@ namespace Engine {
     // Draw call
     void VulkanGraphicsDevice::SubmitDraw(IBuffer& vbo, IBuffer& ebo, uint32_t indexCount) {
         if (!m_CurrentPipelineState) {
-            LOG_CORE_ERROR("Vulkan: Attempted to draw without a bound Pipeline State!");
+            LOG_CORE_WARN("Vulkan: Attempted to draw without a bound Pipeline State!");
             return;
         }
         
@@ -300,10 +290,10 @@ namespace Engine {
         auto& cmd = frame.GetCommandBuffer();
 
         VulkanBuffer* vertexBuffer = static_cast<VulkanBuffer*>(&vbo);
-        cmd.bindVertexBuffers(0, { static_cast<vk::Buffer>(vertexBuffer->m_Buffer) }, {0});
+        cmd.bindVertexBuffers(0, { static_cast<vk::Buffer>(vertexBuffer->GetBuffer()) }, {0});
 	
         VulkanBuffer* indexBuffer = static_cast<VulkanBuffer*>(&ebo);
-        cmd.bindIndexBuffer(static_cast<vk::Buffer>(indexBuffer->m_Buffer), 0, vk::IndexType::eUint16);
+        cmd.bindIndexBuffer(static_cast<vk::Buffer>(indexBuffer->GetBuffer()), 0, vk::IndexType::eUint16);
         
         cmd.drawIndexed(indexCount, 1, 0, 0, 0);
     }
@@ -311,7 +301,7 @@ namespace Engine {
     // Push constants
     void VulkanGraphicsDevice::PushConstants(const void* data, uint32_t size) {
         if (!m_CurrentPipelineState) {
-            LOG_CORE_ERROR("Vulkan: Attempted to push constants without a bound Pipeline State!");
+            LOG_CORE_WARN("Vulkan: Attempted to push constants without a bound Pipeline State!");
             return;
         }
 
@@ -329,7 +319,7 @@ namespace Engine {
     // Bind uniform buffer
     void VulkanGraphicsDevice::BindUniformBuffer(IUniformBuffer& buffer, uint32_t binding) {
         if (!m_CurrentPipelineState) {
-            LOG_CORE_ERROR("Vulkan: Attempted to bind uniform buffer without a bound Pipeline State!");
+            LOG_CORE_WARN("Vulkan: Attempted to bind uniform buffer without a bound Pipeline State!");
             return;
         }
         
@@ -351,7 +341,7 @@ namespace Engine {
     // Bind texture
     void VulkanGraphicsDevice::BindTexture(ITexture& texture, uint32_t slot) {
         if (!m_CurrentPipelineState) {
-            LOG_CORE_ERROR("Vulkan: Attempted to bind texture without a bound Pipeline State!");
+            LOG_CORE_WARN("Vulkan: Attempted to bind texture without a bound Pipeline State!");
             return;
         }
 
@@ -394,6 +384,18 @@ namespace Engine {
 
     vk::DescriptorSetLayout VulkanGraphicsDevice::GetTextureDescriptorSetLayout() {
         return *m_TextureLayout;
+    }
+
+    VulkanContext& VulkanGraphicsDevice::GetContext() {
+        return *m_Context;
+    }
+
+    VulkanDevice& VulkanGraphicsDevice::GetDevice() {
+        return *m_Device;
+    }
+
+    VulkanSwapchain& VulkanGraphicsDevice::GetSwapchain() {
+        return *m_Swapchain;
     }
 
 } // namespace Engine

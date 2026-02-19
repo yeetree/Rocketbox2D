@@ -1,5 +1,5 @@
-#ifndef RENDERER_VULKAN_VULKANBUFFER
-#define RENDERER_VULKAN_VULKANBUFFER
+#ifndef RENDERER_VULKAN_RHI_VULKANBUFFER
+#define RENDERER_VULKAN_RHI_VULKANBUFFER
 
 #include <vulkan/vulkan_raii.hpp>
 #include <vk_mem_alloc.h>
@@ -17,11 +17,14 @@ namespace Engine {
 
         void UpdateData(const void* data, size_t size, size_t offset) override;
 
-        // Handles
+        // Public getters for VulkanGraphicsDevice
+        VkBuffer& GetBuffer();
+
+    private:
+        // VMA members
         VkBuffer m_Buffer = VK_NULL_HANDLE;
         VmaAllocation m_Allocation = VK_NULL_HANDLE;
 
-    private:
         VulkanGraphicsDevice* m_GraphicsDevice;
         bool m_IsHostVisible;
         void* m_MappedPtr = nullptr;
@@ -30,4 +33,4 @@ namespace Engine {
     };
 } // namespace Engine
 
-#endif // RENDERER_VULKAN_VULKANBUFFER
+#endif // RENDERER_VULKAN_RHI_VULKANBUFFER

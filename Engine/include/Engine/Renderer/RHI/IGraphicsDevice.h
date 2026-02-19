@@ -28,11 +28,11 @@ namespace Engine {
         virtual ~IGraphicsDevice() = default;
 
         // Resource creation
-        virtual Scope<IBuffer>      CreateBuffer(const BufferDesc& desc) = 0;
-        virtual Scope<IUniformBuffer> CreateUniformBuffer(const UniformBufferDesc& desc) = 0;
-        virtual Scope<ITexture>     CreateTexture(const TextureDesc& desc) = 0;
-        virtual Scope<IShader>      CreateShader(const ShaderDesc& desc) = 0;
-        virtual Scope<IVertexArray> CreateVertexArray(const VertexArrayDesc& desc) = 0;
+        virtual Scope<IBuffer>          CreateBuffer(const BufferDesc& desc) = 0;
+        virtual Scope<IUniformBuffer>   CreateUniformBuffer(const UniformBufferDesc& desc) = 0;
+        virtual Scope<ITexture>         CreateTexture(const TextureDesc& desc) = 0;
+        virtual Scope<IShader>          CreateShader(const ShaderDesc& desc) = 0;
+        virtual Scope<IVertexArray>     CreateVertexArray(const VertexArrayDesc& desc) = 0;
         
         // Pipeline creation
         virtual Scope<IPipelineState> CreatePipelineState(const PipelineDesc& desc) = 0;

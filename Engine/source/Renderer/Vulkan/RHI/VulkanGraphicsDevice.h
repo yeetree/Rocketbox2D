@@ -76,18 +76,18 @@ namespace Engine {
         vk::raii::DescriptorPool& GetDescriptorPool();
         vk::DescriptorSetLayout GetUBODescriptorSetLayout();
         vk::DescriptorSetLayout GetTextureDescriptorSetLayout();
-        
-        // Public So Vulkan* classes can access them (move to getters soon!)
-        Scope<VulkanContext> m_Context;
-        Scope<VulkanDevice> m_Device;
-        Scope<VulkanSwapchain> m_Swapchain;
+        VulkanContext& GetContext();
+        VulkanDevice& GetDevice();
+        VulkanSwapchain& GetSwapchain();
 
     private:
         // Gives GraphicsDevice chance to finish work before app can destroy
         void OnDestroy() override;
 
-        // Utility
-        [[nodiscard]] vk::raii::ShaderModule CreateShaderModule(const std::vector<char>& code) const;
+        // Vulkan state
+        Scope<VulkanContext> m_Context;
+        Scope<VulkanDevice> m_Device;
+        Scope<VulkanSwapchain> m_Swapchain;
 
         // Frame info
         uint32_t m_FrameIndex;

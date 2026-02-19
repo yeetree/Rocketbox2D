@@ -1,6 +1,8 @@
 #ifndef ENGINE_RENDERER_IPIPELINESTATE
 #define ENGINE_RENDERER_IPIPELINESTATE
 
+#include "engine_export.h"
+
 #include "Engine/Renderer/RHI/IShader.h"
 #include "Engine/Renderer/RHI/IBuffer.h"
 #include "Engine/Renderer/RHI/VertexLayout.h"
@@ -18,7 +20,7 @@ namespace Engine {
     // Describes how a Pipeline State Object should be created
     struct PipelineDesc {
         IShader* shader = nullptr;  // Shader to be used with pipeline
-        VertexLayout layout;        // Vertex attributes
+        VertexLayout layout;        // Vertex attributes (VertexLayout has an empty default constructor)
 
         // Uniform buffers, textures and push constants
         size_t numUniformBuffers = 0;
@@ -37,7 +39,7 @@ namespace Engine {
     };
 
     // Pipeline State Object
-    class IPipelineState {
+    class ENGINE_EXPORT IPipelineState {
     public:
         IPipelineState() {
             static uint32_t nextID = 1;

@@ -23,7 +23,7 @@ namespace Engine {
     };
 
     // Texture
-    class ITexture {
+    class ENGINE_EXPORT ITexture {
     public:
         ITexture() {
             static uint32_t nextID = 1;

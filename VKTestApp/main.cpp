@@ -41,12 +41,17 @@ public:
     UniformData uni;
 
     void OnStart() override {
-       std::vector<char> shaderCode = Engine::FileSystem::ReadFile(FileSystem::GetAbsolutePath("./shaders/slang.spv"));
+        std::vector<uint32_t> shaderCode = Engine::FileSystem::ReadSPV(FileSystem::GetAbsolutePath("./shaders/slang.spv"));
         ShaderDesc shaderDesc;
-        shaderDesc.stages[ShaderStage::Vertex].byteCode = shaderCode;
-        shaderDesc.stages[ShaderStage::Vertex].entryPoint = "vertMain";
-        shaderDesc.stages[ShaderStage::Fragment].byteCode = shaderCode;
-        shaderDesc.stages[ShaderStage::Fragment].entryPoint = "fragMain";
+        shaderDesc.modules = {
+            ShaderModule{
+                .byteCode = shaderCode,
+                .entryPoints = {
+                    { ShaderStage::Vertex, "vertMain" },
+                    { ShaderStage::Fragment, "fragMain" }
+                }
+            } 
+        };
         
         m_Shader = GetGraphicsDevice().CreateShader(shaderDesc);
 

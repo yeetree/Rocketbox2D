@@ -13,6 +13,7 @@ namespace Engine
     public:
         static void SetBasePath(const char* basePath);
         static std::vector<char> ReadFile(const std::string &path);
+        static std::vector<uint32_t> ReadSPV(const std::string &path);
         static bool Exists(const std::string &path);
         static std::string GetAbsolutePath(const std::string& relativePath);
     private:

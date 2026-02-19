@@ -39,7 +39,7 @@ void VulkanContext::CreateInstance() {
         VK_MAKE_VERSION( 1, 0, 0 ),
         "Engine",
         VK_MAKE_VERSION( 1, 0, 0 ),
-        vk::ApiVersion14
+        vk::ApiVersion13
     );
 
     // Get the required layers
@@ -148,6 +148,9 @@ void VulkanContext::PickPhysicalDevice() {
                 found = found &&  extensionIter != extensions.end();
             }
             isSuitable = isSuitable && found;
+            uint32_t queueFamilyIndex = static_cast<uint32_t>(std::distance(queueFamilies.begin(), qfpIter));
+            bool presentSupport = device.getSurfaceSupportKHR(queueFamilyIndex, *m_Surface);
+            isSuitable = isSuitable && presentSupport;
             if (isSuitable) {
                 m_PhysicalDevice = device;
             }

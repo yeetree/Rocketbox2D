@@ -126,7 +126,8 @@ void VulkanDevice::CreateAllocator(VulkanContext& context) {
     vulkanFunctions.vkCreateImage                       = (PFN_vkCreateImage)m_Device.getProcAddr("vkCreateImage");
     vulkanFunctions.vkDestroyImage                      = (PFN_vkDestroyImage)m_Device.getProcAddr("vkDestroyImage");
     vulkanFunctions.vkCmdCopyBuffer                     = (PFN_vkCmdCopyBuffer)m_Device.getProcAddr("vkCmdCopyBuffer");
-    
+    vulkanFunctions.vkGetDeviceBufferMemoryRequirements = (PFN_vkGetDeviceBufferMemoryRequirements)m_Device.getProcAddr("vkGetDeviceBufferMemoryRequirements");
+    vulkanFunctions.vkGetDeviceImageMemoryRequirements = (PFN_vkGetDeviceImageMemoryRequirements)m_Device.getProcAddr("vkGetDeviceImageMemoryRequirements");
     vulkanFunctions.vkGetBufferMemoryRequirements2KHR = (PFN_vkGetBufferMemoryRequirements2)m_Device.getProcAddr("vkGetBufferMemoryRequirements2");
     vulkanFunctions.vkGetImageMemoryRequirements2KHR  = (PFN_vkGetImageMemoryRequirements2)m_Device.getProcAddr("vkGetImageMemoryRequirements2");
     vulkanFunctions.vkBindBufferMemory2KHR            = (PFN_vkBindBufferMemory2)m_Device.getProcAddr("vkBindBufferMemory2");

@@ -14,11 +14,10 @@ const std::array<char const*, 1> k_ValidationLayers = {
     "VK_LAYER_KHRONOS_validation"
 };
 
-const std::array<const char*, 4> k_DeviceExtensions = {
+const std::array<const char*, 3> k_DeviceExtensions = {
     vk::KHRSwapchainExtensionName,
     vk::KHRSpirv14ExtensionName,
     vk::KHRSynchronization2ExtensionName,
-    vk::KHRCreateRenderpass2ExtensionName
 };
 
 const int k_MaxFramesInFlight = 3;

@@ -1,5 +1,5 @@
-#ifndef RENDERER_VULKAN_VULKANTEXTURE
-#define RENDERER_VULKAN_VULKANTEXTURE
+#ifndef RENDERER_VULKAN_RHI_VULKANTEXTURE
+#define RENDERER_VULKAN_RHI_VULKANTEXTURE
 
 #include <vulkan/vulkan_raii.hpp>
 #include <vk_mem_alloc.h>
@@ -41,4 +41,4 @@ namespace Engine
 } // namespace Engine
 
 
-#endif // RENDERER_VULKAN_VULKANTEXTURE
+#endif // RENDERER_VULKAN_RHI_VULKANTEXTURE

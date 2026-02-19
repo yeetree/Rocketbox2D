@@ -18,15 +18,14 @@ namespace Engine {
     // What shader stage the current source is
     enum class ShaderStage { Vertex, Fragment, Geometry };
 
-    struct ShaderModuleBlob {
-        std::vector<char> byteCode;
-        std::string entryPoint = "main";
+    struct ShaderModule {
+        std::vector<uint32_t> byteCode;                 // Contains an entire shader module blob
+        std::map<ShaderStage, std::string> entryPoints; // Maps shaderstage to string which is used as an entrypoint
+                                                        // compiles only what stages are specified
     };
 
     struct ShaderDesc {
-        // Map ShaderStage to string (expects source code)
-        // Only compiles what ShaderStages are specified
-        std::map<ShaderStage, ShaderModuleBlob> stages;
+        std::vector<ShaderModule> modules;
     };
 
     class ENGINE_EXPORT IShader {

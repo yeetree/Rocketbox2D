@@ -1,5 +1,5 @@
-#ifndef ENGINE_RENDERER_VERTEXLAYOUT
-#define ENGINE_RENDERER_VERTEXLAYOUT
+#ifndef ENGINE_RENDERER_RHI_VERTEXLAYOUT
+#define ENGINE_RENDERER_RHI_VERTEXLAYOUT
 
 #include "engine_export.h"
 
@@ -13,11 +13,11 @@ namespace Engine {
 
     // Describes a vertex element
     struct ENGINE_EXPORT VertexElement {
-        std::string name;
+        std::string name = "";
         VertexElementType type;
         uint32_t size = 0;      // Trust me, uint32_t makes sense here. (Vulkan is holding me at gunpoint)
         uint32_t offset = 0;
-        bool normalized;
+        bool normalized = false;
 
         VertexElement(VertexElementType type, const std::string& name);
     };
@@ -40,4 +40,4 @@ namespace Engine {
     };
 }
 
-#endif // ENGINE_RENDERER_VERTEXLAYOUT
+#endif // ENGINE_RENDERER_RHI_VERTEXLAYOUT

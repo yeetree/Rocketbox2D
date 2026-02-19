@@ -1,7 +1,10 @@
 #ifndef ENGINE_RENDERER_RHI_IVERTEXARRAY
 #define ENGINE_RENDERER_RHI_IVERTEXARRAY
 
+#include "engine_export.h"
+
 #include <cstdint>
+
 #include "Engine/Core/Base.h"
 #include "Engine/Renderer/RHI/IBuffer.h"
 #include "Engine/Renderer/RHI/VertexLayout.h"
@@ -15,7 +18,7 @@ namespace Engine
         VertexLayout layout;
     };
 
-    class IVertexArray {
+    class ENGINE_EXPORT IVertexArray {
     public:
         IVertexArray() {
             static uint32_t nextID = 1;

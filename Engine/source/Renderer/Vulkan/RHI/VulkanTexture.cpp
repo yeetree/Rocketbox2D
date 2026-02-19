@@ -1,12 +1,15 @@
-#include "Renderer/Vulkan/VulkanTexture.h"
-#include "Renderer/Vulkan/VulkanGraphicsDevice.h"
-#include "Renderer/Vulkan/VulkanBuffer.h"
+#include "Renderer/Vulkan/RHI/VulkanTexture.h"
+#include "Renderer/Vulkan/RHI/VulkanGraphicsDevice.h"
+#include "Renderer/Vulkan/RHI/VulkanBuffer.h"
+#include "Engine/Core/Assert.h"
 
 namespace Engine
 {
     VulkanTexture::VulkanTexture(VulkanGraphicsDevice* graphicsDevice, const TextureDesc& desc) 
         : m_GraphicsDevice(graphicsDevice), m_Width(desc.width), m_Height(desc.height), m_Format(desc.format)
     {
+        ENGINE_CORE_ASSERT(graphicsDevice != nullptr, "Vulkan: invalid graphics device when creating texture!");
+
         // Create image
         VkImageCreateInfo imageInfo = { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
         imageInfo.imageType = VK_IMAGE_TYPE_2D;
@@ -25,7 +28,7 @@ namespace Engine
         allocInfo.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
         
         vmaCreateImage(
-            m_GraphicsDevice->m_Device->GetAllocator(), 
+            m_GraphicsDevice->GetDevice().GetAllocator(), 
             &imageInfo, 
             &allocInfo, 
             &m_Image, 
@@ -44,7 +47,7 @@ namespace Engine
         viewInfo.subresourceRange.baseArrayLayer = 0;
         viewInfo.subresourceRange.layerCount = 1;
 
-        m_ImageView = vk::raii::ImageView(m_GraphicsDevice->m_Device->GetDevice(), viewInfo);
+        m_ImageView = vk::raii::ImageView(m_GraphicsDevice->GetDevice().GetDevice(), viewInfo);
 
         // Create sampler
         // Hardcoded: linear sampling, repeat
@@ -60,64 +63,67 @@ namespace Engine
         samplerInfo.compareEnable = vk::False;
         samplerInfo.mipmapMode = vk::SamplerMipmapMode::eLinear;
 
-        m_Sampler = vk::raii::Sampler(m_GraphicsDevice->m_Device->GetDevice(), samplerInfo);
+        m_Sampler = vk::raii::Sampler(m_GraphicsDevice->GetDevice().GetDevice(), samplerInfo);
 
         // Upload data
-        // Create the staging buffer
-        BufferDesc stagingDesc;
-        stagingDesc.size = m_Width * m_Height * 4; // RGBA8
-        stagingDesc.type = BufferType::Vertex;  // Generic memory type
-        stagingDesc.isDynamic = true; // map memory
-        stagingDesc.data = desc.data; // upload pixel data 
-        VulkanBuffer stagingBuffer(m_GraphicsDevice, stagingDesc);
 
-        // Copy
-        vk::raii::CommandBuffer cmd = m_GraphicsDevice->BeginOneTimeCommands();
+        if(desc.data != nullptr) {
+            // Create the staging buffer
+            BufferDesc stagingDesc;
+            stagingDesc.size = m_Width * m_Height * 4; // RGBA8
+            stagingDesc.type = BufferType::Vertex;  // Generic memory type
+            stagingDesc.isDynamic = true; // map memory
+            stagingDesc.data = desc.data; // upload pixel data 
+            VulkanBuffer stagingBuffer(m_GraphicsDevice, stagingDesc);
 
-        // undefined -> transferdstoptimal
-        m_GraphicsDevice->TransitionImageLayout(
-            cmd,
-            m_Image, 
-            vk::ImageLayout::eUndefined, 
-            vk::ImageLayout::eTransferDstOptimal,
-            vk::AccessFlagBits2::eNone,                   // src access
-            vk::AccessFlagBits2::eTransferWrite,          // dst access
-            vk::PipelineStageFlagBits2::eTopOfPipe,       // src stage
-            vk::PipelineStageFlagBits2::eTransfer         // dst stage
-        );
+            // Copy
+            vk::raii::CommandBuffer cmd = m_GraphicsDevice->BeginOneTimeCommands();
 
-        // copy buffer to image
-        vk::BufferImageCopy region{};
-        region.bufferOffset = 0;
-        region.bufferRowLength = 0;
-        region.bufferImageHeight = 0;
-        region.imageSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
-        region.imageSubresource.mipLevel = 0;
-        region.imageSubresource.baseArrayLayer = 0;
-        region.imageSubresource.layerCount = 1;
-        region.imageOffset = vk::Offset3D{0, 0, 0};
-        region.imageExtent = vk::Extent3D{ m_Width, m_Height, 1 };
+            // undefined -> transferdstoptimal
+            m_GraphicsDevice->TransitionImageLayout(
+                cmd,
+                m_Image, 
+                vk::ImageLayout::eUndefined, 
+                vk::ImageLayout::eTransferDstOptimal,
+                vk::AccessFlagBits2::eNone,                   // src access
+                vk::AccessFlagBits2::eTransferWrite,          // dst access
+                vk::PipelineStageFlagBits2::eTopOfPipe,       // src stage
+                vk::PipelineStageFlagBits2::eTransfer         // dst stage
+            );
 
-        cmd.copyBufferToImage(
-            static_cast<vk::Buffer>(stagingBuffer.m_Buffer),
-            m_Image,
-            vk::ImageLayout::eTransferDstOptimal,
-            region
-        );
+            // copy buffer to image
+            vk::BufferImageCopy region{};
+            region.bufferOffset = 0;
+            region.bufferRowLength = 0;
+            region.bufferImageHeight = 0;
+            region.imageSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
+            region.imageSubresource.mipLevel = 0;
+            region.imageSubresource.baseArrayLayer = 0;
+            region.imageSubresource.layerCount = 1;
+            region.imageOffset = vk::Offset3D{0, 0, 0};
+            region.imageExtent = vk::Extent3D{ m_Width, m_Height, 1 };
 
-        // transferdstoptimal -> shaderread
-        m_GraphicsDevice->TransitionImageLayout(
-            cmd,
-            m_Image, 
-            vk::ImageLayout::eTransferDstOptimal, 
-            vk::ImageLayout::eShaderReadOnlyOptimal,
-            vk::AccessFlagBits2::eTransferWrite,          // src access
-            vk::AccessFlagBits2::eShaderRead,             // dst access
-            vk::PipelineStageFlagBits2::eTransfer,        // src stage
-            vk::PipelineStageFlagBits2::eFragmentShader   // dst stage
-        );
+            cmd.copyBufferToImage(
+                static_cast<vk::Buffer>(stagingBuffer.GetBuffer()),
+                m_Image,
+                vk::ImageLayout::eTransferDstOptimal,
+                region
+            );
 
-        m_GraphicsDevice->EndOneTimeCommands(cmd);
+            // transferdstoptimal -> shaderread
+            m_GraphicsDevice->TransitionImageLayout(
+                cmd,
+                m_Image, 
+                vk::ImageLayout::eTransferDstOptimal, 
+                vk::ImageLayout::eShaderReadOnlyOptimal,
+                vk::AccessFlagBits2::eTransferWrite,          // src access
+                vk::AccessFlagBits2::eShaderRead,             // dst access
+                vk::PipelineStageFlagBits2::eTransfer,        // src stage
+                vk::PipelineStageFlagBits2::eFragmentShader   // dst stage
+            );
+
+            m_GraphicsDevice->EndOneTimeCommands(cmd);
+        }
 
         // Create and descriptor set
         vk::DescriptorSetLayout layout = m_GraphicsDevice->GetTextureDescriptorSetLayout();
@@ -127,7 +133,7 @@ namespace Engine
         dsAllocInfo.descriptorSetCount = 1;
         dsAllocInfo.pSetLayouts = &layout;
 
-        auto sets = m_GraphicsDevice->m_Device->GetDevice().allocateDescriptorSets(dsAllocInfo);
+        auto sets = m_GraphicsDevice->GetDevice().GetDevice().allocateDescriptorSets(dsAllocInfo);
         m_DescriptorSet = std::move(sets.front());
 
         // Update set for image view and sampler
@@ -143,12 +149,12 @@ namespace Engine
         descriptorWrite.descriptorCount = 1;
         descriptorWrite.pImageInfo = &imageInfoDescriptor;
 
-        m_GraphicsDevice->m_Device->GetDevice().updateDescriptorSets(descriptorWrite, nullptr);
+        m_GraphicsDevice->GetDevice().GetDevice().updateDescriptorSets(descriptorWrite, nullptr);
     }
 
     VulkanTexture::~VulkanTexture() {
         if (m_Image) {
-            vmaDestroyImage(m_GraphicsDevice->m_Device->GetAllocator(), m_Image, m_Allocation);
+            vmaDestroyImage(m_GraphicsDevice->GetDevice().GetAllocator(), m_Image, m_Allocation);
         }
     }
 

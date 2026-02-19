@@ -1,6 +1,8 @@
 #ifndef ENGINE_RENDERER_RHI_IBUFFER
 #define ENGINE_RENDERER_RHI_IBUFFER
 
+#include "engine_export.h"
+
 #include <cstddef>
 #include <cstdint>
 
@@ -19,7 +21,7 @@ namespace Engine {
     };
 
     // Buffer
-    class IBuffer {
+    class ENGINE_EXPORT IBuffer {
     public:
         virtual ~IBuffer() = default;
 

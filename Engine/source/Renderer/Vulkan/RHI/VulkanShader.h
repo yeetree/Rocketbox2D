@@ -13,12 +13,15 @@ namespace Engine {
         VulkanShader(VulkanGraphicsDevice* graphicsDevice, const ShaderDesc& desc);
         ~VulkanShader() override;
 
+        // Public getters for VulkanPipelineState
+        std::map<ShaderStage, std::pair<std::string, std::shared_ptr<vk::raii::ShaderModule>>>& GetStages();
+
+    private:
         // Stage to name + module
         std::map<ShaderStage, std::pair<std::string, std::shared_ptr<vk::raii::ShaderModule>>> m_Stages;
 
-    private:
         // Creates shader module from bytecode
-        [[nodiscard]] vk::raii::ShaderModule CreateShaderModule(const vk::raii::Device& device, const std::vector<char>& code) const;
+        [[nodiscard]] vk::raii::ShaderModule CreateShaderModule(const vk::raii::Device& device, const std::vector<uint32_t>& code) const;
     };
 } // namespace Engine
 

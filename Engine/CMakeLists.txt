@@ -11,7 +11,7 @@ add_library(Engine SHARED ${ENGINE_SOURCES})
 add_library(Engine::Engine ALIAS Engine)
 
 target_compile_definitions(Engine 
-    PUBLIC VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1
+    PUBLIC VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1 ENGINE_DEBUG=1
 )
 
 target_include_directories(Engine

@@ -1,17 +1,26 @@
-#include "Renderer/Vulkan/VulkanPipelineState.h"
-#include "Renderer/Vulkan/VulkanShader.h"
-#include "Renderer/Vulkan/VulkanGraphicsDevice.h"
+#include "Renderer/Vulkan/RHI/VulkanPipelineState.h"
+#include "Renderer/Vulkan/RHI/VulkanShader.h"
+#include "Renderer/Vulkan/RHI/VulkanGraphicsDevice.h"
 #include "Engine/Core/Log.h"
+#include "Engine/Core/Assert.h"
 
 namespace Engine
 {
     VulkanPipelineState::VulkanPipelineState(VulkanGraphicsDevice* graphicsDevice, const PipelineDesc& desc) {
+        ENGINE_CORE_ASSERT(graphicsDevice != nullptr, "Vulkan: invalid graphics device when creating pipeline state!");
+
         // Get Vulkan Shader
+
+        if(desc.shader == nullptr) {
+            LOG_CORE_ERROR("Vulkan: Cannot create pipeline state with null shader!");
+            return;
+        }
+
         VulkanShader* shader = static_cast<VulkanShader*>(desc.shader);
 
         // Get shader stages and create PipelineShaderStages
         std::vector<vk::PipelineShaderStageCreateInfo> stages;
-        for(auto const& [stage, blob] : shader->m_Stages) {
+        for(auto const& [stage, blob] : shader->GetStages()) {
             // Blob: Pair: std::string, std::shared_ptr<vk::raii::ShaderModule>
             vk::PipelineShaderStageCreateInfo shaderStageInfo;
             shaderStageInfo.stage = GetVulkanShaderStage(stage);
@@ -103,7 +112,7 @@ namespace Engine
         
 
         // Create pipelime
-        vk::Format colorFormat = graphicsDevice->m_Swapchain->GetSurfaceFormat().format;
+        vk::Format colorFormat = graphicsDevice->GetSwapchain().GetSurfaceFormat().format;
         vk::PipelineRenderingCreateInfo pipelineRenderingCreateInfo{}; 
         pipelineRenderingCreateInfo.colorAttachmentCount = 1;
         pipelineRenderingCreateInfo.pColorAttachmentFormats = &colorFormat;
@@ -123,7 +132,7 @@ namespace Engine
         layoutInfo.pushConstantRangeCount = (desc.pushConstantSize > 0) ? 1 : 0;
         layoutInfo.pPushConstantRanges = (desc.pushConstantSize > 0) ? &pushRange : nullptr;
 
-        m_Layout = vk::raii::PipelineLayout(graphicsDevice->m_Device->GetDevice(), layoutInfo);
+        m_Layout = vk::raii::PipelineLayout(graphicsDevice->GetDevice().GetDevice(), layoutInfo);
 
         vk::GraphicsPipelineCreateInfo pipelineInfo{};
         pipelineInfo.pNext = &pipelineRenderingCreateInfo;
@@ -139,7 +148,7 @@ namespace Engine
         pipelineInfo.layout = m_Layout;
         pipelineInfo.renderPass = nullptr;
 
-        m_Pipeline = graphicsDevice->m_Device->GetDevice().createGraphicsPipeline(nullptr, pipelineInfo);
+        m_Pipeline = graphicsDevice->GetDevice().GetDevice().createGraphicsPipeline(nullptr, pipelineInfo);
     }
 
     VulkanPipelineState::~VulkanPipelineState() {

@@ -1,12 +1,15 @@
-#include "Renderer/Vulkan/VulkanBuffer.h"
-#include "Renderer/Vulkan/VulkanGraphicsDevice.h"
+#include "Renderer/Vulkan/RHI/VulkanBuffer.h"
+#include "Renderer/Vulkan/RHI/VulkanGraphicsDevice.h"
 #include "Engine/Core/Log.h"
+#include "Engine/Core/Assert.h"
 
 namespace Engine {
     VulkanBuffer::VulkanBuffer(VulkanGraphicsDevice* graphicsDevice, const BufferDesc& desc) 
         : m_GraphicsDevice(graphicsDevice), 
           m_IsHostVisible(desc.isDynamic)
     {
+        ENGINE_CORE_ASSERT(graphicsDevice != nullptr, "Vulkan: invalid graphics device when creating buffer!");
+
         VkBufferCreateInfo bufferInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
         bufferInfo.size = desc.size;
         bufferInfo.usage = GetVulkanBufferUsage(desc.type);
@@ -27,7 +30,7 @@ namespace Engine {
 
         VmaAllocationInfo resultInfo;
         vmaCreateBuffer(
-            m_GraphicsDevice->m_Device->GetAllocator(), 
+            m_GraphicsDevice->GetDevice().GetAllocator(), 
             &bufferInfo, 
             &allocInfo, 
             &m_Buffer, 
@@ -40,7 +43,7 @@ namespace Engine {
             m_MappedPtr = resultInfo.pMappedData;
         }
 
-        if (desc.data) {
+        if (desc.data != nullptr) {
             UpdateData(desc.data, desc.size, 0);
         }
     }
@@ -48,11 +51,16 @@ namespace Engine {
     VulkanBuffer::~VulkanBuffer() {
         // VMA doesn't use raii, destroy manually
         if (m_Buffer) {
-            vmaDestroyBuffer(m_GraphicsDevice->m_Device->GetAllocator(), m_Buffer, m_Allocation);
+            vmaDestroyBuffer(m_GraphicsDevice->GetDevice().GetAllocator(), m_Buffer, m_Allocation);
         }
     }
 
     void VulkanBuffer::UpdateData(const void* data, size_t size, size_t offset) {
+        
+        if(!m_Buffer || data == nullptr) {
+            return;
+        }
+        
         if (m_IsHostVisible) {
             memcpy((uint8_t*)m_MappedPtr + offset, data, size);
         } else {
@@ -76,6 +84,10 @@ namespace Engine {
 
             m_GraphicsDevice->EndOneTimeCommands(cmd);
         }
+    }
+
+    VkBuffer& VulkanBuffer::GetBuffer() {
+        return m_Buffer;
     }
 
     VkBufferUsageFlags VulkanBuffer::GetVulkanBufferUsage(BufferType type) {
