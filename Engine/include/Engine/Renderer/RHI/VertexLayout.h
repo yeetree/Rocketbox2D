@@ -15,8 +15,8 @@ namespace Engine {
     struct ENGINE_EXPORT VertexElement {
         std::string name;
         VertexElementType type;
-        uint32_t size;
-        uint32_t offset;
+        uint32_t size = 0;      // Trust me, uint32_t makes sense here. (Vulkan is holding me at gunpoint)
+        uint32_t offset = 0;
         bool normalized;
 
         VertexElement(VertexElementType type, const std::string& name);

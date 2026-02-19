@@ -11,7 +11,9 @@
                 "${workspaceFolder}/vendor/glad/include",
                 "${workspaceFolder}/vendor/SDL/include",
                 "${workspaceFolder}/vendor/spdlog/include",
-                "${VULKAN_SDK}/include"
+                "${VULKAN_SDK}/include",
+                "C:\\VulkanSDK\\1.4.341.1\\Include",
+                "C:/VulkanSDK/1.4.341.1/Include/vma"
             ],
             "defines": [
                 "_DEBUG",
@@ -19,7 +21,7 @@
                 "_UNICODE"
             ],
             "windowsSdkVersion": "10.0.26100.0",
-            "compilerPath": "/usr/bin/gcc",
+            "compilerPath": "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/cl.exe",
             "cStandard": "c23",
             "cppStandard": "c++23",
             "intelliSenseMode": "windows-msvc-x64"

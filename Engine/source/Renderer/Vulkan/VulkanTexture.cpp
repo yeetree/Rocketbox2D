@@ -118,6 +118,32 @@ namespace Engine
         );
 
         m_GraphicsDevice->EndOneTimeCommands(cmd);
+
+        // Create and descriptor set
+        vk::DescriptorSetLayout layout = m_GraphicsDevice->GetTextureDescriptorSetLayout();
+        
+        vk::DescriptorSetAllocateInfo dsAllocInfo; 
+        dsAllocInfo.descriptorPool = *m_GraphicsDevice->GetDescriptorPool();
+        dsAllocInfo.descriptorSetCount = 1;
+        dsAllocInfo.pSetLayouts = &layout;
+
+        auto sets = m_GraphicsDevice->m_Device->GetDevice().allocateDescriptorSets(dsAllocInfo);
+        m_DescriptorSet = std::move(sets.front());
+
+        // Update set for image view and sampler
+        vk::DescriptorImageInfo imageInfoDescriptor{};
+        imageInfoDescriptor.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+        imageInfoDescriptor.imageView = *m_ImageView;
+        imageInfoDescriptor.sampler = *m_Sampler;
+
+        vk::WriteDescriptorSet descriptorWrite{};
+        descriptorWrite.dstSet = *m_DescriptorSet;
+        descriptorWrite.dstBinding = 0;
+        descriptorWrite.descriptorType = vk::DescriptorType::eCombinedImageSampler;
+        descriptorWrite.descriptorCount = 1;
+        descriptorWrite.pImageInfo = &imageInfoDescriptor;
+
+        m_GraphicsDevice->m_Device->GetDevice().updateDescriptorSets(descriptorWrite, nullptr);
     }
 
     VulkanTexture::~VulkanTexture() {
@@ -136,5 +162,9 @@ namespace Engine
 
     TextureFormat VulkanTexture::GetFormat() const {
         return m_Format;
+    }
+
+    vk::DescriptorSet VulkanTexture::GetDescriptorSet() const {
+        return *m_DescriptorSet;
     }
 } // namespace Engine

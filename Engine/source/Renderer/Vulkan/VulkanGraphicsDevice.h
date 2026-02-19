@@ -46,15 +46,10 @@ namespace Engine {
 
         // Bind Pipeline state
         void BindPipelineState(IPipelineState& pipeline) override;
-
-        // Draw call
         void SubmitDraw(IBuffer& vbo, IBuffer& ebo, uint32_t indexCount) override;
-
-        // Push constants
         void PushConstants(const void* data, uint32_t size) override;
-
-        // Bind uniform buffer
         void BindUniformBuffer(IUniformBuffer& buffer, uint32_t binding) override;
+        void BindTexture(ITexture& texture, uint32_t slot) override;
 
         // Resize
         void Resize(int width, int height) override;
@@ -80,6 +75,7 @@ namespace Engine {
         uint32_t GetFrameIndex();
         vk::raii::DescriptorPool& GetDescriptorPool();
         vk::DescriptorSetLayout GetUBODescriptorSetLayout();
+        vk::DescriptorSetLayout GetTextureDescriptorSetLayout();
         
         // Public So Vulkan* classes can access them (move to getters soon!)
         Scope<VulkanContext> m_Context;
@@ -100,9 +96,13 @@ namespace Engine {
         // Descriptors
         vk::raii::DescriptorPool m_DescriptorPool = nullptr;
         vk::raii::DescriptorSetLayout m_UBOLayout = nullptr;
+        vk::raii::DescriptorSetLayout m_TextureLayout = nullptr;
 
         // Current PSO
         VulkanPipelineState* m_CurrentPipelineState;
+
+        // Current clear color
+        vk::ClearColorValue m_ClearColor = vk::ClearColorValue(0.0f, 0.0f, 0.0f, 1.0f);
     };
 
 } // namespace Engine

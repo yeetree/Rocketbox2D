@@ -46,8 +46,8 @@ namespace Engine
         vk::PipelineRasterizationStateCreateInfo rasterizer{};
         rasterizer.depthClampEnable = vk::False;
         rasterizer.rasterizerDiscardEnable = vk::False;
-        rasterizer.polygonMode = vk::PolygonMode::eFill;
-        rasterizer.cullMode = vk::CullModeFlagBits::eBack;
+        rasterizer.polygonMode = GetVulkanFillMode(desc.fillMode);
+        rasterizer.cullMode = GetVulkanCullMode(desc.cullMode);
         rasterizer.frontFace = vk::FrontFace::eClockwise;
         rasterizer.depthBiasEnable = vk::False;
         rasterizer.depthBiasSlopeFactor = 1.0f;
@@ -58,8 +58,19 @@ namespace Engine
         multisampling.sampleShadingEnable = vk::False;
 
 		vk::PipelineColorBlendAttachmentState colorBlendAttachment{};
-        colorBlendAttachment.blendEnable = vk::False;
+        colorBlendAttachment.blendEnable = desc.enableBlending ? vk::True : vk::False;
         colorBlendAttachment.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+
+        // Color blending
+        // (src * srcAlpha) + (dst * (1 - srcAlpha))
+        colorBlendAttachment.srcColorBlendFactor = vk::BlendFactor::eSrcAlpha;
+        colorBlendAttachment.dstColorBlendFactor = vk::BlendFactor::eOneMinusSrcAlpha;
+        colorBlendAttachment.colorBlendOp = vk::BlendOp::eAdd;
+
+        // Alpha blending
+        colorBlendAttachment.srcAlphaBlendFactor = vk::BlendFactor::eOne;
+        colorBlendAttachment.dstAlphaBlendFactor = vk::BlendFactor::eZero;
+        colorBlendAttachment.alphaBlendOp = vk::BlendOp::eAdd;
 
 		vk::PipelineColorBlendStateCreateInfo colorBlending{};
         colorBlending.logicOpEnable = vk::False;
@@ -83,6 +94,13 @@ namespace Engine
             // Redundant? Yes. Do I care?? No.
             setLayouts.push_back(graphicsDevice->GetUBODescriptorSetLayout());
         }
+
+        // Texture layout
+        for (uint32_t i = 0; i < desc.numTextures; ++i) {
+            // see above
+            setLayouts.push_back(graphicsDevice->GetTextureDescriptorSetLayout());
+        }
+        
 
         // Create pipelime
         vk::Format colorFormat = graphicsDevice->m_Swapchain->GetSurfaceFormat().format;
@@ -155,6 +173,23 @@ namespace Engine
             case PrimitiveTopology::PointList:      return vk::PrimitiveTopology::ePointList; break;
         }
         return vk::PrimitiveTopology::eTriangleList; // Should never really happen
+    }
+
+    vk::PolygonMode VulkanPipelineState::GetVulkanFillMode(FillMode mode) {
+        switch(mode) {
+            case FillMode::Fill:   return vk::PolygonMode::eFill; break;
+            case FillMode::Line:   return vk::PolygonMode::eLine; break;
+        }
+        return vk::PolygonMode::eFill; // Should never really happen
+    }
+
+    vk::CullModeFlagBits VulkanPipelineState::GetVulkanCullMode(CullMode mode) {
+        switch(mode) {
+            case CullMode::None:    return vk::CullModeFlagBits::eNone; break;
+            case CullMode::Front:   return vk::CullModeFlagBits::eFront; break;
+            case CullMode::Back:    return vk::CullModeFlagBits::eBack; break;
+        }
+        return vk::CullModeFlagBits::eFront; // Should never really happen
     }
 
     vk::raii::Pipeline& VulkanPipelineState::GetPipeline() {

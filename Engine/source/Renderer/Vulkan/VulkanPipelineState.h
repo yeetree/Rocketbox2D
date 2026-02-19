@@ -25,6 +25,8 @@ namespace Engine {
         static vk::Format GetVulkanFormat(VertexElementType type);
         static vk::ShaderStageFlagBits GetVulkanShaderStage(ShaderStage stage);
         static vk::PrimitiveTopology GetVulkanTopology(PrimitiveTopology topology);
+        static vk::PolygonMode GetVulkanFillMode(FillMode mode);
+        static vk::CullModeFlagBits GetVulkanCullMode(CullMode mode);
     };
 } // namespace Engine
 

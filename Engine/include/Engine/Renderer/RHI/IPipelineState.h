@@ -6,15 +6,11 @@
 #include "Engine/Renderer/RHI/VertexLayout.h"
 
 namespace Engine {
-
-    // Formats?
-    enum class Format { Undefined, RGBA8, RGB8, RGBA16F, Depth24Stencil8 };
-
     // What are the shapes?
     enum class PrimitiveTopology { PointList, LineList, TriangleList };
 
     // How the shapes should be rendered
-    enum class FillMode { Solid, Wireframe };
+    enum class FillMode { Fill, Line };
 
     // How the shapes should be culled
     enum class CullMode { None, Front, Back };
@@ -24,23 +20,20 @@ namespace Engine {
         IShader* shader = nullptr;  // Shader to be used with pipeline
         VertexLayout layout;        // Vertex attributes
 
-        // Uniform buffers and push constants
-        uint32_t numUniformBuffers;
-        uint32_t pushConstantSize;
+        // Uniform buffers, textures and push constants
+        size_t numUniformBuffers = 0;
+        size_t numTextures = 0;
+        size_t pushConstantSize = 0;
         
         // Topology
         PrimitiveTopology topology = PrimitiveTopology::TriangleList;
 
         // Rasterizer State
-        FillMode fillMode = FillMode::Solid;
+        FillMode fillMode = FillMode::Fill;
         CullMode cullMode = CullMode::Back;
         
         // Blend State
         bool enableBlending = false;
-        
-        // Depth/Stencil State
-        bool depthTest = true;
-        bool depthWrite = true;
     };
 
     // Pipeline State Object

@@ -14,8 +14,8 @@ namespace Engine {
 
     // Decribes how a texture should be created
     struct TextureDesc {
-        uint32_t width;
-        uint32_t height;
+        uint32_t width = 0;
+        uint32_t height = 0;
         // uint32_t mips = 1;
         TextureFormat format = TextureFormat::RGBA8;
         TextureUsage usage = TextureUsage::Sampled;

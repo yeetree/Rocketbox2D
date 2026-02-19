@@ -43,17 +43,11 @@ namespace Engine {
         virtual void Present() = 0;
         virtual void SetClearColor(Vec4 color) = 0;
         
-        // Bind Pipeline state
         virtual void BindPipelineState(IPipelineState& pipeline) = 0;
-
-        // Draw call
         virtual void SubmitDraw(IBuffer& vbo, IBuffer& ebo, uint32_t indexCount) = 0;
-
-        // Push constants
         virtual void PushConstants(const void* data, uint32_t size) = 0;
-
-        // Bind uniform buffer
         virtual void BindUniformBuffer(IUniformBuffer& buffer, uint32_t binding) = 0;
+        virtual void BindTexture(ITexture& texture, uint32_t slot) = 0;
 
         // Resize
         virtual void Resize(int width, int height) = 0;

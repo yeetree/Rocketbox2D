@@ -12,10 +12,10 @@ namespace Engine {
 
     // BufferDesc: Describes how a buffer should be created
     struct BufferDesc {
-        size_t size;                // Size of buffer data in bytes
-        BufferType type;            // Type of buffer
-        const void* data = nullptr; // Initial data (optional)
-        bool isDynamic = false;     // If the data is static or not
+        size_t size = 0;                        // Size of buffer data in bytes
+        BufferType type = BufferType::Vertex;   // Type of buffer
+        const void* data = nullptr;             // Initial data (optional)
+        bool isDynamic = false;                 // If the data is static or not
     };
 
     // Buffer

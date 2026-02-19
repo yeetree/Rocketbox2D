@@ -8,7 +8,7 @@ namespace Engine
 {
     // UniformBufferDesc: Describes how a uniform buffer should be created
     struct UniformBufferDesc {
-        size_t size;                // Size of buffer data in bytes
+        size_t size = 0;            // Size of buffer data in bytes
         const void* data = nullptr; // Initial data (optional)
     };
 

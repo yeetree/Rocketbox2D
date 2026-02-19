@@ -20,6 +20,9 @@ namespace Engine
         uint32_t GetHeight() const override;
         TextureFormat GetFormat() const override;
 
+        // Getter for VulkanGraphicsDevice
+        vk::DescriptorSet GetDescriptorSet() const;
+
     private:
         uint32_t m_Width, m_Height;
         TextureFormat m_Format;
@@ -33,6 +36,7 @@ namespace Engine
         // Vulkan members
         vk::raii::ImageView m_ImageView = nullptr;
         vk::raii::Sampler m_Sampler = nullptr;
+        vk::raii::DescriptorSet m_DescriptorSet = nullptr;
     };
 } // namespace Engine
 

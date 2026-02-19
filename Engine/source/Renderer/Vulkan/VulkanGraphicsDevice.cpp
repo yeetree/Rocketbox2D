@@ -17,29 +17,43 @@ namespace Engine {
         m_Device = CreateScope<VulkanDevice>(*m_Context);
         m_Swapchain = CreateScope<VulkanSwapchain>(*m_Context, *m_Device);
 
-        // Create descriptor layout binding
+        // Create UBO descriptor layout binding
         vk::DescriptorSetLayoutBinding uboBinding{};
         uboBinding.binding = 0;
         uboBinding.descriptorType = vk::DescriptorType::eUniformBuffer;
         uboBinding.descriptorCount = 1;
         uboBinding.stageFlags = vk::ShaderStageFlagBits::eAllGraphics;
 
-        vk::DescriptorSetLayoutCreateInfo layoutInfo{};
-        layoutInfo.bindingCount = 1;
-        layoutInfo.pBindings = &uboBinding;
+        vk::DescriptorSetLayoutCreateInfo uboLayoutInfo{};
+        uboLayoutInfo.bindingCount = 1;
+        uboLayoutInfo.pBindings = &uboBinding;
 
-        m_UBOLayout = vk::raii::DescriptorSetLayout(m_Device->GetDevice(), layoutInfo);
+        m_UBOLayout = vk::raii::DescriptorSetLayout(m_Device->GetDevice(), uboLayoutInfo);
 
-        // Create descriptor pool
-        vk::DescriptorPoolSize poolSize{};
-        poolSize.type = vk::DescriptorType::eUniformBuffer;
-        poolSize.descriptorCount = 1000; // Arbitrary big number
+        // Create the Texture descriptor layout binding
+        vk::DescriptorSetLayoutBinding texBinding{};
+        texBinding.binding = 0;
+        texBinding.descriptorType = vk::DescriptorType::eCombinedImageSampler;
+        texBinding.descriptorCount = 1;
+        texBinding.stageFlags = vk::ShaderStageFlagBits::eFragment;
+
+        vk::DescriptorSetLayoutCreateInfo texLayoutInfo{};
+        texLayoutInfo.bindingCount = 1;
+        texLayoutInfo.pBindings = &texBinding;
+
+        m_TextureLayout = vk::raii::DescriptorSetLayout(m_Device->GetDevice(), texLayoutInfo);
+
+        // Create descriptor pool: 1000 uniforms and 1000 textures
+        std::vector<vk::DescriptorPoolSize> poolSizes = {
+            { vk::DescriptorType::eUniformBuffer, 1000 },
+            { vk::DescriptorType::eCombinedImageSampler, 1000 }
+        };
 
         vk::DescriptorPoolCreateInfo poolInfo{};
         poolInfo.flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet;
-        poolInfo.maxSets = 1000; // Arbitrary big number
-        poolInfo.poolSizeCount = 1;
-        poolInfo.pPoolSizes = &poolSize;
+        poolInfo.maxSets = 2000; 
+        poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
+        poolInfo.pPoolSizes = poolSizes.data();
 
         m_DescriptorPool = vk::raii::DescriptorPool(m_Device->GetDevice(), poolInfo);
     }
@@ -165,7 +179,7 @@ namespace Engine {
         );
 
         // Set up the color attachment
-        vk::ClearValue clearColor = vk::ClearColorValue(0.0f, 0.0f, 0.0f, 1.0f);
+        vk::ClearValue clearColor = m_ClearColor;
         vk::RenderingAttachmentInfo attachmentInfo;
         attachmentInfo.imageView = m_Swapchain->GetImageView(m_ImageIndex);
         attachmentInfo.imageLayout = vk::ImageLayout::eColorAttachmentOptimal;
@@ -240,7 +254,7 @@ namespace Engine {
     }
 
     void VulkanGraphicsDevice::SetClearColor(Vec4 color) {
-
+        m_ClearColor = vk::ClearColorValue(color.r, color.g, color.b, color.a);
     }
 
     vk::raii::CommandBuffer VulkanGraphicsDevice::BeginOneTimeCommands() {
@@ -334,6 +348,28 @@ namespace Engine {
         );
     }
 
+    // Bind texture
+    void VulkanGraphicsDevice::BindTexture(ITexture& texture, uint32_t slot) {
+        if (!m_CurrentPipelineState) {
+            LOG_CORE_ERROR("Vulkan: Attempted to bind texture without a bound Pipeline State!");
+            return;
+        }
+
+        auto& frame = m_Swapchain->GetFrame(m_FrameIndex);
+        auto& cmd = frame.GetCommandBuffer();
+
+        auto* vkTexture = static_cast<VulkanTexture*>(&texture);
+        vk::DescriptorSet set = vkTexture->GetDescriptorSet();
+
+        cmd.bindDescriptorSets(
+            vk::PipelineBindPoint::eGraphics,
+            *m_CurrentPipelineState->GetLayout(),
+            slot,
+            set,
+            nullptr
+        );
+    }
+
     // Resize
     void VulkanGraphicsDevice::Resize(int width, int height) {
         m_Swapchain->Resize(*m_Context, *m_Device, width, height);
@@ -354,6 +390,10 @@ namespace Engine {
 
     vk::DescriptorSetLayout VulkanGraphicsDevice::GetUBODescriptorSetLayout() {
         return *m_UBOLayout;
+    }
+
+    vk::DescriptorSetLayout VulkanGraphicsDevice::GetTextureDescriptorSetLayout() {
+        return *m_TextureLayout;
     }
 
 } // namespace Engine

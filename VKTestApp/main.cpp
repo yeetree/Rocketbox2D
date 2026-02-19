@@ -7,10 +7,11 @@
 using namespace Engine;
 
 const std::vector<float> vertices = {
-    -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
-    0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
-    0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
-    -0.5f, 0.5f, 1.0f, 1.0f, 1.0f
+    // Position     UV 
+    -0.5f, -0.5f,   0.0f, 0.0f,
+     0.5f, -0.5f,   1.0f, 0.0f,
+     0.5f,  0.5f,   1.0f, 1.0f,
+    -0.5f,  0.5f,   0.0f, 1.0f
 };
 
 const std::vector<uint16_t> indices = {
@@ -33,6 +34,7 @@ public:
     Ref<IBuffer> m_IndexBuffer;
     Ref<IUniformBuffer> m_UniformBuffer;
     Ref<IShader> m_Shader;
+    Ref<ITexture> m_Texture;
     Ref<IPipelineState> m_Pipeline;
 
     PushData push;
@@ -51,8 +53,10 @@ public:
         PipelineDesc pipeDesc;
         pipeDesc.pushConstantSize = sizeof(PushData);
         pipeDesc.numUniformBuffers = 1;
+        pipeDesc.numTextures = 1;
+        pipeDesc.enableBlending = true;
         pipeDesc.shader = m_Shader.get();
-        pipeDesc.layout = VertexLayout{VertexElement(VertexElementType::Vec2, "inPosition"), VertexElement(VertexElementType::Vec3, "inColor")};
+        pipeDesc.layout = VertexLayout{VertexElement(VertexElementType::Vec2, "inPosition"), VertexElement(VertexElementType::Vec2, "inCoord")};
 
         m_Pipeline =  GetGraphicsDevice().CreatePipelineState(pipeDesc);
 
@@ -75,6 +79,11 @@ public:
         ubDesc.data = &uni;
         // Need a CreateUniformBuffer or similar in your GraphicsDevice
         m_UniformBuffer = GetGraphicsDevice().CreateUniformBuffer(ubDesc);
+
+        GetResourceManager().LoadTexture("awesome", "./Assets/awesomeface.png");
+        m_Texture = GetResourceManager().GetTexture("awesome");
+
+        GetGraphicsDevice().SetClearColor(Vec4(0.0f, 0.0f, 0.5f, 1.0f));
     }
 
     void OnInput(SDL_Event event) override {
@@ -91,6 +100,7 @@ public:
         GetGraphicsDevice().BindUniformBuffer(*m_UniformBuffer, 0);
         m_UniformBuffer->UpdateData(&uni, sizeof(UniformData), 0);
         GetGraphicsDevice().PushConstants(&push, sizeof(PushData));
+        GetGraphicsDevice().BindTexture(*m_Texture, 1);
         GetGraphicsDevice().SubmitDraw(*m_VertexBuffer, *m_IndexBuffer, indices.size());
     }
 
