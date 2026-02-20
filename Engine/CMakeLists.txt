@@ -40,6 +40,8 @@ generate_export_header(Engine
     EXPORT_FILE_NAME "${CMAKE_CURRENT_BINARY_DIR}/gen/engine_export.h"
 )
 
+compile_shader_to_header(Engine "./assets/shaders/quad.slang" "${CMAKE_CURRENT_BINARY_DIR}/gen/generated/quadShader.h" "k_QuadShaderByteCode" "vertMain" "fragMain")
+
 # RPath origin for Linux
 set_target_properties(Engine PROPERTIES
     CXX_VISIBILITY_PRESET hidden

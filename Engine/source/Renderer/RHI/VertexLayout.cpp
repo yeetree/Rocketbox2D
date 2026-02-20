@@ -2,7 +2,7 @@
 
 namespace Engine
 {
-    static uint32_t GetSizeOfType(VertexElementType type)
+    uint32_t VertexLayout::GetSizeOfType(VertexElementType type)
     {
         switch (type)
         {
@@ -14,8 +14,6 @@ namespace Engine
         }
         return 0;
     }
-
-    VertexElement::VertexElement(VertexElementType type, const std::string& name) : name(name), type(type), size(GetSizeOfType(type)), offset(0), normalized(false) {}
 
     VertexLayout::VertexLayout(std::initializer_list<VertexElement> elements) : m_Elements(elements) {
         CalculateOffsetsAndStride();

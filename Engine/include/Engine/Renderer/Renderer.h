@@ -33,9 +33,9 @@ namespace Engine {
             Ref<Mesh> mesh;
             Ref<IShader> shader;
 
-            std::map<std::string, ShaderUniformValue> uniforms; 
+            //std::map<std::string, ShaderUniformValue> uniforms; 
             std::map<std::string, Ref<ITexture>> textures;
-            std::map<std::string, ShaderUniformValue> uniformOverrides; 
+            //std::map<std::string, ShaderUniformValue> uniformOverrides; 
             std::map<std::string, Ref<ITexture>> textureOverrides;
 
             Mat4 transform;
@@ -51,7 +51,12 @@ namespace Engine {
         std::map<uint64_t, Ref<IPipelineState>> m_PSOCache;
 
         // UBO
-        Ref<IBuffer> m_UBO;
+        struct RendererUniformData {
+            alignas(16) Engine::Mat4 viewProjection;
+        };
+        RendererUniformData uniformData;
+
+        Ref<IUniformBuffer> m_UBO;
 
         // Quads
         Ref<Mesh> m_QuadMesh;

@@ -57,11 +57,28 @@ public:
 
         PipelineDesc pipeDesc;
         pipeDesc.pushConstantSize = sizeof(PushData);
-        pipeDesc.numUniformBuffers = 1;
-        pipeDesc.numTextures = 1;
         pipeDesc.enableBlending = true;
         pipeDesc.shader = m_Shader.get();
-        pipeDesc.layout = VertexLayout{VertexElement(VertexElementType::Vec2, "inPosition"), VertexElement(VertexElementType::Vec2, "inCoord")};
+        pipeDesc.shaderLayout = ShaderLayout{
+            ShaderBinding(
+                ShaderBindingType::UniformBuffer,
+                "ub",
+                0, 0, 0,
+                {
+                    ShaderElement(ShaderDataType::Vec4, "tint")
+                }
+            ),
+            ShaderBinding(
+                ShaderBindingType::Sampler,
+                "texture",
+                1, 1, 0
+            ),
+        };
+
+        pipeDesc.vertexLayout = VertexLayout{
+            VertexElement(VertexElementType::Vec2, "inPosition"),
+            VertexElement(VertexElementType::Vec2, "inCoord")
+        };
 
         m_Pipeline =  GetGraphicsDevice().CreatePipelineState(pipeDesc);
 

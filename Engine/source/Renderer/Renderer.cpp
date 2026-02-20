@@ -5,6 +5,9 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <algorithm>
 
+// Generated
+#include "generated/quadShader.h"
+
 // Quad data
 const float quadVerts[] = {
     -0.5f,  -0.5f,   0.0f,  0.0f, // Bottom Left
@@ -13,62 +16,21 @@ const float quadVerts[] = {
     -0.5f,  0.5f,   0.0f,   1.0   // Top Left
 };
 
-const unsigned int quadIndices[] = {
+const uint16_t quadIndices[] = {
     0, 1, 2,
     0, 2, 3
 };
 
-// Quad shader
-const char* vertSource = R"(
-#version 330 core
-
-layout (location = 0) in vec2 a_Position;
-layout (location = 1) in vec2 a_TexCoord;
-
-layout (std140) uniform u_ViewData {
-    mat4 u_ViewProjection;
-};
-
-uniform mat4 u_Transform;
-
-out vec2 v_TexCoord;
-
-void main()
-{
-    gl_Position = u_ViewProjection * u_Transform * vec4(a_Position, 0.0, 1.0);
-    v_TexCoord = a_TexCoord;
-}
-
-)";
-
-const char* fragSource = R"(
-#version 330 core
-
-in vec2 v_TexCoord;
-
-uniform sampler2D u_Texture;
-uniform vec4 u_Tint;
-
-out vec4 f_Color;
-
-void main()
-{
-    f_Color = u_Tint * texture(u_Texture, v_TexCoord);
-}
-
-)";
-
 namespace Engine
 {
     Renderer::Renderer(IGraphicsDevice* device) : m_GraphicsDevice(device) {
-        BufferDesc vboDesc, eboDesc, uboDesc;
+        BufferDesc vboDesc, eboDesc;
+        UniformBufferDesc uboDesc;
 
         // Create UBO
-        uboDesc.isDynamic = false;
-        uboDesc.size = sizeof(Mat4);
-        uboDesc.type = BufferType::Uniform;
+        uboDesc.size = sizeof(RendererUniformData);
 
-        m_UBO = m_GraphicsDevice->CreateBuffer(uboDesc);
+        m_UBO = m_GraphicsDevice->CreateUniformBuffer(uboDesc);
         
         // Create VBO and EBO for quad
         vboDesc.data = quadVerts;
@@ -86,20 +48,24 @@ namespace Engine
 
         VertexLayout layout = {VertexElement(VertexElementType::Vec2, "a_Position"), VertexElement(VertexElementType::Vec2, "a_TexCoord")};
 
-        VertexArrayDesc vaoDesc;
-        vaoDesc.vbo = vbo;
-        vaoDesc.ebo = ebo;
-        vaoDesc.layout = layout;
-
-        Ref<IVertexArray> vao = m_GraphicsDevice->CreateVertexArray(vaoDesc);
-
         // Create quad mesh
-        m_QuadMesh = CreateRef<Mesh>(vao, 6, layout);
+        m_QuadMesh = CreateRef<Mesh>(vbo, ebo, 6, layout);
 
         // Create shader
         ShaderDesc shaderDesc;
-        //shaderDesc.sources[ShaderStage::Vertex] = vertSource;
-        //shaderDesc.sources[ShaderStage::Fragment] = fragSource;
+
+        // Listen, i PROMISE that k_QuadShaderByteCode_len is divisible by 4
+        const uint32_t* shaderData = static_cast<const uint32_t*>(static_cast<const void*>(k_QuadShaderByteCode));
+        std::vector<uint32_t> shaderDataVector(shaderData, shaderData + k_QuadShaderByteCode_len / sizeof(uint32_t));
+        shaderDesc.modules = {
+            ShaderModule{
+                .byteCode = shaderDataVector,
+                .entryPoints = {
+                    {ShaderStage::Vertex, "vertMain"},
+                    {ShaderStage::Fragment, "fragMain"}
+                }
+            }
+        };
         Ref<IShader> shader = m_GraphicsDevice->CreateShader(shaderDesc);
 
         // Create material
@@ -110,8 +76,8 @@ namespace Engine
         RenderCommand cmd;
         cmd.mesh = mesh;
         cmd.shader = material->GetShader();
-        cmd.uniforms = material->GetUniforms(); 
-        cmd.textures = material->GetTextures();
+        //cmd.uniforms = material->GetUniforms(); 
+        //cmd.textures = material->GetTextures();
         cmd.transform = transform;
         
         // Layer/Shader/Mesh sort key
@@ -124,10 +90,10 @@ namespace Engine
         RenderCommand cmd;
         cmd.mesh = mesh;
         cmd.shader = material->GetParent()->GetShader();
-        cmd.uniforms = material->GetParent()->GetUniforms(); 
-        cmd.textures = material->GetParent()->GetTextures();
-        cmd.uniformOverrides = material->GetUniformOverrides();
-        cmd.textureOverrides = material->GetTextureOverrides();
+        //cmd.uniforms = material->GetParent()->GetUniforms(); 
+        //cmd.textures = material->GetParent()->GetTextures();
+        //cmd.uniformOverrides = material->GetUniformOverrides();
+        //cmd.textureOverrides = material->GetTextureOverrides();
         cmd.transform = transform;
         
         // Layer/Shader/Mesh sort key
@@ -144,15 +110,15 @@ namespace Engine
         
         // Use overrides
         cmd.textureOverrides["u_Texture"] = texture;
-        cmd.uniformOverrides["u_Tint"] = color;
+        //cmd.uniformOverrides["u_Tint"] = color;
         
         cmd.sortKey = ((uint64_t)layer << 48) | ((uint64_t)cmd.shader->GetID() << 16) | cmd.mesh->GetID();
         m_CommandQueue.push_back(cmd);
     }
 
     void Renderer::BeginScene(const Mat4& viewProjection) {
-        //m_UBO->BindBase(0);
-        //m_UBO->UpdateData(glm::value_ptr(viewProjection), sizeof(Mat4), 0);
+        uniformData.viewProjection = viewProjection;
+        m_UBO->UpdateData(&uniformData, sizeof(RendererUniformData), 0);
     }
 
     void Renderer::EndScene() {
@@ -163,7 +129,6 @@ namespace Engine
         });
 
         Flush();
-        //m_UBO->UnbindBase(0);
     }
 
     void Renderer::Flush() {
@@ -175,26 +140,25 @@ namespace Engine
             auto pso = GetOrCreatePSO(cmd.mesh, cmd.shader);
             uint64_t currentPSO = pso->GetID();
             if (currentPSO != lastPSO) {
-                //pso->Bind();
+                m_GraphicsDevice->BindPipelineState(*pso);
                 lastPSO = currentPSO;
             }
 
             // Only switch Mesh if it's different
             uint64_t currentMesh = cmd.mesh->GetID();
             if (currentMesh != lastMesh) {
-                cmd.mesh->Bind();
                 lastMesh = currentMesh;
             }
 
             // Bind Material uniforms and textures and overrides
             // Set uniforms
-            for (const auto& [name, value] : cmd.uniforms) {
+            //for (const auto& [name, value] : cmd.uniforms) {
                 //cmd.shader->Set(name, value);
-            }
+            //}
 
-            for (const auto& [name, value] : cmd.uniformOverrides) {
-                //cmd.shader->Set(name, value);
-            }
+            //for (const auto& [name, value] : cmd.uniformOverrides) {
+            //    //cmd.shader->Set(name, value);
+            //}
 
             // Bind textures
             uint32_t slot = 0;
@@ -222,7 +186,7 @@ namespace Engine
             //cmd.shader->SetMat4("u_Transform", cmd.transform);
 
             // Draw
-            //m_GraphicsDevice->SubmitDraw(cmd.mesh->GetIndexCount());
+            m_GraphicsDevice->SubmitDraw(*cmd.mesh->GetVertexBuffer(), *cmd.mesh->GetIndexBuffer(), cmd.mesh->GetIndexCount());
         }
         m_CommandQueue.clear();
     }
@@ -237,7 +201,7 @@ namespace Engine
         if (m_PSOCache.find(psoKey) == m_PSOCache.end()) {
             PipelineDesc desc{};
             desc.shader = shader.get();
-            desc.layout = mesh->GetLayout();
+            desc.vertexLayout = mesh->GetLayout();
             
             desc.enableBlending = true; // Temp
             

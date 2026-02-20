@@ -13,7 +13,6 @@
 #include "Engine/Renderer/RHI/IPipelineState.h"
 #include "Engine/Renderer/RHI/IShader.h"
 #include "Engine/Renderer/RHI/ITexture.h"
-#include "Engine/Renderer/RHI/IVertexArray.h"
 #include "Engine/Renderer/RHI/VertexLayout.h"
 
 #include "Engine/Renderer/Renderer.h"

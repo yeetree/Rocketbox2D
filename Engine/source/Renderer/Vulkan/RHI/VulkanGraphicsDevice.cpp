@@ -17,32 +17,6 @@ namespace Engine {
         m_Device = CreateScope<VulkanDevice>(*m_Context);
         m_Swapchain = CreateScope<VulkanSwapchain>(*m_Context, *m_Device);
 
-        // Create UBO descriptor layout binding
-        vk::DescriptorSetLayoutBinding uboBinding{};
-        uboBinding.binding = 0;
-        uboBinding.descriptorType = vk::DescriptorType::eUniformBuffer;
-        uboBinding.descriptorCount = 1;
-        uboBinding.stageFlags = vk::ShaderStageFlagBits::eAllGraphics;
-
-        vk::DescriptorSetLayoutCreateInfo uboLayoutInfo{};
-        uboLayoutInfo.bindingCount = 1;
-        uboLayoutInfo.pBindings = &uboBinding;
-
-        m_UBOLayout = vk::raii::DescriptorSetLayout(m_Device->GetDevice(), uboLayoutInfo);
-
-        // Create the Texture descriptor layout binding
-        vk::DescriptorSetLayoutBinding texBinding{};
-        texBinding.binding = 0;
-        texBinding.descriptorType = vk::DescriptorType::eCombinedImageSampler;
-        texBinding.descriptorCount = 1;
-        texBinding.stageFlags = vk::ShaderStageFlagBits::eFragment;
-
-        vk::DescriptorSetLayoutCreateInfo texLayoutInfo{};
-        texLayoutInfo.bindingCount = 1;
-        texLayoutInfo.pBindings = &texBinding;
-
-        m_TextureLayout = vk::raii::DescriptorSetLayout(m_Device->GetDevice(), texLayoutInfo);
-
         // Create descriptor pool: 1000 uniforms and 1000 textures
         std::vector<vk::DescriptorPoolSize> poolSizes = {
             { vk::DescriptorType::eUniformBuffer, 1000 },
@@ -115,10 +89,6 @@ namespace Engine {
 
     Scope<IShader> VulkanGraphicsDevice::CreateShader(const ShaderDesc& desc) {
         return CreateScope<VulkanShader>(this, desc);
-    }
-
-    Scope<IVertexArray> VulkanGraphicsDevice::CreateVertexArray(const VertexArrayDesc& desc) {
-        return nullptr;
     }
 
     Scope<IPipelineState> VulkanGraphicsDevice::CreatePipelineState(const PipelineDesc& desc) {
@@ -317,7 +287,7 @@ namespace Engine {
     }
 
     // Bind uniform buffer
-    void VulkanGraphicsDevice::BindUniformBuffer(IUniformBuffer& buffer, uint32_t binding) {
+    void VulkanGraphicsDevice::BindUniformBuffer(IUniformBuffer& buffer, uint32_t slot) {
         if (!m_CurrentPipelineState) {
             LOG_CORE_WARN("Vulkan: Attempted to bind uniform buffer without a bound Pipeline State!");
             return;
@@ -327,12 +297,12 @@ namespace Engine {
         auto& cmd = frame.GetCommandBuffer();
 
         auto* vkUniformBuffer = static_cast<VulkanUniformBuffer*>(&buffer);
-        vk::DescriptorSet set = vkUniformBuffer->GetDescriptorSet(m_FrameIndex);
+        vk::DescriptorSet set = m_CurrentPipelineState->GetDescriptorSetForUniformBuffer(*vkUniformBuffer, slot);
 
         cmd.bindDescriptorSets(
             vk::PipelineBindPoint::eGraphics,
             *m_CurrentPipelineState->GetLayout(), 
-            binding,
+            slot,
             set,
             nullptr
         );
@@ -349,7 +319,7 @@ namespace Engine {
         auto& cmd = frame.GetCommandBuffer();
 
         auto* vkTexture = static_cast<VulkanTexture*>(&texture);
-        vk::DescriptorSet set = vkTexture->GetDescriptorSet();
+        vk::DescriptorSet set = m_CurrentPipelineState->GetDescriptorSetForTexture(*vkTexture, slot);
 
         cmd.bindDescriptorSets(
             vk::PipelineBindPoint::eGraphics,
@@ -370,20 +340,12 @@ namespace Engine {
         m_Device->GetQueue().waitIdle();
     }
 
-    uint32_t VulkanGraphicsDevice::GetFrameIndex() {
+    uint32_t VulkanGraphicsDevice::GetFrameIndex() const {
         return m_FrameIndex;
     }
 
     vk::raii::DescriptorPool& VulkanGraphicsDevice::GetDescriptorPool() {
         return m_DescriptorPool;
-    }
-
-    vk::DescriptorSetLayout VulkanGraphicsDevice::GetUBODescriptorSetLayout() {
-        return *m_UBOLayout;
-    }
-
-    vk::DescriptorSetLayout VulkanGraphicsDevice::GetTextureDescriptorSetLayout() {
-        return *m_TextureLayout;
     }
 
     VulkanContext& VulkanGraphicsDevice::GetContext() {

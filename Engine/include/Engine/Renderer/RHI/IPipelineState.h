@@ -6,6 +6,7 @@
 #include "Engine/Renderer/RHI/IShader.h"
 #include "Engine/Renderer/RHI/IBuffer.h"
 #include "Engine/Renderer/RHI/VertexLayout.h"
+#include "Engine/Renderer/RHI/ShaderLayout.h"
 
 namespace Engine {
     // What are the shapes?
@@ -20,11 +21,9 @@ namespace Engine {
     // Describes how a Pipeline State Object should be created
     struct PipelineDesc {
         IShader* shader = nullptr;  // Shader to be used with pipeline
-        VertexLayout layout;        // Vertex attributes (VertexLayout has an empty default constructor)
+        VertexLayout vertexLayout;  // Vertex attributes (VertexLayout has an empty default constructor)
+        ShaderLayout shaderLayout;  // Info about uniforms / samplers / general reflection data
 
-        // Uniform buffers, textures and push constants
-        size_t numUniformBuffers = 0;
-        size_t numTextures = 0;
         size_t pushConstantSize = 0;
         
         // Topology

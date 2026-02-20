@@ -13,8 +13,6 @@
 
 namespace Engine {
 
-    using ShaderUniformValue = std::variant<int, float, Vec2, Vec3, Vec4, Mat4>;
-
     // What shader stage the current source is
     enum class ShaderStage { Vertex, Fragment, Geometry };
 
@@ -37,7 +35,6 @@ namespace Engine {
 
         virtual ~IShader() = default;
         
-
         uint32_t GetID() const { return m_ID; }
 
     private:

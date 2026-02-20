@@ -1,5 +1,5 @@
-#ifndef RENDERER_VULKAN_VULKANUNIFORMBUFFER
-#define RENDERER_VULKAN_VULKANUNIFORMBUFFER
+#ifndef RENDERER_VULKAN_RHI_VULKANUNIFORMBUFFER
+#define RENDERER_VULKAN_RHI_VULKANUNIFORMBUFFER
 
 #include <vulkan/vulkan_raii.hpp>
 #include <vk_mem_alloc.h>
@@ -22,13 +22,13 @@ namespace Engine {
         // Public getters for VulkanGraphicsDevice
         // (Not declared in IUniformBuffer)
         VulkanBuffer& GetBuffer(uint32_t index);
-        vk::DescriptorSet GetDescriptorSet(uint32_t frameIndex);
+        size_t GetSize() const; // Maybe implement in base class soon
 
     private:
         std::vector<Scope<VulkanBuffer>> m_Buffers;
-        std::vector<vk::raii::DescriptorSet> m_DescriptorSets;
         VulkanGraphicsDevice* m_GraphicsDevice;
+        size_t m_Size;
     };
 } // namespace Engine
 
-#endif // RENDERER_VULKAN_VULKANUNIFORMBUFFER
+#endif // RENDERER_VULKAN_RHI_VULKANUNIFORMBUFFER

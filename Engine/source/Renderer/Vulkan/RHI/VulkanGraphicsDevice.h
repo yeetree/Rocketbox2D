@@ -36,7 +36,6 @@ namespace Engine {
         Scope<ITexture> CreateTexture(const TextureDesc& desc) override;
         Scope<IShader> CreateShader(const ShaderDesc& desc) override;
         Scope<IPipelineState> CreatePipelineState(const PipelineDesc& desc) override;
-        Scope<IVertexArray> CreateVertexArray(const VertexArrayDesc& desc) override;
 
         // Frame Management
         void BeginFrame() override;
@@ -48,7 +47,7 @@ namespace Engine {
         void BindPipelineState(IPipelineState& pipeline) override;
         void SubmitDraw(IBuffer& vbo, IBuffer& ebo, uint32_t indexCount) override;
         void PushConstants(const void* data, uint32_t size) override;
-        void BindUniformBuffer(IUniformBuffer& buffer, uint32_t binding) override;
+        void BindUniformBuffer(IUniformBuffer& buffer, uint32_t slot) override;
         void BindTexture(ITexture& texture, uint32_t slot) override;
 
         // Resize
@@ -72,10 +71,8 @@ namespace Engine {
             vk::PipelineStageFlags2 dstStage);
 
         // Getters for Vulkan* classes (Not declared in IGraphicsDevice)
-        uint32_t GetFrameIndex();
+        uint32_t GetFrameIndex() const;
         vk::raii::DescriptorPool& GetDescriptorPool();
-        vk::DescriptorSetLayout GetUBODescriptorSetLayout();
-        vk::DescriptorSetLayout GetTextureDescriptorSetLayout();
         VulkanContext& GetContext();
         VulkanDevice& GetDevice();
         VulkanSwapchain& GetSwapchain();

@@ -69,13 +69,8 @@ namespace Engine
         Ref<IBuffer> vbo = m_GraphicsDevice->CreateBuffer(vboDesc);
         Ref<IBuffer> ebo = m_GraphicsDevice->CreateBuffer(eboDesc);
 
-        VertexArrayDesc vaoDesc;
-        vaoDesc.vbo = vbo;
-        vaoDesc.ebo = ebo;
-        vaoDesc.layout = layout;
 
-        Ref<IVertexArray> vao = m_GraphicsDevice->CreateVertexArray(vaoDesc);
-        Ref<Mesh> mesh = CreateRef<Mesh>(vao, indexCount, layout);
+        Ref<Mesh> mesh = CreateRef<Mesh>(vbo, ebo, indexCount, layout);
         m_Meshes[identifier] = mesh;
     }
 

@@ -43,7 +43,7 @@ function(engine_add_project PROJECT_NAME SOURCES ASSET_DIR_IN ASSET_DIR_OUT)
 endfunction()
 
 # Adds shaders
-function(add_slang_shader PROJECT_NAME FILE_PATH OUTPUT_PATH VERT_ENTRY FRAG_ENTRY)
+function(add_slang_shader TARGET_NAME FILE_PATH OUTPUT_PATH VERT_ENTRY FRAG_ENTRY)
     # Set defaults
     if("${VERT_ENTRY}" STREQUAL "")
         set(VERT_ENTRY "vertMain")
@@ -52,7 +52,7 @@ function(add_slang_shader PROJECT_NAME FILE_PATH OUTPUT_PATH VERT_ENTRY FRAG_ENT
         set(FRAG_ENTRY "fragMain")
     endif()
 
-    set(OUTPUT_SPV "${CMAKE_BINARY_DIR}/bin/${PROJECT_NAME}/${OUTPUT_PATH}")
+    set(OUTPUT_SPV "${CMAKE_BINARY_DIR}/bin/${TARGET_NAME}/${OUTPUT_PATH}")
     
     # Make sure output directory exists
     get_filename_component(OUT_DIR "${OUTPUT_SPV}" DIRECTORY)
@@ -63,7 +63,7 @@ function(add_slang_shader PROJECT_NAME FILE_PATH OUTPUT_PATH VERT_ENTRY FRAG_ENT
     get_filename_component(SPV_OUT_NAME ${OUTPUT_SPV} NAME)
     
     # Unique target name
-    string(MAKE_C_IDENTIFIER "shader_${PROJECT_NAME}_${SPV_OUT_NAME}" TARGET_NAME)
+    string(MAKE_C_IDENTIFIER "shader_${TARGET_NAME}_${SPV_OUT_NAME}" TARGET_NAME)
 
     # Shader comp via slangc
     add_custom_command(
@@ -92,4 +92,58 @@ function(add_slang_shader PROJECT_NAME FILE_PATH OUTPUT_PATH VERT_ENTRY FRAG_ENT
     if(TARGET ${PROJECT_NAME})
         add_dependencies(${PROJECT_NAME} ${TARGET_NAME})
     endif()
+endfunction()
+
+# Compile shader to header (for built ins)
+function(compile_shader_to_header TARGET_NAME SHADER_FILE_IN HEADER_FILE_OUT VARIABLE_NAME)
+    
+    # Set defaults
+    if("${VERT_ENTRY}" STREQUAL "")
+        set(VERT_ENTRY "vertMain")
+    endif()
+    if("${FRAG_ENTRY}" STREQUAL "")
+        set(FRAG_ENTRY "fragMain")
+    endif()
+
+    # Internal paths
+    set(TEMP_BIN "${CMAKE_CURRENT_BINARY_DIR}/temp/${VARIABLE_NAME}.bin")
+    get_filename_component(OUT_DIR "${HEADER_FILE_OUT}" DIRECTORY)
+    
+    # Make sure directory exists
+    file(MAKE_DIRECTORY "${OUT_DIR}")
+
+    # Compile 
+    add_custom_command(
+        OUTPUT "${TEMP_BIN}"
+        COMMAND slangc "${CMAKE_CURRENT_SOURCE_DIR}/${SHADER_FILE_IN}" 
+                -target spirv -profile spirv_1_5
+                -entry ${VERT_ENTRY} 
+                -entry ${FRAG_ENTRY}
+                -o "${TEMP_BIN}"
+        DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/${SHADER_FILE_IN}"
+        COMMENT "Compiling Slang shader ${SHADER_FILE_IN} to binary"
+        VERBATIM
+    )
+
+    # bin2h
+    add_custom_command(
+        OUTPUT "${HEADER_FILE_OUT}"
+        COMMAND ${CMAKE_COMMAND} 
+                -DINPUT_FILE=${TEMP_BIN}
+                -DOUTPUT_FILE=${HEADER_FILE_OUT}
+                -DVAR_NAME=${VARIABLE_NAME}
+                -P "${PROJECT_SOURCE_DIR}/cmake/bin2h.cmake"
+        DEPENDS "${TEMP_BIN}" "${PROJECT_SOURCE_DIR}/cmake/bin2h.cmake"
+        COMMENT "Converting binary bytecode to header ${HEADER_FILE_OUT}"
+        VERBATIM
+    )
+
+    # Target and dependencies
+    set(SHADER_GEN_TARGET "${TARGET_NAME}_${VARIABLE_NAME}_gen")
+    add_custom_target(${SHADER_GEN_TARGET} DEPENDS "${HEADER_FILE_OUT}")
+    add_dependencies(${TARGET_NAME} ${SHADER_GEN_TARGET})
+
+    # Include directories to target
+    target_include_directories(${TARGET_NAME} PRIVATE "${OUT_DIR}")
+
 endfunction()

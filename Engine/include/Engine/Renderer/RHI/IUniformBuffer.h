@@ -18,9 +18,18 @@ namespace Engine
     // (Vulkan is holding me at gunpoint)
     class ENGINE_EXPORT IUniformBuffer {
     public:
+        IUniformBuffer() {
+            static uint32_t nextID = 1;
+            m_ID = nextID++;
+        }
+
         virtual ~IUniformBuffer() = default;
 
+        uint32_t GetID() const { return m_ID; }
+
         virtual void UpdateData(const void* data, size_t size, size_t offset) = 0;
+    private:
+        uint32_t m_ID;
     };
     
 } // namespace Engine

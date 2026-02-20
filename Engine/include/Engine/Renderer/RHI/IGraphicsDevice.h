@@ -12,7 +12,6 @@
 #include "Engine/Renderer/RHI/IShader.h"
 #include "Engine/Renderer/RHI/ITexture.h"
 #include "Engine/Renderer/RHI/IPipelineState.h"
-#include "Engine/Renderer/RHI/IVertexArray.h"
 #include "Engine/Renderer/RHI/IUniformBuffer.h"
 
 namespace Engine {
@@ -32,7 +31,6 @@ namespace Engine {
         virtual Scope<IUniformBuffer>   CreateUniformBuffer(const UniformBufferDesc& desc) = 0;
         virtual Scope<ITexture>         CreateTexture(const TextureDesc& desc) = 0;
         virtual Scope<IShader>          CreateShader(const ShaderDesc& desc) = 0;
-        virtual Scope<IVertexArray>     CreateVertexArray(const VertexArrayDesc& desc) = 0;
         
         // Pipeline creation
         virtual Scope<IPipelineState> CreatePipelineState(const PipelineDesc& desc) = 0;

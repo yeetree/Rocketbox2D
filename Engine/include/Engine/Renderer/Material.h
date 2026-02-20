@@ -17,18 +17,18 @@ namespace Engine
         Material() = default;
         Material(Ref<IShader> shader) : m_Shader(shader) {};
 
-        void Set(const std::string& name, ShaderUniformValue value) { m_Uniforms[name] = value; }
-        void SetTexture(const std::string& name, Ref<ITexture> tex) { m_Textures[name] = tex; }
+        //void Set(const std::string& name, ShaderUniformValue value) { m_Uniforms[name] = value; }
+        //void SetTexture(const std::string& name, Ref<ITexture> tex) { m_Textures[name] = tex; }
 
         Ref<IShader> GetShader() const { return m_Shader; }
-        std::map<std::string, ShaderUniformValue> GetUniforms() const { return m_Uniforms; }
-        std::map<std::string, Ref<ITexture>> GetTextures() const { return m_Textures; }
+        //std::map<std::string, ShaderUniformValue> GetUniforms() const { return m_Uniforms; }
+        //std::map<std::string, Ref<ITexture>> GetTextures() const { return m_Textures; }
 
     private:
         Ref<IShader> m_Shader;
         
-        std::map<std::string, ShaderUniformValue> m_Uniforms;
-        std::map<std::string, Ref<ITexture>> m_Textures;
+        //std::map<std::string, ShaderUniformValue> m_Uniforms;
+        //std::map<std::string, Ref<ITexture>> m_Textures;
     };
 } // namespace Engine
 
