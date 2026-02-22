@@ -21,10 +21,10 @@ namespace Engine {
     // Describes how a Pipeline State Object should be created
     struct PipelineDesc {
         IShader* shader = nullptr;  // Shader to be used with pipeline
-        VertexLayout vertexLayout;  // Vertex attributes (VertexLayout has an empty default constructor)
         ShaderLayout shaderLayout;  // Info about uniforms / samplers / general reflection data
-
         size_t pushConstantSize = 0;
+        
+        VertexLayout vertexLayout;  // Vertex attributes (VertexLayout has an empty default constructor)
         
         // Topology
         PrimitiveTopology topology = PrimitiveTopology::TriangleList;

@@ -42,7 +42,7 @@ namespace Engine {
         Mat4 m_ViewProjection;
         std::vector<RenderCommand> m_CommandQueue;
         std::map<uint64_t, Ref<IPipelineState>> m_PSOCache;
-        std::vector<Ref<IUniformBuffer>> m_FrameBuffers; // keep buffers alive during frame
+        std::vector<Ref<IBuffer>> m_FrameBuffers; // keep buffers alive during frame
 
         // Quads
         Ref<Mesh> m_QuadMesh;

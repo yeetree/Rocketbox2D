@@ -4,7 +4,6 @@
 #include "Renderer/Vulkan/RHI/VulkanBuffer.h"
 #include "Renderer/Vulkan/RHI/VulkanPipelineState.h"
 #include "Renderer/Vulkan/RHI/VulkanShader.h"
-#include "Renderer/Vulkan/RHI/VulkanUniformBuffer.h"
 #include "Renderer/Vulkan/RHI/VulkanTexture.h"
 #include <SDL3/SDL_vulkan.h>
 
@@ -63,10 +62,6 @@ namespace Engine {
     // Resource Creation
     Scope<IBuffer> VulkanGraphicsDevice::CreateBuffer(const BufferDesc& desc) {
         return CreateScope<VulkanBuffer>(this, desc);
-    }
-
-    Scope<IUniformBuffer> VulkanGraphicsDevice::CreateUniformBuffer(const UniformBufferDesc& desc) {
-        return CreateScope<VulkanUniformBuffer>(this, desc);
     }
 
     Scope<ITexture> VulkanGraphicsDevice::CreateTexture(const TextureDesc& desc) {
@@ -221,6 +216,18 @@ namespace Engine {
     }
 
     void VulkanGraphicsDevice::EndOneTimeCommands(vk::raii::CommandBuffer& commandBuffer) {
+        // Add a barrier to make the transfer visible to the rest of the pipeline
+        vk::MemoryBarrier2 barrier;
+        barrier.srcStageMask = vk::PipelineStageFlagBits2::eTransfer;
+        barrier.srcAccessMask = vk::AccessFlagBits2::eTransferWrite;
+        barrier.dstStageMask = vk::PipelineStageFlagBits2::eVertexAttributeInput | vk::PipelineStageFlagBits2::eAllGraphics;
+        barrier.dstAccessMask = vk::AccessFlagBits2::eMemoryRead | vk::AccessFlagBits2::eUniformRead | vk::AccessFlagBits2::eVertexAttributeRead;
+
+        vk::DependencyInfo depInfo;
+        depInfo.memoryBarrierCount = 1;
+        depInfo.pMemoryBarriers = &barrier;
+        commandBuffer.pipelineBarrier2(depInfo);
+
         commandBuffer.end();
 
         vk::SubmitInfo submitInfo;
@@ -277,13 +284,14 @@ namespace Engine {
 
         // Bind buffers
         VulkanBuffer* vertexBuffer = static_cast<VulkanBuffer*>(&vbo);
-        cmd.bindVertexBuffers(0, { static_cast<vk::Buffer>(vertexBuffer->GetBuffer()) }, {0});
+        cmd.bindVertexBuffers(0, {vertexBuffer->GetBuffer()}, {0});
 	
         VulkanBuffer* indexBuffer = static_cast<VulkanBuffer*>(&ebo);
-        cmd.bindIndexBuffer(static_cast<vk::Buffer>(indexBuffer->GetBuffer()), 0, vk::IndexType::eUint16);
+        cmd.bindIndexBuffer(indexBuffer->GetBuffer(), 0, vk::IndexType::eUint16);
         
         // Draw
         cmd.drawIndexed(indexCount, 1, 0, 0, 0);
+        //cmd.draw(3, 1, 0, 0);
 
         // Clear pending sets
         m_PendingSets.clear();
@@ -308,11 +316,11 @@ namespace Engine {
     }
 
     // Bind uniform buffer
-    void VulkanGraphicsDevice::BindUniformBuffer(IUniformBuffer& buffer, uint32_t binding, uint32_t set) {
-        VulkanUniformBuffer& ubo = static_cast<VulkanUniformBuffer&>(buffer);
+    void VulkanGraphicsDevice::BindUniformBuffer(IBuffer& buffer, uint32_t binding, uint32_t set) {
+        VulkanBuffer& ubo = static_cast<VulkanBuffer&>(buffer);
     
         vk::DescriptorBufferInfo info{};
-        info.buffer = ubo.GetBuffer(m_FrameIndex).GetBuffer();
+        info.buffer = ubo.GetBuffer();
         info.offset = 0;
         info.range  = ubo.GetSize();
 

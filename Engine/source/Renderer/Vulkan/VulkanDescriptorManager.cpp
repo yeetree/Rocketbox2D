@@ -35,25 +35,32 @@ vk::DescriptorSet VulkanDescriptorManager::GetDescriptorSet(vk::DescriptorSetLay
     // Update set
     std::vector<vk::WriteDescriptorSet> writes;
 
+    std::vector<vk::DescriptorBufferInfo> bufferInfos;
+    std::vector<vk::DescriptorImageInfo> imageInfos;
+    bufferInfos.reserve(key.buffers.size());
+    imageInfos.reserve(key.textures.size());
+
     // Uniforms
     for (auto const& [binding, info] : key.buffers) {
+        bufferInfos.push_back(info);
         vk::WriteDescriptorSet write{};
         write.dstSet = ds;
         write.dstBinding = binding;
         write.descriptorCount = 1;
         write.descriptorType = vk::DescriptorType::eUniformBuffer;
-        write.pBufferInfo = &info;
+        write.pBufferInfo = &bufferInfos.back();
         writes.push_back(write);
     }
 
     // Samplers
     for (auto const& [binding, info] : key.textures) {
+        imageInfos.push_back(info);
         vk::WriteDescriptorSet write{};
         write.dstSet = ds;
         write.dstBinding = binding;
         write.descriptorCount = 1;
         write.descriptorType = vk::DescriptorType::eCombinedImageSampler;
-        write.pImageInfo = &info;
+        write.pImageInfo = &imageInfos.back();
         writes.push_back(write);
     }
 

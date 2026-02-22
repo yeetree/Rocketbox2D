@@ -16,18 +16,23 @@ namespace Engine {
         ~VulkanBuffer() override;
 
         void UpdateData(const void* data, size_t size, size_t offset) override;
+        size_t GetSize() const override;
 
         // Public getters for VulkanGraphicsDevice
         VkBuffer& GetBuffer();
 
     private:
-        // VMA members
-        VkBuffer m_Buffer = VK_NULL_HANDLE;
-        VmaAllocation m_Allocation = VK_NULL_HANDLE;
+        // Vulkan members
+        struct BufferInfo {
+            VkBuffer buffer;
+            VmaAllocation allocation;
+            void* mapPointer;
+        };
+        std::vector<BufferInfo> m_Buffers;
+        bool m_IsDynamic;
 
         VulkanGraphicsDevice* m_GraphicsDevice;
-        bool m_IsHostVisible;
-        void* m_MappedPtr = nullptr;
+        size_t m_Size;
 
         static VkBufferUsageFlags GetVulkanBufferUsage(BufferType type);
     };

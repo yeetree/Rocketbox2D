@@ -11,9 +11,6 @@
 
 namespace Engine
 {
-    // fwd
-    class IGraphicsDevice;
-    class IUniformBuffer;
 
     class ENGINE_EXPORT UniformBlock {
     public:
@@ -26,9 +23,6 @@ namespace Engine
         const uint8_t* GetData() const;
         size_t GetSize() const;
         const ShaderBinding& GetBinding() const;
-        Ref<IUniformBuffer> GetUniformBuffer();
-
-        void Upload(IGraphicsDevice* device);
 
     private:
         static ShaderDataType GetValueType(ShaderDataValue value);
@@ -36,7 +30,6 @@ namespace Engine
         ShaderBinding m_Binding;
         std::vector<uint8_t> m_Data;
         std::unordered_map<std::string, ShaderElement> m_ElementCache;
-        Ref<IUniformBuffer> m_UniformBuffer;
 
         bool m_Dirty = true;
     };

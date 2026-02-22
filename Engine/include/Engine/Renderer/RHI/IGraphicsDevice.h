@@ -12,7 +12,6 @@
 #include "Engine/Renderer/RHI/IShader.h"
 #include "Engine/Renderer/RHI/ITexture.h"
 #include "Engine/Renderer/RHI/IPipelineState.h"
-#include "Engine/Renderer/RHI/IUniformBuffer.h"
 
 namespace Engine {
     // What backend to create (Only Vulkan for now)
@@ -28,7 +27,6 @@ namespace Engine {
 
         // Resource creation
         virtual Scope<IBuffer>          CreateBuffer(const BufferDesc& desc) = 0;
-        virtual Scope<IUniformBuffer>   CreateUniformBuffer(const UniformBufferDesc& desc) = 0;
         virtual Scope<ITexture>         CreateTexture(const TextureDesc& desc) = 0;
         virtual Scope<IShader>          CreateShader(const ShaderDesc& desc) = 0;
         
@@ -44,7 +42,7 @@ namespace Engine {
         virtual void BindPipelineState(IPipelineState& pipeline) = 0;
         virtual void SubmitDraw(IBuffer& vbo, IBuffer& ebo, uint32_t indexCount) = 0;
         virtual void PushConstants(const void* data, uint32_t size) = 0;
-        virtual void BindUniformBuffer(IUniformBuffer& buffer, uint32_t binding, uint32_t set) = 0;
+        virtual void BindUniformBuffer(IBuffer& buffer, uint32_t binding, uint32_t set) = 0;
         virtual void BindTexture(ITexture& texture, uint32_t binding, uint32_t set) = 0;
 
         // Resize

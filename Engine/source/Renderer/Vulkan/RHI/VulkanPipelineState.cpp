@@ -1,9 +1,6 @@
 #include "Renderer/Vulkan/RHI/VulkanPipelineState.h"
 #include "Renderer/Vulkan/RHI/VulkanShader.h"
 #include "Renderer/Vulkan/RHI/VulkanGraphicsDevice.h"
-#include "Renderer/Vulkan/RHI/VulkanTexture.h"
-#include "Renderer/Vulkan/RHI/VulkanUniformBuffer.h"
-#include "Renderer/Vulkan/RHI/VulkanBuffer.h"
 #include "Engine/Core/Log.h"
 #include "Engine/Core/Assert.h"
 
@@ -11,6 +8,8 @@ namespace Engine
 {
     VulkanPipelineState::VulkanPipelineState(VulkanGraphicsDevice* graphicsDevice, const PipelineDesc& desc) : m_GraphicsDevice(graphicsDevice) {
         ENGINE_CORE_ASSERT(m_GraphicsDevice != nullptr, "Vulkan: invalid graphics device when creating pipeline state!");
+
+        LOG_CORE_TRACE("PSO Create begin. vert layout elements {0} stride: {1}", desc.vertexLayout.GetElements().size(), desc.vertexLayout.GetStride());
 
         // Get Vulkan Shader
         if(desc.shader == nullptr) {
@@ -39,6 +38,7 @@ namespace Engine
         // Attrib desc
         const std::vector<VertexElement>& elements = desc.vertexLayout.GetElements();
         for(int i = 0; i < elements.size(); i++) {
+            LOG_CORE_TRACE("Element {0}, Offset {1}, Size {2}", i, elements[i].offset, elements[i].size);
             attributeDescriptions.emplace_back(i, 0, GetVulkanFormat(elements[i].type), elements[i].offset);
         }
 
@@ -169,6 +169,8 @@ namespace Engine
         pipelineInfo.renderPass = nullptr;
 
         m_Pipeline = m_GraphicsDevice->GetDevice().GetDevice().createGraphicsPipeline(nullptr, pipelineInfo);
+    
+        LOG_CORE_TRACE("PSO Create end");
     }
 
     VulkanPipelineState::~VulkanPipelineState() {
@@ -232,5 +234,5 @@ namespace Engine
     std::map<uint32_t, vk::raii::DescriptorSetLayout>& VulkanPipelineState::GetDescriptorSetLayouts() {
         return m_DescriptorSetLayouts;
     }
-    
+
 } // namespace Engine

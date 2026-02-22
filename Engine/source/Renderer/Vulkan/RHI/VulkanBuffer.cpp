@@ -1,102 +1,141 @@
 #include "Renderer/Vulkan/RHI/VulkanBuffer.h"
 #include "Renderer/Vulkan/RHI/VulkanGraphicsDevice.h"
+#include "Renderer/Vulkan/VulkanConstants.h"
 #include "Engine/Core/Log.h"
 #include "Engine/Core/Assert.h"
 
 namespace Engine {
     VulkanBuffer::VulkanBuffer(VulkanGraphicsDevice* graphicsDevice, const BufferDesc& desc) 
         : m_GraphicsDevice(graphicsDevice), 
-          m_IsHostVisible(desc.isDynamic)
+          m_IsDynamic(desc.isDynamic), m_Size(desc.size)
     {
         ENGINE_CORE_ASSERT(graphicsDevice != nullptr, "Vulkan: invalid graphics device when creating buffer!");
 
         VkBufferCreateInfo bufferInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
         bufferInfo.size = desc.size;
         bufferInfo.usage = GetVulkanBufferUsage(desc.type);
-        
-        // If not dynamic, set able to be copied to
-        if(!m_IsHostVisible) {
-            bufferInfo.usage |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-        }
-
         VmaAllocationCreateInfo allocInfo = {};
-        if (m_IsHostVisible) {
+        int buffersToMake = m_IsDynamic ? k_MaxFramesInFlight : 1;
+
+        // Dynamic: Create one buffer per frame and keep memory mapped
+        if(m_IsDynamic) {
+            bufferInfo.usage |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
             allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
             allocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
                               VMA_ALLOCATION_CREATE_MAPPED_BIT; 
-        } else {
+        }
+        // Static: Create one buffer and use staging buffer to upload
+        else {
+            bufferInfo.usage |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
             allocInfo.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
         }
 
-        VmaAllocationInfo resultInfo;
-        vmaCreateBuffer(
-            m_GraphicsDevice->GetDevice().GetAllocator(), 
-            &bufferInfo, 
-            &allocInfo, 
-            &m_Buffer, 
-            &m_Allocation, 
-            &resultInfo
-        );
-
-        // Get VMA mapped pointer
-        if (m_IsHostVisible) {
-            m_MappedPtr = resultInfo.pMappedData;
+        m_Buffers.resize(buffersToMake);
+    
+        for(int i = 0; i < buffersToMake; i++) {
+            VmaAllocationInfo resultInfo;
+            vmaCreateBuffer(
+                m_GraphicsDevice->GetDevice().GetAllocator(), 
+                &bufferInfo, 
+                &allocInfo, 
+                &m_Buffers[i].buffer, 
+                &m_Buffers[i].allocation,
+                &resultInfo
+            );
+            if(m_IsDynamic) {
+                m_Buffers[i].mapPointer = resultInfo.pMappedData;
+            }
         }
 
+    
         if (desc.data != nullptr) {
-            UpdateData(desc.data, desc.size, 0);
+            if (m_IsDynamic) {
+                // init all frames
+                for (int i = 0; i < buffersToMake; i++) {
+                    memcpy((uint8_t*)m_Buffers[i].mapPointer, desc.data, desc.size);
+                }
+            } else {
+                UpdateData(desc.data, desc.size, 0);
+            }
         }
     }
 
     VulkanBuffer::~VulkanBuffer() {
         // VMA doesn't use raii, destroy manually
-        if (m_Buffer) {
-            vmaDestroyBuffer(m_GraphicsDevice->GetDevice().GetAllocator(), m_Buffer, m_Allocation);
+        for(const BufferInfo& buffer : m_Buffers) {
+            if(buffer.buffer) {
+                vmaDestroyBuffer(m_GraphicsDevice->GetDevice().GetAllocator(), buffer.buffer, buffer.allocation);
+            }
         }
     }
 
     void VulkanBuffer::UpdateData(const void* data, size_t size, size_t offset) {
-        
-        if(!m_Buffer || data == nullptr) {
+        if(data == nullptr) {
             return;
         }
         
-        if (m_IsHostVisible) {
-            memcpy((uint8_t*)m_MappedPtr + offset, data, size);
+        // Dynamic: Memory is mapped, get frame index and copy buffer data
+        if (m_IsDynamic) {
+            memcpy((uint8_t*)m_Buffers[m_GraphicsDevice->GetFrameIndex()].mapPointer + offset, data, size);
+        // Static: Create staging buffer
         } else {
-            // Create the staging buffer
-            BufferDesc stagingDesc;
-            stagingDesc.size = size;
-            stagingDesc.type = BufferType::Vertex;
-            stagingDesc.isDynamic = true; // map memory
-            stagingDesc.data = data; 
-            VulkanBuffer stagingBuffer(m_GraphicsDevice, stagingDesc);
 
+            BufferInfo stagingBuffer;
+
+            VkBufferCreateInfo bufferInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+            bufferInfo.size = size;
+            bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+
+            VmaAllocationCreateInfo allocInfo = {};
+            allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
+            allocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
+                              VMA_ALLOCATION_CREATE_MAPPED_BIT; 
+
+
+            VmaAllocationInfo resultInfo;
+            vmaCreateBuffer(
+                m_GraphicsDevice->GetDevice().GetAllocator(), 
+                &bufferInfo, 
+                &allocInfo, 
+                &stagingBuffer.buffer, 
+                &stagingBuffer.allocation,
+                &resultInfo
+            );
+            stagingBuffer.mapPointer = resultInfo.pMappedData;
+
+            memcpy(resultInfo.pMappedData, data, size);
+        
             // Copy
             vk::raii::CommandBuffer cmd = m_GraphicsDevice->BeginOneTimeCommands();
 
             vk::BufferCopy copyRegion(0, offset, size);
             cmd.copyBuffer(
-                static_cast<vk::Buffer>(stagingBuffer.m_Buffer), 
-                static_cast<vk::Buffer>(m_Buffer), 
+                static_cast<vk::Buffer>(stagingBuffer.buffer), 
+                static_cast<vk::Buffer>(m_Buffers[0].buffer), 
                 copyRegion
             );
 
             m_GraphicsDevice->EndOneTimeCommands(cmd);
+
+            // Destroy
+            vmaDestroyBuffer(m_GraphicsDevice->GetDevice().GetAllocator(), stagingBuffer.buffer, stagingBuffer.allocation);
         }
+    }
+
+    size_t VulkanBuffer::GetSize() const {
+        return m_Size;
     }
 
     VkBuffer& VulkanBuffer::GetBuffer() {
-        return m_Buffer;
+        return m_Buffers[(m_IsDynamic) ? m_GraphicsDevice->GetFrameIndex() : 0].buffer;
     }
 
     VkBufferUsageFlags VulkanBuffer::GetVulkanBufferUsage(BufferType type) {
-        VkBufferUsageFlags usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
         switch(type) {
-            case BufferType::Vertex:  usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT; break;
-            case BufferType::Index:   usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT; break;
-            case BufferType::Uniform: usage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT; break;
+            case BufferType::Vertex:  return VK_BUFFER_USAGE_VERTEX_BUFFER_BIT; break;
+            case BufferType::Index:   return VK_BUFFER_USAGE_INDEX_BUFFER_BIT; break;
+            case BufferType::Uniform: return VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT; break;
         }
-        return usage;
+        return VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
     }
 }

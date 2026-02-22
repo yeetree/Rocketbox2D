@@ -11,12 +11,10 @@
 #include "Engine/Renderer/RHI/IGraphicsDevice.h"
 #include "Engine/Renderer/RHI/IShader.h"
 #include "Engine/Renderer/RHI/IPipelineState.h"
-#include "Engine/Renderer/RHI/IUniformBuffer.h"
 
 namespace Engine {
     // Fwd:
     class VulkanBuffer;
-    class VulkanUniformBuffer;
     class VulkanPipelineState;
 
     // Vulkan Implementation of IGraphicsDevice
@@ -32,7 +30,6 @@ namespace Engine {
 
         // Resource Creation
         Scope<IBuffer> CreateBuffer(const BufferDesc& desc) override;
-        Scope<IUniformBuffer> CreateUniformBuffer(const UniformBufferDesc& desc) override;
         Scope<ITexture> CreateTexture(const TextureDesc& desc) override;
         Scope<IShader> CreateShader(const ShaderDesc& desc) override;
         Scope<IPipelineState> CreatePipelineState(const PipelineDesc& desc) override;
@@ -47,7 +44,7 @@ namespace Engine {
         void BindPipelineState(IPipelineState& pipeline) override;
         void SubmitDraw(IBuffer& vbo, IBuffer& ebo, uint32_t indexCount) override;
         void PushConstants(const void* data, uint32_t size) override;
-        void BindUniformBuffer(IUniformBuffer& buffer, uint32_t binding, uint32_t set) override;
+        void BindUniformBuffer(IBuffer& buffer, uint32_t binding, uint32_t set) override;
         void BindTexture(ITexture& texture, uint32_t binding, uint32_t set) override;
 
         // Resize

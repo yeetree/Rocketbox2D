@@ -9,8 +9,6 @@
 namespace Engine {
     // BufferType: What kind of data the buffer stores
     enum class BufferType { Vertex, Index, Uniform };
-    // NOTE: Uniform BufferType is used internally to create them.
-    // For usage, use IUniformBuffer or platform eqiv
 
     // BufferDesc: Describes how a buffer should be created
     struct BufferDesc {
@@ -33,6 +31,7 @@ namespace Engine {
         uint32_t GetID() const { return m_ID; }
 
         virtual void UpdateData(const void* data, size_t size, size_t offset) = 0;
+        virtual size_t GetSize() const = 0;
     private:
         uint32_t m_ID;
     };

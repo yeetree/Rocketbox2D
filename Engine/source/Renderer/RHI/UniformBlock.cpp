@@ -1,7 +1,5 @@
 #include "Engine/Renderer/RHI/UniformBlock.h"
 #include "Engine/Renderer/RHI/ShaderLayout.h"
-#include "Engine/Renderer/RHI/IGraphicsDevice.h"
-#include "Engine/Renderer/RHI/IUniformBuffer.h"
 #include "Engine/Core/Log.h"
 #include "Engine/Core/Assert.h"
 #include "Engine/Math/Vector.h"
@@ -48,23 +46,9 @@ namespace Engine
         return m_ElementCache.find(name) != m_ElementCache.end();
     }
 
-    void UniformBlock::Upload(IGraphicsDevice* device) {
-        if (!m_UniformBuffer) {
-            UniformBufferDesc desc;
-            desc.size = m_Data.size();
-            desc.data = m_Data.data();
-            m_UniformBuffer = device->CreateUniformBuffer(desc);
-        } else if (m_Dirty) {
-            m_UniformBuffer->UpdateData(m_Data.data(), m_Data.size(), 0);
-        }
-        m_Dirty = false;
-    }
-
     const uint8_t* UniformBlock::GetData() const { return m_Data.data(); }
     size_t UniformBlock::GetSize() const { return m_Data.size(); }
     const ShaderBinding& UniformBlock::GetBinding() const { return m_Binding; }
-
-    Ref<IUniformBuffer> UniformBlock::GetUniformBuffer() { return m_UniformBuffer; }
 
     ShaderDataType UniformBlock::GetValueType(ShaderDataValue value) {
         return std::visit([](auto&& arg) -> ShaderDataType {

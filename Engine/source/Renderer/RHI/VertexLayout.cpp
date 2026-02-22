@@ -1,4 +1,5 @@
 #include "Engine/Renderer/RHI/VertexLayout.h"
+#include "Engine/Core/Log.h"
 
 namespace Engine
 {
@@ -16,7 +17,9 @@ namespace Engine
     }
 
     VertexLayout::VertexLayout(std::initializer_list<VertexElement> elements) : m_Elements(elements) {
+        LOG_CORE_TRACE("VertexLayout created with {0} elements", elements.size());
         CalculateOffsetsAndStride();
+        LOG_CORE_TRACE("Stride: {0}", m_Stride);
     }
 
     uint64_t VertexLayout::GetHash() const {
@@ -29,6 +32,7 @@ namespace Engine
     }
 
     void VertexLayout::CalculateOffsetsAndStride() {
+        LOG_CORE_TRACE("Calculating offsets...");
         uint32_t offset = 0;
         m_Stride = 0;
         for (auto& element : m_Elements) {

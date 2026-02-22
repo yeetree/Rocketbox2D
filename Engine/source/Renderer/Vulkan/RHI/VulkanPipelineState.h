@@ -8,7 +8,6 @@
 namespace Engine {
     class VulkanGraphicsDevice;
     class VulkanTexture;
-    class VulkanUniformBuffer;
 
     class VulkanPipelineState : public IPipelineState {
     public:

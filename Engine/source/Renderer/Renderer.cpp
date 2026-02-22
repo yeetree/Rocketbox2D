@@ -134,15 +134,15 @@ namespace Engine
             auto& blocks = cmd.material->GetUniformBlocks();
             for (auto& [name, block] : blocks) {
                 // Upload data
-                block.Upload(m_GraphicsDevice);
-                m_FrameBuffers.push_back(block.GetUniformBuffer());
+                //block.Upload(m_GraphicsDevice);
+                //m_FrameBuffers.push_back(block.GetUniformBuffer());
 
                 // Bind
-                m_GraphicsDevice->BindUniformBuffer(
-                    *block.GetUniformBuffer(),
-                    block.GetBinding().binding,
-                    block.GetBinding().set
-                );
+                //m_GraphicsDevice->BindUniformBuffer(
+                //    *block.GetUniformBuffer(),
+                //    block.GetBinding().binding,
+                //    block.GetBinding().set
+                //);
             }
 
             // Handle Textures
