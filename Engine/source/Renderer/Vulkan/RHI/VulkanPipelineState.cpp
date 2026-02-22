@@ -59,7 +59,7 @@ namespace Engine
         rasterizer.rasterizerDiscardEnable = vk::False;
         rasterizer.polygonMode = GetVulkanFillMode(desc.fillMode);
         rasterizer.cullMode = GetVulkanCullMode(desc.cullMode);
-        rasterizer.frontFace = vk::FrontFace::eClockwise;
+        rasterizer.frontFace = vk::FrontFace::eCounterClockwise;
         rasterizer.depthBiasEnable = vk::False;
         rasterizer.depthBiasSlopeFactor = 1.0f;
         rasterizer.lineWidth = 1.0f;
@@ -100,47 +100,35 @@ namespace Engine
         dynamicState.pDynamicStates = dynamicStates.data();
 
         // Loop thru shader layout
-        std::vector<vk::DescriptorSetLayout> setLayouts;
+        std::map<uint32_t, std::vector<vk::DescriptorSetLayoutBinding>> setGroups;
+        uint32_t maxSetIndex = 0;
 
-        const std::vector<ShaderBinding>& bindings = desc.shaderLayout.GetBindings();
+        for (const ShaderBinding& sb : desc.shaderLayout.GetBindings()) {
+            vk::DescriptorSetLayoutBinding dlb{};
+            dlb.binding = sb.binding;
+            dlb.descriptorCount = 1;
+            dlb.stageFlags = (sb.type == ShaderBindingType::UniformBuffer) 
+                ? (vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment)
+                : vk::ShaderStageFlagBits::eFragment;
+            dlb.descriptorType = (sb.type == ShaderBindingType::UniformBuffer)
+                ? vk::DescriptorType::eUniformBuffer : vk::DescriptorType::eCombinedImageSampler;
 
-        // group bindings by set and create descriptor bindings
-        std::map<uint32_t, std::vector<vk::DescriptorSetLayoutBinding>> sets;
-        for (const ShaderBinding& shaderBinding : bindings) {
-            vk::DescriptorSetLayoutBinding descriptorBinding{};
-            descriptorBinding.binding = shaderBinding.binding;
-            descriptorBinding.descriptorCount = 1;
-
-            switch (shaderBinding.type) {
-                case ShaderBindingType::UniformBuffer:
-                    descriptorBinding.descriptorType = vk::DescriptorType::eUniformBuffer;
-                    // Best practice: allow UBOs in both vertex and fragment stages
-                    descriptorBinding.stageFlags = vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment;
-                    break;
-                case ShaderBindingType::Sampler:
-                    descriptorBinding.descriptorType = vk::DescriptorType::eCombinedImageSampler;
-                    descriptorBinding.stageFlags = vk::ShaderStageFlagBits::eFragment;
-                    break;
-            }
-            
-
-            m_SlotToSetBindingMap[shaderBinding.slot] = { shaderBinding.set, shaderBinding.binding };
-
-            // Add binding to set
-            sets[shaderBinding.set].push_back(descriptorBinding);
+            setGroups[sb.set].push_back(dlb);
+            maxSetIndex = std::max(maxSetIndex, sb.set);
         }
 
-        // create descriptor sets
-        for (auto const& [setIndex, bindingsList] : sets) {
-            vk::DescriptorSetLayoutCreateInfo descriptorSetLayoutInfo{};
-            descriptorSetLayoutInfo.bindingCount = static_cast<uint32_t>(bindingsList.size());
-            descriptorSetLayoutInfo.pBindings = bindingsList.data();
-
-            // Store the layout as well
-            m_DescriptorSetLayouts.emplace(setIndex, vk::raii::DescriptorSetLayout(
-                m_GraphicsDevice->GetDevice().GetDevice(), 
-                descriptorSetLayoutInfo
-            ));
+        // create layouts
+        std::vector<vk::DescriptorSetLayout> rawLayouts;
+        for (uint32_t i = 0; i <= maxSetIndex; i++) {
+            if (setGroups.contains(i)) {
+                vk::DescriptorSetLayoutCreateInfo layoutInfo({}, setGroups[i]);
+                m_DescriptorSetLayouts.emplace(i, vk::raii::DescriptorSetLayout(m_GraphicsDevice->GetDevice().GetDevice(), layoutInfo));
+            } else {
+                // empty layout for skipped sets to keep alignment
+                vk::DescriptorSetLayoutCreateInfo emptyInfo{};
+                m_DescriptorSetLayouts.emplace(i, vk::raii::DescriptorSetLayout(m_GraphicsDevice->GetDevice().GetDevice(), emptyInfo));
+            }
+            rawLayouts.push_back(*m_DescriptorSetLayouts.at(i));
         }
 
         // Create pipelime
@@ -156,13 +144,6 @@ namespace Engine
         pushRange.stageFlags = vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment;
         pushRange.offset = 0;
         pushRange.size = desc.pushConstantSize;
-
-        std::vector<vk::DescriptorSetLayout> rawLayouts;
-        rawLayouts.reserve(m_DescriptorSetLayouts.size());
-
-        for (const auto& layout : m_DescriptorSetLayouts) {
-            rawLayouts.push_back(*layout.second);
-        }
 
         vk::PipelineLayoutCreateInfo layoutInfo;
         layoutInfo.setLayoutCount = static_cast<uint32_t>(rawLayouts.size());
@@ -192,84 +173,6 @@ namespace Engine
 
     VulkanPipelineState::~VulkanPipelineState() {
 
-    }
-
-    vk::DescriptorSet VulkanPipelineState::GetDescriptorSetForTexture(VulkanTexture& tex, uint32_t slot) {
-        ResourceKey key = { tex.GetID(), slot, 0};
-    
-        if (m_DescriptorCacheTextures.find(key) == m_DescriptorCacheTextures.end()) {
-            // Get set from slot
-            SetBinding setBinding = m_SlotToSetBindingMap[slot];
-            const vk::DescriptorSetLayout& layout = *m_DescriptorSetLayouts.at(setBinding.set);
-
-            // allocate set
-            vk::DescriptorSetAllocateInfo allocInfo;
-            allocInfo.descriptorPool = *m_GraphicsDevice->GetDescriptorPool();
-            allocInfo.descriptorSetCount = 1;
-            allocInfo.pSetLayouts = &layout;
-
-            std::vector<vk::raii::DescriptorSet> sets = m_GraphicsDevice->GetDevice().GetDevice().allocateDescriptorSets(allocInfo);
-            
-            vk::raii::DescriptorSet descriptorSet = std::move(sets[0]);
-
-            // update the Set
-            vk::DescriptorImageInfo imageInfo{};
-            imageInfo.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-            imageInfo.imageView = *tex.GetImageView();
-            imageInfo.sampler = *tex.GetSampler();
-
-            vk::WriteDescriptorSet write{};
-            write.dstSet = *descriptorSet;
-            write.dstBinding = setBinding.binding;
-            write.descriptorType = vk::DescriptorType::eCombinedImageSampler;
-            write.descriptorCount = 1;
-            write.pImageInfo = &imageInfo;
-
-            m_GraphicsDevice->GetDevice().GetDevice().updateDescriptorSets(write, nullptr);
-
-            m_DescriptorCacheTextures.emplace(key, std::move(descriptorSet));
-        }
-        
-        return *m_DescriptorCacheTextures.at(key);
-    }
-
-    vk::DescriptorSet VulkanPipelineState::GetDescriptorSetForUniformBuffer(VulkanUniformBuffer& ubo, uint32_t slot) {
-        uint32_t frameIndex = m_GraphicsDevice->GetFrameIndex();
-        ResourceKey key = { ubo.GetID(), slot, frameIndex };
-
-        if (m_DescriptorCacheUniformBufferObjects.find(key) == m_DescriptorCacheUniformBufferObjects.end()) {
-            SetBinding setBinding = m_SlotToSetBindingMap[slot];
-            const vk::DescriptorSetLayout& layout = *m_DescriptorSetLayouts.at(setBinding.set);
-
-            // Allocate Set
-            vk::DescriptorSetAllocateInfo allocInfo;
-            allocInfo.descriptorPool = *m_GraphicsDevice->GetDescriptorPool();
-            allocInfo.descriptorSetCount = 1;
-            allocInfo.pSetLayouts = &layout;
-
-            auto sets = m_GraphicsDevice->GetDevice().GetDevice().allocateDescriptorSets(allocInfo);
-            vk::raii::DescriptorSet descriptorSet = std::move(sets[0]);
-
-            // Update the Set for a Buffer
-            vk::DescriptorBufferInfo bufferInfo{};
-            // GetVulkanBuffer() should return the specific VkBuffer for this frame
-            bufferInfo.buffer = ubo.GetBuffer(frameIndex).GetBuffer(); 
-            bufferInfo.offset = 0;
-            bufferInfo.range = ubo.GetSize();
-
-            vk::WriteDescriptorSet write{};
-            write.dstSet = *descriptorSet;
-            write.dstBinding = setBinding.binding;
-            write.descriptorType = vk::DescriptorType::eUniformBuffer;
-            write.descriptorCount = 1;
-            write.pBufferInfo = &bufferInfo;
-
-            m_GraphicsDevice->GetDevice().GetDevice().updateDescriptorSets(write, nullptr);
-
-            m_DescriptorCacheUniformBufferObjects.emplace(key, std::move(descriptorSet));
-        }
-
-        return *m_DescriptorCacheUniformBufferObjects.at(key);
     }
 
     vk::Format VulkanPipelineState::GetVulkanFormat(VertexElementType type) {
@@ -325,4 +228,9 @@ namespace Engine
     vk::raii::PipelineLayout& VulkanPipelineState::GetLayout() {
         return m_Layout;
     }
+
+    std::map<uint32_t, vk::raii::DescriptorSetLayout>& VulkanPipelineState::GetDescriptorSetLayouts() {
+        return m_DescriptorSetLayouts;
+    }
+    
 } // namespace Engine

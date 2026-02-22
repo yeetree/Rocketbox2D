@@ -4,108 +4,114 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <cmath>
 
+// Generated
+#include "generated/quadShader.h"
+
+// Quad data
+const float quadVerts[] = {
+    -0.5f,  -0.5f,   0.0f,  0.0f, // Bottom Left
+    0.5f,   -0.5f,  1.0f,   0.0f, // Bottom Right
+    0.5f,   0.5f,   1.0f,   1.0f, // Top Right
+    -0.5f,  0.5f,   0.0f,   1.0   // Top Left
+};
+
+const uint16_t quadIndices[] = {
+    0, 1, 2,
+    2, 3, 0
+};
+
 using namespace Engine;
-
-const std::vector<float> vertices = {
-    // Position     UV 
-    -0.5f, -0.5f,   0.0f, 0.0f,
-     0.5f, -0.5f,   1.0f, 0.0f,
-     0.5f,  0.5f,   1.0f, 1.0f,
-    -0.5f,  0.5f,   0.0f, 1.0f
-};
-
-const std::vector<uint16_t> indices = {
-    0, 1, 2, 2, 3, 0
-};
-
-// Push constant struct
-struct PushData {
-    alignas(16) glm::mat4 transform;
-};
-
-// Uniform constant struct
-struct UniformData {
-    alignas(16) glm::vec4 tint;
-};
 
 class EngineTestApp : public Application {
 public:
-    Ref<IBuffer> m_VertexBuffer;
-    Ref<IBuffer> m_IndexBuffer;
-    Ref<IUniformBuffer> m_UniformBuffer;
-    Ref<IShader> m_Shader;
-    Ref<ITexture> m_Texture;
-    Ref<IPipelineState> m_Pipeline;
 
-    PushData push;
-    UniformData uni;
+    Ref<ITexture> texture;
+    Camera cam;
+    Mat4 transformMat;
+    Vec4 tint;
+
+    Ref<IBuffer> vbo, ebo;
+    UniformBlock global, local;
+
+    Ref<IShader> shader;
+    Ref<IPipelineState> pso;
 
     void OnStart() override {
-        std::vector<uint32_t> shaderCode = Engine::FileSystem::ReadSPV(FileSystem::GetAbsolutePath("./shaders/slang.spv"));
+
+        BufferDesc vboDesc, eboDesc;
+        
+        // Create VBO and EBO for quad
+        vboDesc.data = quadVerts;
+        vboDesc.isDynamic = false;
+        vboDesc.size = sizeof(quadVerts);
+        vboDesc.type = BufferType::Vertex;
+
+        eboDesc.data = quadIndices;
+        eboDesc.isDynamic = false;
+        eboDesc.size = sizeof(quadIndices);
+        eboDesc.type = BufferType::Index;
+
+        vbo = GetGraphicsDevice().CreateBuffer(vboDesc);
+        ebo = GetGraphicsDevice().CreateBuffer(eboDesc);
+
+        // Create shader
         ShaderDesc shaderDesc;
+
+        // Listen, i PROMISE that k_QuadShaderByteCode_len is divisible by 4
+        const uint32_t* shaderData = static_cast<const uint32_t*>(static_cast<const void*>(k_QuadShaderByteCode));
+        std::vector<uint32_t> shaderDataVector(shaderData, shaderData + k_QuadShaderByteCode_len / sizeof(uint32_t));
         shaderDesc.modules = {
             ShaderModule{
-                .byteCode = shaderCode,
+                .byteCode = shaderDataVector,
                 .entryPoints = {
-                    { ShaderStage::Vertex, "vertMain" },
-                    { ShaderStage::Fragment, "fragMain" }
+                    {ShaderStage::Vertex, "vertMain"},
+                    {ShaderStage::Fragment, "fragMain"}
                 }
-            } 
+            }
         };
-        
-        m_Shader = GetGraphicsDevice().CreateShader(shaderDesc);
+        shader = GetGraphicsDevice().CreateShader(shaderDesc);
 
-        PipelineDesc pipeDesc;
-        pipeDesc.pushConstantSize = sizeof(PushData);
-        pipeDesc.enableBlending = true;
-        pipeDesc.shader = m_Shader.get();
-        pipeDesc.shaderLayout = ShaderLayout{
+        // shader layout
+        ShaderLayout shaderLayout = ShaderLayout{
+            // Global: Binding 0, Set 0
             ShaderBinding(
-                ShaderBindingType::UniformBuffer,
-                "ub",
-                0, 0, 0,
-                {
-                    ShaderElement(ShaderDataType::Vec4, "tint")
-                }
-            ),
+                ShaderBindingType::UniformBuffer,"global", 0, 0, 0, 
+                { ShaderElement(ShaderDataType::Mat4, "viewProjection") }),
+            
+            // Local: Binding 0, Set 1
             ShaderBinding(
-                ShaderBindingType::Sampler,
-                "texture",
-                1, 1, 0
-            ),
+                ShaderBindingType::UniformBuffer, "local", 1, 0, 1, 
+                { ShaderElement(ShaderDataType::Mat4, "transform"), 
+                ShaderElement(ShaderDataType::Vec4, "tint") }),
+            
+            // Texture: Binding 1, Set 1
+            ShaderBinding(ShaderBindingType::Sampler, "texture", 2, 1, 1)
         };
 
-        pipeDesc.vertexLayout = VertexLayout{
-            VertexElement(VertexElementType::Vec2, "inPosition"),
-            VertexElement(VertexElementType::Vec2, "inCoord")
-        };
+        // Vert layout
+        VertexLayout vertLayout = VertexLayout{VertexElement(VertexElementType::Vec2, "inPosition"), VertexElement(VertexElementType::Vec2, "inCoord")};
 
-        m_Pipeline =  GetGraphicsDevice().CreatePipelineState(pipeDesc);
+        PipelineDesc psoDesc;
+        psoDesc.shader = shader.get();
+        psoDesc.shaderLayout = shaderLayout;
+        psoDesc.vertexLayout = vertLayout;
+        psoDesc.pushConstantSize = 0;
+        psoDesc.topology = PrimitiveTopology::TriangleList;
+        psoDesc.fillMode = FillMode::Fill;
+        psoDesc.cullMode = CullMode::None;
+        psoDesc.enableBlending = true;
 
-        BufferDesc vbDesc;
-        vbDesc.data = vertices.data();
-        vbDesc.size = sizeof(vertices[0]) * vertices.size();
-        vbDesc.type = BufferType::Vertex;
+        pso = GetGraphicsDevice().CreatePipelineState(psoDesc);
 
-        m_VertexBuffer = GetGraphicsDevice().CreateBuffer(vbDesc);
-
-        BufferDesc ibDesc;
-        ibDesc.data = indices.data();
-        ibDesc.size = sizeof(indices[0]) * indices.size();
-        ibDesc.type = BufferType::Index;
-
-        m_IndexBuffer = GetGraphicsDevice().CreateBuffer(ibDesc);
-
-        UniformBufferDesc ubDesc;
-        ubDesc.size = sizeof(UniformData);
-        ubDesc.data = &uni;
-        // Need a CreateUniformBuffer or similar in your GraphicsDevice
-        m_UniformBuffer = GetGraphicsDevice().CreateUniformBuffer(ubDesc);
+        global = UniformBlock(*shaderLayout.GetBinding("global"));
+        local = UniformBlock(*shaderLayout.GetBinding("local"));
 
         GetResourceManager().LoadTexture("awesome", "./Assets/awesomeface.png");
-        m_Texture = GetResourceManager().GetTexture("awesome");
+        texture = GetResourceManager().GetTexture("awesome");
+        cam = Camera(800.0f);
+        cam.OnResize();
 
-        GetGraphicsDevice().SetClearColor(Vec4(0.0f, 0.0f, 0.5f, 1.0f));
+        GetGraphicsDevice().SetClearColor(Vec4(1.0, 0.0, 0.0, 1.0));
     }
 
     void OnInput(SDL_Event event) override {
@@ -113,33 +119,31 @@ public:
     }
 
     void OnUpdate(float dt) override {
-        push.transform = glm::rotate(glm::mat4(1.0f), (float)SDL_GetTicks() / 1000.0f, glm::vec3(0, 0, 1));
-        uni.tint = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f); // Red
+        transformMat = glm::translate(glm::mat4(1.0f), Vec3(0.0f, 0.0f, 0.0f)); 
+        transformMat = glm::scale(transformMat, Vec3(100.0f, 100.0f, 1.0f));
+    
+        tint = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+        global.Set("viewProjection", cam.GetViewProjectionMatrix());
+        local.Set("transform", transformMat);
+        local.Set("tint", tint);
+        global.Upload(&GetGraphicsDevice());
+        local.Upload(&GetGraphicsDevice());
     }
 
     void OnRender() override {
-        GetGraphicsDevice().BindPipelineState(*m_Pipeline);
-        GetGraphicsDevice().BindUniformBuffer(*m_UniformBuffer, 0);
-        m_UniformBuffer->UpdateData(&uni, sizeof(UniformData), 0);
-        GetGraphicsDevice().PushConstants(&push, sizeof(PushData));
-        GetGraphicsDevice().BindTexture(*m_Texture, 1);
-        GetGraphicsDevice().SubmitDraw(*m_VertexBuffer, *m_IndexBuffer, indices.size());
+        GetGraphicsDevice().BindPipelineState(*pso);
+        GetGraphicsDevice().BindUniformBuffer(*global.GetUniformBuffer(), 0, 0);
+        GetGraphicsDevice().BindUniformBuffer(*local.GetUniformBuffer(), 0, 1);
+        GetGraphicsDevice().BindTexture(*texture, 1, 1);
+        GetGraphicsDevice().SubmitDraw(*vbo, *ebo, 6);
     }
 
     void OnDestroy() override {
-        // Manually destroy our objects because this class technically outlives the rest
-        // of the engine and vulkan is NOT happy with us.
-        LOG_TRACE("Client destroying...");
-        m_Pipeline.reset();
-        m_Shader.reset();
-        m_VertexBuffer.reset();
-        m_IndexBuffer.reset();
-        m_UniformBuffer.reset();
-        LOG_TRACE("Client done destroying.");
+
     }
 };
 
-int main(int argc, char **argv) {
+int Engine::EntryPoint(int argc, char **argv) {
     EngineTestApp app;
     app.Init(800, 600, "VKTestApp", SDL_WINDOW_RESIZABLE);
     app.Run();

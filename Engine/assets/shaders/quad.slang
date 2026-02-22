@@ -9,33 +9,37 @@ struct VSOutput
     float2 coords;
 };
 
-struct PushData {
+struct GlobalUniformData {
+    float4x4 viewProjection;
+};
+
+struct LocalUniformData {
     float4x4 transform;
     float4 tint;
-};
-
-struct UniformData {
-    float4 viewProjection;
-};
-
-[[vk::push_constant]]
-ConstantBuffer<PushData> pc;
+}
 
 [[vk::binding(0, 0)]]
-ConstantBuffer<UniformData> ub;
+ConstantBuffer<GlobalUniformData> global;
 
 [[vk::binding(0, 1)]]
+ConstantBuffer<LocalUniformData> local;
+
+[[vk::binding(1, 1)]]
 Sampler2D texture;
 
 [shader("vertex")]
 VSOutput vertMain(VSInput input) {
     VSOutput output;
-    output.pos = mul(ub.viewProjection, mul(pc.transform, float4(input.inPosition, 0.0, 1.0)));
+
+    float4 localPos = float4(input.inPosition, 0.0, 1.0);
+    float4 worldPos = mul(localPos, local.transform);
+    output.pos = mul(worldPos, global.viewProjection);
+    
     output.coords = input.inCoords;
     return output;
 }
 
 [shader("fragment")]
 float4 fragMain(VSOutput vertIn) : SV_TARGET {
-    return texture.Sample(vertIn.coords) * pc.tint;
+    return texture.Sample(vertIn.coords) * local.tint;
 }

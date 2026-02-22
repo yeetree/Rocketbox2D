@@ -1,6 +1,8 @@
 #ifndef ENGINE_ENGINE
 #define ENGINE_ENGINE
 
+#include "Engine/Core/EntryPoint.h"
+
 #include "Engine/Core/Application.h"
 #include "Engine/Core/FileSystem.h"
 #include "Engine/Core/ResourceManager.h"

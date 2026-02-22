@@ -21,5 +21,8 @@ const std::array<const char*, 3> k_DeviceExtensions = {
 };
 
 const int k_MaxFramesInFlight = 3;
+const int k_MaxUniformBuffersPerFrame = 1000;
+const int k_MaxSamplersPerFrame = 1000;
+const int k_MaxDescriptorSetsPerFrame = 1000;
 
 #endif // RENDERER_VULKAN_VULKANCONSTANTS

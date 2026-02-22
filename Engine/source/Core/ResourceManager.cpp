@@ -7,14 +7,19 @@
 
 namespace Engine
 {
-    void ResourceManager::LoadShader(const std::string& identifier, const std::string& vertPath, const std::string& fragPath) {
+    void ResourceManager::LoadShader(const std::string& identifier, const std::string& path, const std::string& vertEntry, const std::string& fragEntry ) {
 
-        std::vector<char> vertSource = FileSystem::ReadFile(FileSystem::GetAbsolutePath(vertPath));
-        std::vector<char> fragSource = FileSystem::ReadFile(FileSystem::GetAbsolutePath(fragPath));
-
+        std::vector<uint32_t> byteCode = FileSystem::ReadSPV(FileSystem::GetAbsolutePath(path));
         ShaderDesc desc;
-        //desc.sources[ShaderStage::Vertex] = vertSource;
-        //desc.sources[ShaderStage::Fragment] = fragSource;
+        desc.modules = {
+            ShaderModule{
+                .byteCode = byteCode,
+                .entryPoints = {
+                    { ShaderStage::Vertex, vertEntry },
+                    { ShaderStage::Fragment, fragEntry },
+                }
+            }
+        };
 
         // Get shader (unique)
         Scope<IShader> shaderPtr = m_GraphicsDevice->CreateShader(desc);
@@ -74,12 +79,12 @@ namespace Engine
         m_Meshes[identifier] = mesh;
     }
 
-    void ResourceManager::CreateMaterial(const std::string& identifier, Ref<IShader> shader) {
+    void ResourceManager::CreateMaterial(const std::string& identifier, Ref<IShader> shader, ShaderLayout& layout) {
         if(!shader) {
             LOG_CORE_WARN("Resource Warning: Material: {0} was created with a null shader!", identifier);
         }
 
-        Ref<Material> material = CreateRef<Material>(shader);
+        Ref<Material> material = CreateRef<Material>(shader, layout);
         m_Materials[identifier] = material;
     }
 

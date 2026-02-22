@@ -22,6 +22,22 @@ namespace Engine
         }
     }
 
+    const ShaderBinding* ShaderLayout::GetBinding(const std::string& name) const {
+        for(const auto& b : m_Bindings) {
+            if(b.name == name) return &b;
+        }
+        return nullptr;
+    }
+
+    const ShaderBinding* ShaderLayout::GetBindingBySlot(uint32_t slot) const {
+        for (const auto& binding : m_Bindings) {
+            if (binding.slot == slot) {
+                return &binding;
+            }
+        }
+        return nullptr;
+    }
+
     uint64_t ShaderLayout::GetHash() const {
         uint64_t hash = 0;
         for (const auto& binding : m_Bindings) {

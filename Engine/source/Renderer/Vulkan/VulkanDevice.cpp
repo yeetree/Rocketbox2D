@@ -40,7 +40,7 @@ void VulkanDevice::CreateLogicalDevice(VulkanContext& context) {
     }
     if (m_QueueIndex == ~0)
     {
-        LOG_CORE_ERROR("Vulkan: Could not find a queue for graphics and present!");
+        throw std::runtime_error("Vulkan: Could not find a queue for graphics and present!");
         return; // Failure
     }
 
@@ -82,6 +82,8 @@ void VulkanDevice::CreateLogicalDevice(VulkanContext& context) {
 
     m_Device = vk::raii::Device(context.GetPhysicalDevice(), deviceCreateInfo);
     m_Queue = vk::raii::Queue(m_Device, m_QueueIndex, 0);
+
+    VULKAN_HPP_DEFAULT_DISPATCHER.init(*context.GetInstance(), vkGetInstanceProcAddr, *m_Device, vkGetDeviceProcAddr);
 }
 
 void VulkanDevice::CreateCommandPool() {
@@ -95,48 +97,46 @@ void VulkanDevice::CreateCommandPool() {
 void VulkanDevice::CreateAllocator(VulkanContext& context) {
     // Setup VMA allocator
     // We're configuring VMA for Vulkan 1.3 because 1.4 is scary :(
-    VmaAllocatorCreateInfo allocatorInfo = {};
-    allocatorInfo.vulkanApiVersion = VK_API_VERSION_1_3;
-    allocatorInfo.physicalDevice = *context.GetPhysicalDevice();
-    allocatorInfo.device = *m_Device;
-    allocatorInfo.instance = *context.GetInstance();
 
     // Setup vulkanFunctions for VMA allocator
     auto &instance = context.GetInstance();
     VmaVulkanFunctions vulkanFunctions = {};
-    vulkanFunctions.vkGetInstanceProcAddr = (PFN_vkGetInstanceProcAddr)instance.getProcAddr("vkGetInstanceProcAddr");
-    vulkanFunctions.vkGetDeviceProcAddr   = (PFN_vkGetDeviceProcAddr)m_Device.getProcAddr("vkGetDeviceProcAddr");
+    vulkanFunctions.vkGetInstanceProcAddr = VULKAN_HPP_DEFAULT_DISPATCHER.vkGetInstanceProcAddr;
+    vulkanFunctions.vkGetDeviceProcAddr   = VULKAN_HPP_DEFAULT_DISPATCHER.vkGetDeviceProcAddr;
+    vulkanFunctions.vkGetPhysicalDeviceProperties = VULKAN_HPP_DEFAULT_DISPATCHER.vkGetPhysicalDeviceProperties;
+    vulkanFunctions.vkGetPhysicalDeviceMemoryProperties = VULKAN_HPP_DEFAULT_DISPATCHER.vkGetPhysicalDeviceMemoryProperties;
+    vulkanFunctions.vkAllocateMemory = VULKAN_HPP_DEFAULT_DISPATCHER.vkAllocateMemory;
+    vulkanFunctions.vkFreeMemory = VULKAN_HPP_DEFAULT_DISPATCHER.vkFreeMemory;
+    vulkanFunctions.vkMapMemory = VULKAN_HPP_DEFAULT_DISPATCHER.vkMapMemory;
+    vulkanFunctions.vkUnmapMemory = VULKAN_HPP_DEFAULT_DISPATCHER.vkUnmapMemory;
+    vulkanFunctions.vkFlushMappedMemoryRanges = VULKAN_HPP_DEFAULT_DISPATCHER.vkFlushMappedMemoryRanges;
+    vulkanFunctions.vkInvalidateMappedMemoryRanges = VULKAN_HPP_DEFAULT_DISPATCHER.vkInvalidateMappedMemoryRanges;
+    vulkanFunctions.vkBindBufferMemory = VULKAN_HPP_DEFAULT_DISPATCHER.vkBindBufferMemory;
+    vulkanFunctions.vkBindImageMemory = VULKAN_HPP_DEFAULT_DISPATCHER.vkBindImageMemory;
+    vulkanFunctions.vkGetBufferMemoryRequirements = VULKAN_HPP_DEFAULT_DISPATCHER.vkGetBufferMemoryRequirements;
+    vulkanFunctions.vkGetImageMemoryRequirements = VULKAN_HPP_DEFAULT_DISPATCHER.vkGetImageMemoryRequirements;
+    vulkanFunctions.vkGetPhysicalDeviceMemoryProperties2KHR = VULKAN_HPP_DEFAULT_DISPATCHER.vkGetPhysicalDeviceMemoryProperties2;
+    vulkanFunctions.vkGetBufferMemoryRequirements2KHR = VULKAN_HPP_DEFAULT_DISPATCHER.vkGetBufferMemoryRequirements2;
+    vulkanFunctions.vkGetImageMemoryRequirements2KHR = VULKAN_HPP_DEFAULT_DISPATCHER.vkGetImageMemoryRequirements2;
+    vulkanFunctions.vkBindBufferMemory2KHR = VULKAN_HPP_DEFAULT_DISPATCHER.vkBindBufferMemory2;
+    vulkanFunctions.vkBindImageMemory2KHR = VULKAN_HPP_DEFAULT_DISPATCHER.vkBindImageMemory2;
+    vulkanFunctions.vkGetDeviceBufferMemoryRequirements = VULKAN_HPP_DEFAULT_DISPATCHER.vkGetDeviceBufferMemoryRequirements;
+    vulkanFunctions.vkGetDeviceImageMemoryRequirements = VULKAN_HPP_DEFAULT_DISPATCHER.vkGetDeviceImageMemoryRequirements;
+    vulkanFunctions.vkCreateBuffer = VULKAN_HPP_DEFAULT_DISPATCHER.vkCreateBuffer;
+    vulkanFunctions.vkDestroyBuffer = VULKAN_HPP_DEFAULT_DISPATCHER.vkDestroyBuffer;
+    vulkanFunctions.vkCreateImage = VULKAN_HPP_DEFAULT_DISPATCHER.vkCreateImage;
+    vulkanFunctions.vkDestroyImage = VULKAN_HPP_DEFAULT_DISPATCHER.vkDestroyImage;
+    vulkanFunctions.vkCmdCopyBuffer = VULKAN_HPP_DEFAULT_DISPATCHER.vkCmdCopyBuffer;
 
-    vulkanFunctions.vkGetPhysicalDeviceProperties       = (PFN_vkGetPhysicalDeviceProperties)instance.getProcAddr("vkGetPhysicalDeviceProperties");
-    vulkanFunctions.vkGetPhysicalDeviceMemoryProperties = (PFN_vkGetPhysicalDeviceMemoryProperties)instance.getProcAddr("vkGetPhysicalDeviceMemoryProperties");
-    vulkanFunctions.vkGetPhysicalDeviceMemoryProperties2KHR = (PFN_vkGetPhysicalDeviceMemoryProperties2)instance.getProcAddr("vkGetPhysicalDeviceMemoryProperties2");
-
-    vulkanFunctions.vkAllocateMemory                    = (PFN_vkAllocateMemory)m_Device.getProcAddr("vkAllocateMemory");
-    vulkanFunctions.vkFreeMemory                        = (PFN_vkFreeMemory)m_Device.getProcAddr("vkFreeMemory");
-    vulkanFunctions.vkMapMemory                         = (PFN_vkMapMemory)m_Device.getProcAddr("vkMapMemory");
-    vulkanFunctions.vkUnmapMemory                       = (PFN_vkUnmapMemory)m_Device.getProcAddr("vkUnmapMemory");
-    vulkanFunctions.vkFlushMappedMemoryRanges           = (PFN_vkFlushMappedMemoryRanges)m_Device.getProcAddr("vkFlushMappedMemoryRanges");
-    vulkanFunctions.vkInvalidateMappedMemoryRanges      = (PFN_vkInvalidateMappedMemoryRanges)m_Device.getProcAddr("vkInvalidateMappedMemoryRanges");
-    vulkanFunctions.vkBindBufferMemory                  = (PFN_vkBindBufferMemory)m_Device.getProcAddr("vkBindBufferMemory");
-    vulkanFunctions.vkBindImageMemory                   = (PFN_vkBindImageMemory)m_Device.getProcAddr("vkBindImageMemory");
-    vulkanFunctions.vkGetBufferMemoryRequirements       = (PFN_vkGetBufferMemoryRequirements)m_Device.getProcAddr("vkGetBufferMemoryRequirements");
-    vulkanFunctions.vkGetImageMemoryRequirements        = (PFN_vkGetImageMemoryRequirements)m_Device.getProcAddr("vkGetImageMemoryRequirements");
-    vulkanFunctions.vkCreateBuffer                      = (PFN_vkCreateBuffer)m_Device.getProcAddr("vkCreateBuffer");
-    vulkanFunctions.vkDestroyBuffer                     = (PFN_vkDestroyBuffer)m_Device.getProcAddr("vkDestroyBuffer");
-    vulkanFunctions.vkCreateImage                       = (PFN_vkCreateImage)m_Device.getProcAddr("vkCreateImage");
-    vulkanFunctions.vkDestroyImage                      = (PFN_vkDestroyImage)m_Device.getProcAddr("vkDestroyImage");
-    vulkanFunctions.vkCmdCopyBuffer                     = (PFN_vkCmdCopyBuffer)m_Device.getProcAddr("vkCmdCopyBuffer");
-    vulkanFunctions.vkGetDeviceBufferMemoryRequirements = (PFN_vkGetDeviceBufferMemoryRequirements)m_Device.getProcAddr("vkGetDeviceBufferMemoryRequirements");
-    vulkanFunctions.vkGetDeviceImageMemoryRequirements = (PFN_vkGetDeviceImageMemoryRequirements)m_Device.getProcAddr("vkGetDeviceImageMemoryRequirements");
-    vulkanFunctions.vkGetBufferMemoryRequirements2KHR = (PFN_vkGetBufferMemoryRequirements2)m_Device.getProcAddr("vkGetBufferMemoryRequirements2");
-    vulkanFunctions.vkGetImageMemoryRequirements2KHR  = (PFN_vkGetImageMemoryRequirements2)m_Device.getProcAddr("vkGetImageMemoryRequirements2");
-    vulkanFunctions.vkBindBufferMemory2KHR            = (PFN_vkBindBufferMemory2)m_Device.getProcAddr("vkBindBufferMemory2");
-    vulkanFunctions.vkBindImageMemory2KHR             = (PFN_vkBindImageMemory2)m_Device.getProcAddr("vkBindImageMemory2");
-
+    VmaAllocatorCreateInfo allocatorInfo = {};
+    allocatorInfo.vulkanApiVersion = VK_API_VERSION_1_3;
+    allocatorInfo.physicalDevice   = *context.GetPhysicalDevice();
+    allocatorInfo.device           = *m_Device;
+    allocatorInfo.instance         = *context.GetInstance();
     allocatorInfo.pVulkanFunctions = &vulkanFunctions;
     
     if (vmaCreateAllocator(&allocatorInfo, &m_Allocator) != VK_SUCCESS) {
-        LOG_CORE_ERROR("Vulkan: Failed to create VMA Allocator!");
+        throw std::runtime_error("Vulkan: Failed to create VMA Allocator!");
     }
 }
 

@@ -44,8 +44,8 @@ namespace Engine {
         virtual void BindPipelineState(IPipelineState& pipeline) = 0;
         virtual void SubmitDraw(IBuffer& vbo, IBuffer& ebo, uint32_t indexCount) = 0;
         virtual void PushConstants(const void* data, uint32_t size) = 0;
-        virtual void BindUniformBuffer(IUniformBuffer& buffer, uint32_t binding) = 0;
-        virtual void BindTexture(ITexture& texture, uint32_t slot) = 0;
+        virtual void BindUniformBuffer(IUniformBuffer& buffer, uint32_t binding, uint32_t set) = 0;
+        virtual void BindTexture(ITexture& texture, uint32_t binding, uint32_t set) = 0;
 
         // Resize
         virtual void Resize(int width, int height) = 0;

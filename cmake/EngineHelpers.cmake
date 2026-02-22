@@ -21,15 +21,28 @@ function(engine_add_project PROJECT_NAME SOURCES ASSET_DIR_IN ASSET_DIR_OUT)
 
     # Deployment
 
-    # Copy dlls
+    # Deploy shared libs
+
+    # Post-Build
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory "${APP_BIN_DIR}"
+        # Copy the Engine and SDL libraries
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "$<TARGET_FILE:Engine::Engine>"
-            "$<TARGET_FILE:SDL3::SDL3-shared>"
+            "$<TARGET_FILE:SDL3::SDL3>"
             "${APP_BIN_DIR}"
-        COMMENT "Deployed DLL dependencies to ${APP_BIN_DIR}"
+        
+        COMMENT "Deployed libraries"
     )
+
+    # Manual symlink for linux
+    if(UNIX)
+        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+            # Create symlink because linux hates us now
+            COMMAND ${CMAKE_COMMAND} -E create_symlink "$<TARGET_FILE_NAME:SDL3::SDL3>" "${APP_BIN_DIR}/libSDL3.so.0"
+            COMMENT "Created symlinks for SDL3"
+        )
+    endif()
 
     # Assets
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ASSET_DIR_IN}")
@@ -111,6 +124,7 @@ function(compile_shader_to_header TARGET_NAME SHADER_FILE_IN HEADER_FILE_OUT VAR
     
     # Make sure directory exists
     file(MAKE_DIRECTORY "${OUT_DIR}")
+    file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/temp/")
 
     # Compile 
     add_custom_command(

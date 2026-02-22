@@ -47,8 +47,8 @@ namespace Engine {
         void BindPipelineState(IPipelineState& pipeline) override;
         void SubmitDraw(IBuffer& vbo, IBuffer& ebo, uint32_t indexCount) override;
         void PushConstants(const void* data, uint32_t size) override;
-        void BindUniformBuffer(IUniformBuffer& buffer, uint32_t slot) override;
-        void BindTexture(ITexture& texture, uint32_t slot) override;
+        void BindUniformBuffer(IUniformBuffer& buffer, uint32_t binding, uint32_t set) override;
+        void BindTexture(ITexture& texture, uint32_t binding, uint32_t set) override;
 
         // Resize
         void Resize(int width, int height) override;
@@ -72,7 +72,6 @@ namespace Engine {
 
         // Getters for Vulkan* classes (Not declared in IGraphicsDevice)
         uint32_t GetFrameIndex() const;
-        vk::raii::DescriptorPool& GetDescriptorPool();
         VulkanContext& GetContext();
         VulkanDevice& GetDevice();
         VulkanSwapchain& GetSwapchain();
@@ -90,13 +89,11 @@ namespace Engine {
         uint32_t m_FrameIndex;
         uint32_t m_ImageIndex;
 
-        // Descriptors
-        vk::raii::DescriptorPool m_DescriptorPool = nullptr;
-        vk::raii::DescriptorSetLayout m_UBOLayout = nullptr;
-        vk::raii::DescriptorSetLayout m_TextureLayout = nullptr;
-
         // Current PSO
         VulkanPipelineState* m_CurrentPipelineState;
+
+        // Pending set binds
+        std::map<uint32_t, DescriptorSetKey> m_PendingSets;
 
         // Current clear color
         vk::ClearColorValue m_ClearColor = vk::ClearColorValue(0.0f, 0.0f, 0.0f, 1.0f);

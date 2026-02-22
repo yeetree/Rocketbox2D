@@ -57,10 +57,10 @@ namespace Engine {
 
         uint64_t m_TicksPrevious;
         
-        Scope<IGraphicsDevice> m_GraphicsDevice;
-        Scope<Renderer> m_Renderer;
-        Scope<ResourceManager> m_ResourceManager;
         Scope<Input> m_Input;
+        Scope<ResourceManager> m_ResourceManager;
+        Scope<Renderer> m_Renderer;
+        Scope<IGraphicsDevice> m_GraphicsDevice;
     };
 } // namespace Engine
 

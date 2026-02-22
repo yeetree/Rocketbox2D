@@ -16,20 +16,6 @@ namespace Engine {
         m_Context = CreateScope<VulkanContext>(window);
         m_Device = CreateScope<VulkanDevice>(*m_Context);
         m_Swapchain = CreateScope<VulkanSwapchain>(*m_Context, *m_Device);
-
-        // Create descriptor pool: 1000 uniforms and 1000 textures
-        std::vector<vk::DescriptorPoolSize> poolSizes = {
-            { vk::DescriptorType::eUniformBuffer, 1000 },
-            { vk::DescriptorType::eCombinedImageSampler, 1000 }
-        };
-
-        vk::DescriptorPoolCreateInfo poolInfo{};
-        poolInfo.flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet;
-        poolInfo.maxSets = 2000; 
-        poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
-        poolInfo.pPoolSizes = poolSizes.data();
-
-        m_DescriptorPool = vk::raii::DescriptorPool(m_Device->GetDevice(), poolInfo);
     }
 
     VulkanGraphicsDevice::~VulkanGraphicsDevice() {
@@ -103,6 +89,9 @@ namespace Engine {
 
         // Wait to finish
         (void)device.waitForFences({*frame.GetInFlightFence()}, vk::True, UINT64_MAX);
+
+        // Reset frame
+        frame.Reset();
 
         // Get semaphore
         auto& imageAvailableSem = m_Swapchain->GetImageAvailableSemaphore(m_FrameIndex);
@@ -186,7 +175,7 @@ namespace Engine {
         submitInfo.commandBufferCount = 1;
         submitInfo.pCommandBuffers = &*cmd;
         submitInfo.signalSemaphoreCount = 1;
-        submitInfo.pSignalSemaphores = &*m_Swapchain->GetRenderFinishedSemaphore(m_FrameIndex);
+        submitInfo.pSignalSemaphores = &*m_Swapchain->GetRenderFinishedSemaphore(m_ImageIndex);
 
         // Submit to the queue (which should be a getter in m_Device)
         m_Device->GetQueue().submit(submitInfo, *frame.GetInFlightFence());
@@ -197,7 +186,7 @@ namespace Engine {
 
         vk::PresentInfoKHR presentInfo;
         presentInfo.waitSemaphoreCount = 1;
-        presentInfo.pWaitSemaphores = &*m_Swapchain->GetRenderFinishedSemaphore(m_FrameIndex);
+        presentInfo.pWaitSemaphores = &*m_Swapchain->GetRenderFinishedSemaphore(m_ImageIndex);
         presentInfo.swapchainCount = 1;
         presentInfo.pSwapchains = &*m_Swapchain->GetSwapchain();
         presentInfo.pImageIndices = &m_ImageIndex;
@@ -257,15 +246,47 @@ namespace Engine {
         }
         
         auto& frame = m_Swapchain->GetFrame(m_FrameIndex);
+        auto& descriptorManager = frame.GetDescriptorManager();
         auto& cmd = frame.GetCommandBuffer();
 
+        // Get layout from pso
+        std::map<uint32_t, vk::raii::DescriptorSetLayout>& layouts = m_CurrentPipelineState->GetDescriptorSetLayouts();
+        
+        // Get and bind pending sets
+        for (auto& [setIdx, key] : m_PendingSets) {
+            
+            auto i = layouts.find(setIdx);
+            if(i == layouts.end()) {
+                LOG_CORE_WARN("Vulkan: Descriptor set layout for set {0} does not exist in current Pipeline State!", setIdx);
+                continue;
+            }
+            vk::DescriptorSetLayout layout = m_CurrentPipelineState->GetDescriptorSetLayouts().at(setIdx);
+            
+            // get set from manager
+            vk::DescriptorSet ds = descriptorManager.GetDescriptorSet(layout, key);
+
+            // bind
+            cmd.bindDescriptorSets(
+                vk::PipelineBindPoint::eGraphics,
+                m_CurrentPipelineState->GetLayout(),
+                setIdx,
+                ds,
+                nullptr
+            );
+        }
+
+        // Bind buffers
         VulkanBuffer* vertexBuffer = static_cast<VulkanBuffer*>(&vbo);
         cmd.bindVertexBuffers(0, { static_cast<vk::Buffer>(vertexBuffer->GetBuffer()) }, {0});
 	
         VulkanBuffer* indexBuffer = static_cast<VulkanBuffer*>(&ebo);
         cmd.bindIndexBuffer(static_cast<vk::Buffer>(indexBuffer->GetBuffer()), 0, vk::IndexType::eUint16);
         
+        // Draw
         cmd.drawIndexed(indexCount, 1, 0, 0, 0);
+
+        // Clear pending sets
+        m_PendingSets.clear();
     }
 
     // Push constants
@@ -287,47 +308,27 @@ namespace Engine {
     }
 
     // Bind uniform buffer
-    void VulkanGraphicsDevice::BindUniformBuffer(IUniformBuffer& buffer, uint32_t slot) {
-        if (!m_CurrentPipelineState) {
-            LOG_CORE_WARN("Vulkan: Attempted to bind uniform buffer without a bound Pipeline State!");
-            return;
-        }
-        
-        auto& frame = m_Swapchain->GetFrame(m_FrameIndex);
-        auto& cmd = frame.GetCommandBuffer();
+    void VulkanGraphicsDevice::BindUniformBuffer(IUniformBuffer& buffer, uint32_t binding, uint32_t set) {
+        VulkanUniformBuffer& ubo = static_cast<VulkanUniformBuffer&>(buffer);
+    
+        vk::DescriptorBufferInfo info{};
+        info.buffer = ubo.GetBuffer(m_FrameIndex).GetBuffer();
+        info.offset = 0;
+        info.range  = ubo.GetSize();
 
-        auto* vkUniformBuffer = static_cast<VulkanUniformBuffer*>(&buffer);
-        vk::DescriptorSet set = m_CurrentPipelineState->GetDescriptorSetForUniformBuffer(*vkUniformBuffer, slot);
-
-        cmd.bindDescriptorSets(
-            vk::PipelineBindPoint::eGraphics,
-            *m_CurrentPipelineState->GetLayout(), 
-            slot,
-            set,
-            nullptr
-        );
+        m_PendingSets[set].buffers[binding] = info;
     }
 
-    // Bind texture
-    void VulkanGraphicsDevice::BindTexture(ITexture& texture, uint32_t slot) {
-        if (!m_CurrentPipelineState) {
-            LOG_CORE_WARN("Vulkan: Attempted to bind texture without a bound Pipeline State!");
-            return;
-        }
+    // bind texture
+    void VulkanGraphicsDevice::BindTexture(ITexture& texture, uint32_t binding, uint32_t set) {
+        VulkanTexture& tex = static_cast<VulkanTexture&>(texture);
+        
+        vk::DescriptorImageInfo info{};
+        info.imageView   = tex.GetImageView();
+        info.sampler     = tex.GetSampler();
+        info.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
 
-        auto& frame = m_Swapchain->GetFrame(m_FrameIndex);
-        auto& cmd = frame.GetCommandBuffer();
-
-        auto* vkTexture = static_cast<VulkanTexture*>(&texture);
-        vk::DescriptorSet set = m_CurrentPipelineState->GetDescriptorSetForTexture(*vkTexture, slot);
-
-        cmd.bindDescriptorSets(
-            vk::PipelineBindPoint::eGraphics,
-            *m_CurrentPipelineState->GetLayout(),
-            slot,
-            set,
-            nullptr
-        );
+        m_PendingSets[set].textures[binding] = info;
     }
 
     // Resize
@@ -338,14 +339,12 @@ namespace Engine {
     // Gives GraphicsDevice chance to finish work before app can destroy
     void VulkanGraphicsDevice::OnDestroy() {
         m_Device->GetQueue().waitIdle();
+        m_PendingSets.clear();
+        m_Swapchain->GetFrame(m_FrameIndex).Reset();
     }
 
     uint32_t VulkanGraphicsDevice::GetFrameIndex() const {
         return m_FrameIndex;
-    }
-
-    vk::raii::DescriptorPool& VulkanGraphicsDevice::GetDescriptorPool() {
-        return m_DescriptorPool;
     }
 
     VulkanContext& VulkanGraphicsDevice::GetContext() {

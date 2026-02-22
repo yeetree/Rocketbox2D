@@ -21,26 +21,19 @@ namespace Engine {
         void BeginScene(const Mat4& viewProjection);
         void EndScene();
         void Submit(Ref<Mesh> mesh, Ref<Material> material, const Mat4& transform, uint32_t layer);
-        void Submit(Ref<Mesh> mesh, Ref<MaterialInstance> material, const Mat4& transform, uint32_t layer);
 
         void DrawQuad(const Ref<ITexture>& texture, const Vec4& color, const Mat4& transform, uint32_t layer);
 
     private:
         void Flush();
-        Ref<IPipelineState> GetOrCreatePSO(Ref<Mesh> mesh, Ref<IShader> shader);
+        Ref<IPipelineState> GetOrCreatePSO(Ref<Mesh> mesh, Ref<Material> material);
 
         struct RenderCommand {
             Ref<Mesh> mesh;
-            Ref<IShader> shader;
-
-            //std::map<std::string, ShaderUniformValue> uniforms; 
-            std::map<std::string, Ref<ITexture>> textures;
-            //std::map<std::string, ShaderUniformValue> uniformOverrides; 
-            std::map<std::string, Ref<ITexture>> textureOverrides;
+            Ref<Material> material;
 
             Mat4 transform;
             
-            // Top bits: Shader ID, Middle bits: Texture ID, Bottom bits: Mesh ID
             uint64_t sortKey; 
         };
 
@@ -49,14 +42,7 @@ namespace Engine {
         Mat4 m_ViewProjection;
         std::vector<RenderCommand> m_CommandQueue;
         std::map<uint64_t, Ref<IPipelineState>> m_PSOCache;
-
-        // UBO
-        struct RendererUniformData {
-            alignas(16) Engine::Mat4 viewProjection;
-        };
-        RendererUniformData uniformData;
-
-        Ref<IUniformBuffer> m_UBO;
+        std::vector<Ref<IUniformBuffer>> m_FrameBuffers; // keep buffers alive during frame
 
         // Quads
         Ref<Mesh> m_QuadMesh;

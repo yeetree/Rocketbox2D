@@ -17,7 +17,7 @@ namespace Engine {
         // Initialize SDL
         if(!SDL_Init(SDL_INIT_VIDEO))
         {
-            LOG_CORE_ERROR("SDL could not initialize! SDL: {0}", SDL_GetError());
+            throw std::runtime_error(std::format("SDL could not initialize! SDL: {0}", SDL_GetError()));
             return; // Failure
         }
     }
@@ -50,7 +50,7 @@ namespace Engine {
         m_Window = SDL_CreateWindow(title.c_str(), m_WindowWidth, m_WindowHeight, flags | SDL_WINDOW_VULKAN);
         if(m_Window == nullptr)
         {
-            LOG_CORE_CRITICAL("Window could not be created! SDL: {0}", SDL_GetError());
+            throw std::runtime_error(std::format("Window could not be created! SDL: {0}", SDL_GetError()));
             return; // Failure
         }
 
@@ -130,6 +130,10 @@ namespace Engine {
     }
 
     Application::~Application() {
+        m_ResourceManager.reset();
+        m_Renderer.reset();
+        m_GraphicsDevice.reset();
+
         if(m_Window)
             SDL_DestroyWindow(m_Window);
         SDL_Quit();
