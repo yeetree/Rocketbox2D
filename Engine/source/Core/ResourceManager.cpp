@@ -7,14 +7,19 @@
 
 namespace Engine
 {
-    void ResourceManager::LoadShader(const std::string& identifier, const std::string& vertPath, const std::string& fragPath) {
+    void ResourceManager::LoadShader(const std::string& identifier, const std::string& path, const std::string& vertEntry, const std::string& fragEntry ) {
 
-        std::string vertSource = FileSystem::ReadFile(FileSystem::GetAbsolutePath(vertPath));
-        std::string fragSource = FileSystem::ReadFile(FileSystem::GetAbsolutePath(fragPath));
-
+        std::vector<uint32_t> byteCode = FileSystem::ReadSPV(FileSystem::GetAbsolutePath(path));
         ShaderDesc desc;
-        desc.sources[ShaderStage::Vertex] = vertSource;
-        desc.sources[ShaderStage::Fragment] = fragSource;
+        desc.modules = {
+            ShaderModule{
+                .byteCode = byteCode,
+                .entryPoints = {
+                    { ShaderStage::Vertex, vertEntry },
+                    { ShaderStage::Fragment, fragEntry },
+                }
+            }
+        };
 
         // Get shader (unique)
         Scope<IShader> shaderPtr = m_GraphicsDevice->CreateShader(desc);
@@ -69,22 +74,17 @@ namespace Engine
         Ref<IBuffer> vbo = m_GraphicsDevice->CreateBuffer(vboDesc);
         Ref<IBuffer> ebo = m_GraphicsDevice->CreateBuffer(eboDesc);
 
-        VertexArrayDesc vaoDesc;
-        vaoDesc.vbo = vbo;
-        vaoDesc.ebo = ebo;
-        vaoDesc.layout = layout;
 
-        Ref<IVertexArray> vao = m_GraphicsDevice->CreateVertexArray(vaoDesc);
-        Ref<Mesh> mesh = CreateRef<Mesh>(vao, indexCount, layout);
+        Ref<Mesh> mesh = CreateRef<Mesh>(vbo, ebo, indexCount, layout);
         m_Meshes[identifier] = mesh;
     }
 
-    void ResourceManager::CreateMaterial(const std::string& identifier, Ref<IShader> shader) {
+    void ResourceManager::CreateMaterial(const std::string& identifier, Ref<IShader> shader, ShaderLayout& layout) {
         if(!shader) {
             LOG_CORE_WARN("Resource Warning: Material: {0} was created with a null shader!", identifier);
         }
 
-        Ref<Material> material = CreateRef<Material>(shader);
+        Ref<Material> material = CreateRef<Material>(shader, layout);
         m_Materials[identifier] = material;
     }
 

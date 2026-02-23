@@ -1,34 +1,41 @@
 #ifndef ENGINE_RENDERER_MATERIAL
 #define ENGINE_RENDERER_MATERIAL
 
+#include "engine_export.h"
+
 #include <memory>
 #include <string>
 
 #include "Engine/Core/Base.h"
 #include "Engine/Renderer/RHI/IShader.h"
 #include "Engine/Renderer/RHI/ITexture.h"
-#include "Engine/Renderer/RHI/IPipelineState.h"
-#include "Engine/Renderer/RHI/IGraphicsDevice.h"
+#include "Engine/Renderer/RHI/UniformBlock.h"
 
 namespace Engine
 {
-    class Material {
+    class ENGINE_EXPORT Material {
     public:
         Material() = default;
-        Material(Ref<IShader> shader) : m_Shader(shader) {};
+        Material(Ref<IShader> shader, ShaderLayout& layout);
+        virtual ~Material() = default;
 
-        void Set(const std::string& name, ShaderUniformValue value) { m_Uniforms[name] = value; }
-        void SetTexture(const std::string& name, Ref<ITexture> tex) { m_Textures[name] = tex; }
+        virtual void Set(const std::string& name, const ShaderDataValue& value);
+        virtual void SetTexture(const std::string& name, Ref<ITexture> tex);
 
-        Ref<IShader> GetShader() const { return m_Shader; }
-        std::map<std::string, ShaderUniformValue> GetUniforms() const { return m_Uniforms; }
-        std::map<std::string, Ref<ITexture>> GetTextures() const { return m_Textures; }
+        virtual std::map<uint32_t, UniformBlock>& GetUniformBlocks();
+        virtual std::map<uint32_t, Ref<ITexture>>& GetTextures();
+        virtual std::map<std::string, uint32_t>& GetTextureSlots();
+        virtual const ShaderLayout& GetShaderLayout() const;
+        virtual Ref<IShader> GetShader();
 
     private:
         Ref<IShader> m_Shader;
+        ShaderLayout m_ShaderLayout;
+
+        std::map<uint32_t, UniformBlock> m_UniformBlocks;
+        std::map<std::string, uint32_t> m_TextureSlots;
+        std::map<uint32_t, Ref<ITexture>> m_Textures;
         
-        std::map<std::string, ShaderUniformValue> m_Uniforms;
-        std::map<std::string, Ref<ITexture>> m_Textures;
     };
 } // namespace Engine
 

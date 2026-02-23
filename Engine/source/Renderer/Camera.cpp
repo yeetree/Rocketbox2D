@@ -43,10 +43,11 @@ namespace Engine
     void Camera::RecalculateProjection() {
         float left   = -m_VerticalSize * m_AspectRatio * 0.5f;
         float right  =  m_VerticalSize * m_AspectRatio * 0.5f;
-        float bottom = -m_VerticalSize * 0.5f;
-        float top    =  m_VerticalSize * 0.5f;
+        float bottom = m_VerticalSize * 0.5f;
+        float top    = -m_VerticalSize * 0.5f;
 
         m_ProjectionMatrix = glm::ortho(left, right, bottom, top, -1.0f, 1.0f);
+        //m_ProjectionMatrix[1][1] *= -1; // flip y
 
         m_ViewDirty = true;
     }

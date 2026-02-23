@@ -8,8 +8,9 @@
 #include <string>
 #include <cstdint>
 
-#include "Engine/Renderer/RHI/IGraphicsDevice.h"
 #include "Engine/Core/Base.h"
+
+#include "Engine/Renderer/RHI/IGraphicsDevice.h"
 #include "Engine/Core/ResourceManager.h"
 #include "Engine/Core/Input.h"
 #include "Engine/Renderer/Renderer.h"
@@ -56,10 +57,10 @@ namespace Engine {
 
         uint64_t m_TicksPrevious;
         
-        Scope<IGraphicsDevice> m_GraphicsDevice;
-        Scope<Renderer> m_Renderer;
-        Scope<ResourceManager> m_ResourceManager;
         Scope<Input> m_Input;
+        Scope<ResourceManager> m_ResourceManager;
+        Scope<Renderer> m_Renderer;
+        Scope<IGraphicsDevice> m_GraphicsDevice;
     };
 } // namespace Engine
 

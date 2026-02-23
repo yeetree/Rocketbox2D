@@ -1,5 +1,5 @@
-#ifndef ENGINE_RENDERER_VERTEXLAYOUT
-#define ENGINE_RENDERER_VERTEXLAYOUT
+#ifndef ENGINE_RENDERER_RHI_VERTEXLAYOUT
+#define ENGINE_RENDERER_RHI_VERTEXLAYOUT
 
 #include "engine_export.h"
 
@@ -8,20 +8,11 @@
 #include <cstdint>
 
 namespace Engine {
-    // Type of vertex element
-    enum class VertexElementType { Int, Float, Bool, Vec2, Vec3, Vec4, Mat4 };
+    // Type of vertex element (We do not support passing matrices as vertex data)
+    enum class VertexElementType { Int, Float, Vec2, Vec3, Vec4 };
 
-    // Describes a vertex element
-    struct ENGINE_EXPORT VertexElement {
-        std::string name;
-        VertexElementType type;
-        uint32_t components;
-        uint32_t size;
-        uint32_t offset;
-        bool normalized;
-
-        VertexElement(VertexElementType type, const std::string& name);
-    };
+    // fwd
+    struct VertexElement;
 
     // Creates a VertexLayout with initializer list of VertexElements, calculates stride, and updates size, components, and offset of each element
     class ENGINE_EXPORT VertexLayout {
@@ -34,11 +25,25 @@ namespace Engine {
         uint64_t GetHash() const;
 
     private:
+        friend struct VertexElement;
+        static uint32_t GetSizeOfType(VertexElementType type);
         void CalculateOffsetsAndStride();
 
         std::vector<VertexElement> m_Elements;
         uint32_t m_Stride = 0;
     };
+
+    // Describes a vertex element
+    struct ENGINE_EXPORT VertexElement {
+        std::string name = "";
+        VertexElementType type;
+        uint32_t size = 0;      // Trust me, uint32_t makes sense here. (Vulkan is holding me at gunpoint)
+        uint32_t offset = 0;
+        bool normalized = false;
+
+        VertexElement(VertexElementType type, const std::string& name) 
+            : name(name), type(type), size(VertexLayout::GetSizeOfType(type)), offset(0), normalized(false) {}
+    };
 }
 
-#endif // ENGINE_RENDERER_VERTEXLAYOUT
+#endif // ENGINE_RENDERER_RHI_VERTEXLAYOUT

@@ -1,5 +1,5 @@
-#ifndef ENGINE_RENDERER_ISHADER
-#define ENGINE_RENDERER_ISHADER
+#ifndef ENGINE_RENDERER_RHI_ISHADER
+#define ENGINE_RENDERER_RHI_ISHADER
 
 #include "engine_export.h"
 
@@ -12,16 +12,18 @@
 #include "Engine/Math/Matrix.h"
 
 namespace Engine {
+
     // What shader stage the current source is
+    enum class ShaderStage { Vertex, Fragment, Geometry };
 
-    using ShaderUniformValue = std::variant<bool, int, float, Vec2, Vec3, Vec4, Mat4>;
-
-    enum class ShaderStage { Vertex, Fragment, Compute, Geometry };
+    struct ShaderModule {
+        std::vector<uint32_t> byteCode;                 // Contains an entire shader module blob
+        std::map<ShaderStage, std::string> entryPoints; // Maps shaderstage to string which is used as an entrypoint
+                                                        // compiles only what stages are specified
+    };
 
     struct ShaderDesc {
-        // Map ShaderStage to string (expects source code)
-        // Only compiles what ShaderStages are specified
-        std::map<ShaderStage, std::string> sources; 
+        std::vector<ShaderModule> modules;
     };
 
     class ENGINE_EXPORT IShader {
@@ -33,24 +35,11 @@ namespace Engine {
 
         virtual ~IShader() = default;
         
-        virtual void Bind() = 0;
-        virtual void Unbind() = 0;
-
         uint32_t GetID() const { return m_ID; }
 
-        // Uniform functions
-        virtual void SetBool(const std::string& name, bool value) = 0;
-        virtual void SetInt(const std::string& name, int value) = 0;
-        virtual void SetFloat(const std::string& name, float value) = 0;
-        virtual void SetVec2(const std::string& name, Vec2 value) = 0;
-        virtual void SetVec3(const std::string& name, Vec3 value) = 0;
-        virtual void SetVec4(const std::string& name, Vec4 value) = 0;
-        virtual void SetMat4(const std::string& name, Mat4 value) = 0;
-        
-        void Set(const std::string& name, ShaderUniformValue value);
     private:
         uint32_t m_ID;
     };
 }
 
-#endif // ENGINE_RENDERER_ISHADER
+#endif // ENGINE_RENDERER_RHI_ISHADER

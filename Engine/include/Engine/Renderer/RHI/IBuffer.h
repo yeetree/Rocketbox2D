@@ -1,6 +1,8 @@
 #ifndef ENGINE_RENDERER_RHI_IBUFFER
 #define ENGINE_RENDERER_RHI_IBUFFER
 
+#include "engine_export.h"
+
 #include <cstddef>
 #include <cstdint>
 
@@ -10,26 +12,28 @@ namespace Engine {
 
     // BufferDesc: Describes how a buffer should be created
     struct BufferDesc {
-        size_t size;                // Size of buffer data in bytes
-        BufferType type;            // Type of buffer
-        const void* data = nullptr; // Initial data (optional)
-        bool isDynamic = false;     // If the data is static or not
+        size_t size = 0;                        // Size of buffer data in bytes
+        BufferType type = BufferType::Vertex;   // Type of buffer
+        const void* data = nullptr;             // Initial data (optional)
+        bool isDynamic = false;                 // If the data is static or not
     };
 
     // Buffer
-    class IBuffer {
+    class ENGINE_EXPORT IBuffer {
     public:
+        IBuffer() {
+            static uint32_t nextID = 1;
+            m_ID = nextID++;
+        }
+
         virtual ~IBuffer() = default;
-        
-        virtual void Bind() = 0;
-        virtual void Unbind() = 0;
-        virtual void BindBase(uint32_t index) = 0;
-        virtual void UnbindBase(uint32_t index) = 0;
 
+        uint32_t GetID() const { return m_ID; }
+
+        virtual void UpdateData(const void* data, size_t size, size_t offset) = 0;
         virtual size_t GetSize() const = 0;
-        virtual BufferType GetType() const = 0;
-
-        virtual void UpdateData(const void* data, size_t size, size_t offset = 0) = 0;
+    private:
+        uint32_t m_ID;
     };
 
 } // namespace Engine

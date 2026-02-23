@@ -5,33 +5,29 @@ project(Rocketbox2D_Workspace VERSION 1.0)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# OpenGL
-find_package(OpenGL REQUIRED)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
-# GLM
+# Dependencies
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
+# Vulkan
+find_package(Vulkan 1.4.335 REQUIRED)
+find_package(VMA REQUIRED)
+find_program(SLANGC_EXECUTABLE slangc REQUIRED)
+
+# Vendored
 add_subdirectory(vendor/glm)
-
-# SDL3
-set(SDL_TEST_LIBRARY OFF)
-set(SDL_TESTS OFF)
-set(SDL_DISABLE_INSTALL ON)
-add_subdirectory(vendor/SDL)
-
-# EnTT
+add_subdirectory(vendor/SDL EXCLUDE_FROM_ALL)
 add_subdirectory(vendor/entt)
-
-# spdlog
 set(SPDLOG_BUILD_PIC ON)
 add_subdirectory(vendor/spdlog)
 
-# Engine library
+# Helpers
+include(EngineHelpers)
+include(ScaryVoodooMagic)
+
+# Engine
 add_subdirectory(Engine)
 
-# Rocketbox2D
-add_subdirectory(Rocketbox2D)
-
-option(RB2D_BUILD_ENGINE_TEST_APP "Build the engine test app" ON)
-
-if(RB2D_BUILD_ENGINE_TEST_APP)
-    add_subdirectory(EngineTestApp)
-endif()
+# TestApp
+add_subdirectory(VKTestApp)

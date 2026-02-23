@@ -16,11 +16,11 @@ namespace Engine
         ResourceManager(const ResourceManager&) = delete; // No copying
         ~ResourceManager() = default;
         
-        void LoadShader(const std::string& identifier, const std::string& vertPath, const std::string& fragPath);
+        void LoadShader(const std::string& identifier, const std::string& path, const std::string& vertEntry, const std::string& fragEntry );
         void LoadTexture(const std::string& identifier, const std::string& texturePath);
 
         void CreateMesh(const std::string& identifier, const void* vertices, uint32_t vSize, const void* indices, uint32_t iSize, uint32_t indexCount, const VertexLayout& layout, bool vDynamic = false, bool iDynamic = true);
-        void CreateMaterial(const std::string& identifier, Ref<IShader> shader);
+        void CreateMaterial(const std::string& identifier, Ref<IShader> shader, ShaderLayout& layout);
 
         void SetShader(const std::string& identifier, Scope<IShader> shader);
         void SetTexture(const std::string& identifier, Scope<ITexture> texture);

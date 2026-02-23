@@ -1,36 +1,44 @@
 #ifndef ENGINE_RENDERER_IPIPELINESTATE
 #define ENGINE_RENDERER_IPIPELINESTATE
 
+#include "engine_export.h"
+
 #include "Engine/Renderer/RHI/IShader.h"
 #include "Engine/Renderer/RHI/IBuffer.h"
 #include "Engine/Renderer/RHI/VertexLayout.h"
+#include "Engine/Renderer/RHI/ShaderLayout.h"
 
 namespace Engine {
-    // How the triangles should be rendered
-    enum class FillMode { Solid, Wireframe };
+    // What are the shapes?
+    enum class PrimitiveTopology { PointList, LineList, TriangleList };
 
-    // How the triangles should be culled
+    // How the shapes should be rendered
+    enum class FillMode { Fill, Line };
+
+    // How the shapes should be culled
     enum class CullMode { None, Front, Back };
 
     // Describes how a Pipeline State Object should be created
     struct PipelineDesc {
         IShader* shader = nullptr;  // Shader to be used with pipeline
-        VertexLayout layout;        // Vertex attributes
+        ShaderLayout shaderLayout;  // Info about uniforms / samplers / general reflection data
+        size_t pushConstantSize = 0;
         
+        VertexLayout vertexLayout;  // Vertex attributes (VertexLayout has an empty default constructor)
+        
+        // Topology
+        PrimitiveTopology topology = PrimitiveTopology::TriangleList;
+
         // Rasterizer State
-        FillMode fillMode = FillMode::Solid;
+        FillMode fillMode = FillMode::Fill;
         CullMode cullMode = CullMode::Back;
         
         // Blend State
         bool enableBlending = false;
-        
-        // Depth/Stencil State
-        bool depthTest = true;
-        bool depthWrite = true;
     };
 
     // Pipeline State Object
-    class IPipelineState {
+    class ENGINE_EXPORT IPipelineState {
     public:
         IPipelineState() {
             static uint32_t nextID = 1;
@@ -38,8 +46,6 @@ namespace Engine {
         }
 
         virtual ~IPipelineState() = default;
-        virtual void Bind() = 0;
-        virtual void Unbind() = 0;
 
         uint32_t GetID() const { return m_ID; }
 

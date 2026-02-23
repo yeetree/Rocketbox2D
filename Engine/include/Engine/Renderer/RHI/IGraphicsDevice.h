@@ -12,11 +12,10 @@
 #include "Engine/Renderer/RHI/IShader.h"
 #include "Engine/Renderer/RHI/ITexture.h"
 #include "Engine/Renderer/RHI/IPipelineState.h"
-#include "Engine/Renderer/RHI/IVertexArray.h"
 
 namespace Engine {
-    // What backend to create (Only OpenGL for now)
-    enum class GraphicsAPI { OpenGL };
+    // What backend to create (Only Vulkan for now)
+    enum class GraphicsAPI { Vulkan };
 
     // Creates resources for rendering and dispatches draw calls
     class ENGINE_EXPORT IGraphicsDevice {
@@ -27,10 +26,9 @@ namespace Engine {
         virtual ~IGraphicsDevice() = default;
 
         // Resource creation
-        virtual Scope<IBuffer>      CreateBuffer(const BufferDesc& desc) = 0;
-        virtual Scope<ITexture>     CreateTexture(const TextureDesc& desc) = 0;
-        virtual Scope<IShader>      CreateShader(const ShaderDesc& desc) = 0;
-        virtual Scope<IVertexArray> CreateVertexArray(const VertexArrayDesc& desc) = 0;
+        virtual Scope<IBuffer>          CreateBuffer(const BufferDesc& desc) = 0;
+        virtual Scope<ITexture>         CreateTexture(const TextureDesc& desc) = 0;
+        virtual Scope<IShader>          CreateShader(const ShaderDesc& desc) = 0;
         
         // Pipeline creation
         virtual Scope<IPipelineState> CreatePipelineState(const PipelineDesc& desc) = 0;
@@ -41,14 +39,20 @@ namespace Engine {
         virtual void Present() = 0;
         virtual void SetClearColor(Vec4 color) = 0;
         
-        // Draw call
-        virtual void SubmitDraw(uint32_t indexCount) = 0;
-
-        // Get back buffer
-        //virtual ITexture* GetBackBuffer() = 0;
+        virtual void BindPipelineState(IPipelineState& pipeline) = 0;
+        virtual void BindVertexBuffer(IBuffer& buffer) = 0;
+        virtual void BindIndexBuffer(IBuffer& buffer) = 0;
+        virtual void BindUniformBuffer(IBuffer& buffer, uint32_t slot) = 0;
+        virtual void BindTexture(ITexture& texture, uint32_t slot) = 0;
+        virtual void PushConstants(const void* data, uint32_t size) = 0;
+        virtual void DrawIndexed(uint32_t indexCount) = 0;
 
         // Resize
         virtual void Resize(int width, int height) = 0;
+    private:
+        friend class Application;
+        // Gives GraphicsDevice chance to finish current work before app can destroy
+        virtual void OnDestroy() = 0;
     };
 } // namespace Engine
 

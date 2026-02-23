@@ -7,24 +7,28 @@
 #include "Engine/Renderer/Material.h"
 
 namespace Engine {
-    class MaterialInstance {
+    class ENGINE_EXPORT MaterialInstance : public Material {
     public:
         MaterialInstance() = default;
-        MaterialInstance(Ref<Material> parent) : m_Parent(parent) {}
+        MaterialInstance(Ref<Material> parent);
+        ~MaterialInstance() override = default;
 
-        // Overrides
-        void Set(const std::string& name, ShaderUniformValue value) { m_UniformOverrides[name] = value; };
-        void SetTexture(const std::string& name, Ref<ITexture> texture) { m_TextureOverrides[name] = texture; };
+        void Set(const std::string& name, const ShaderDataValue& value) override;
+        void SetTexture(const std::string& name, Ref<ITexture> tex) override;
 
-        // Getters
-        Ref<Material> GetParent() const { return m_Parent; }
-        const std::map<std::string, ShaderUniformValue>& GetUniformOverrides() const { return m_UniformOverrides; }
-        const std::map<std::string, Ref<ITexture>>& GetTextureOverrides() const { return m_TextureOverrides; }
+        std::map<uint32_t, UniformBlock>& GetUniformBlocks() override;
+        std::map<uint32_t, Ref<ITexture>>& GetTextures() override;
+        std::map<std::string, uint32_t>& GetTextureSlots() override;
+        const ShaderLayout& GetShaderLayout() const override;
+        
+        Ref<IShader>  GetShader() override;
+        Ref<Material> GetParent() const;
 
     private:
         Ref<Material> m_Parent;
-        std::map<std::string, ShaderUniformValue> m_UniformOverrides;
-        std::map<std::string, Ref<ITexture>> m_TextureOverrides;
+        std::map<uint32_t, UniformBlock> m_UniformBlocks;
+        std::map<uint32_t, Ref<ITexture>> m_Textures;
+        std::map<std::string, uint32_t> m_TextureSlots;
     };
 }
 

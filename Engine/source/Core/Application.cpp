@@ -17,7 +17,7 @@ namespace Engine {
         // Initialize SDL
         if(!SDL_Init(SDL_INIT_VIDEO))
         {
-            LOG_CORE_ERROR("SDL could not initialize! SDL: {0}", SDL_GetError());
+            throw std::runtime_error(std::format("SDL could not initialize! SDL: {0}", SDL_GetError()));
             return; // Failure
         }
     }
@@ -45,12 +45,12 @@ namespace Engine {
         m_AspectRatio = (float)m_WindowWidth / (float)m_WindowHeight;
 
         // Create window
-        // Create window with OpenGL -- everything else is platform agnostic, so switching backends will be insanely trivial in the future
+        // Create window with Vulkan -- everything else is platform agnostic, so switching backends will be insanely trivial in the future
         LOG_CORE_INFO("Creating window...");
-        m_Window = SDL_CreateWindow(title.c_str(), m_WindowWidth, m_WindowHeight, flags | SDL_WINDOW_OPENGL);
+        m_Window = SDL_CreateWindow(title.c_str(), m_WindowWidth, m_WindowHeight, flags | SDL_WINDOW_VULKAN);
         if(m_Window == nullptr)
         {
-            LOG_CORE_CRITICAL("Window could not be created! SDL: {0}", SDL_GetError());
+            throw std::runtime_error(std::format("Window could not be created! SDL: {0}", SDL_GetError()));
             return; // Failure
         }
 
@@ -59,18 +59,18 @@ namespace Engine {
         m_Input = CreateScope<Input>();
         Input::s_Instance = m_Input.get(); // Engine is friend to Input class, we set it's instance for it.
 
+        // Init filesystem (set base path)
+        LOG_CORE_INFO("Initializing filesystem...");
+        FileSystem::SetBasePath(SDL_GetBasePath());
+
         // Create graphics device
         LOG_CORE_INFO("Initializing graphics device...");
-        m_GraphicsDevice = IGraphicsDevice::Create(GraphicsAPI::OpenGL, m_Window);
+        m_GraphicsDevice = IGraphicsDevice::Create(GraphicsAPI::Vulkan, m_Window);
         m_GraphicsDevice->Resize(m_WindowWidth, m_WindowHeight);
 
         // Create Renderer2D
         LOG_CORE_INFO("Initializing renderer...");
         m_Renderer = CreateScope<Renderer>(m_GraphicsDevice.get());
-
-        // Init filesystem (set base path)
-        LOG_CORE_INFO("Initializing filesystem...");
-        FileSystem::SetBasePath(SDL_GetBasePath());
 
         // Create resource manager
         LOG_CORE_INFO("Initializing resource manager...");
@@ -125,10 +125,15 @@ namespace Engine {
             m_TicksPrevious = ticksNow;
         }
         LOG_CORE_INFO("Shutting down...");
+        m_GraphicsDevice->OnDestroy();
         OnDestroy();
     }
 
     Application::~Application() {
+        m_ResourceManager.reset();
+        m_Renderer.reset();
+        m_GraphicsDevice.reset();
+
         if(m_Window)
             SDL_DestroyWindow(m_Window);
         SDL_Quit();
