@@ -174,6 +174,9 @@ namespace Engine {
 
         // Submit to the queue (which should be a getter in m_Device)
         m_Device->GetQueue().submit(submitInfo, *frame.GetInFlightFence());
+
+        // Reset m_CurrentPipelineState
+        m_CurrentPipelineState = nullptr;
     }
 
     void VulkanGraphicsDevice::Present() {
@@ -216,18 +219,6 @@ namespace Engine {
     }
 
     void VulkanGraphicsDevice::EndOneTimeCommands(vk::raii::CommandBuffer& commandBuffer) {
-        // Add a barrier to make the transfer visible to the rest of the pipeline
-        vk::MemoryBarrier2 barrier;
-        barrier.srcStageMask = vk::PipelineStageFlagBits2::eTransfer;
-        barrier.srcAccessMask = vk::AccessFlagBits2::eTransferWrite;
-        barrier.dstStageMask = vk::PipelineStageFlagBits2::eVertexAttributeInput | vk::PipelineStageFlagBits2::eAllGraphics;
-        barrier.dstAccessMask = vk::AccessFlagBits2::eMemoryRead | vk::AccessFlagBits2::eUniformRead | vk::AccessFlagBits2::eVertexAttributeRead;
-
-        vk::DependencyInfo depInfo;
-        depInfo.memoryBarrierCount = 1;
-        depInfo.pMemoryBarriers = &barrier;
-        commandBuffer.pipelineBarrier2(depInfo);
-
         commandBuffer.end();
 
         vk::SubmitInfo submitInfo;
@@ -245,8 +236,79 @@ namespace Engine {
         cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, *m_CurrentPipelineState->GetPipeline());
     }
 
+    // Bind vertex buffer
+    void VulkanGraphicsDevice::BindVertexBuffer(IBuffer& buffer) {
+        VulkanBuffer* vkBuffer = static_cast<VulkanBuffer*>(&buffer);
+        m_Swapchain->GetFrame(m_FrameIndex).GetCommandBuffer().bindVertexBuffers(0, {vkBuffer->GetBuffer()}, {0});
+    }
+
+    // Bind vertex buffer
+    void VulkanGraphicsDevice::BindIndexBuffer(IBuffer& buffer) {
+        VulkanBuffer* vkBuffer = static_cast<VulkanBuffer*>(&buffer);
+        m_Swapchain->GetFrame(m_FrameIndex).GetCommandBuffer().bindIndexBuffer(vkBuffer->GetBuffer(), 0, vk::IndexType::eUint16);
+    }
+
+    // Bind uniform buffer
+    void VulkanGraphicsDevice::BindUniformBuffer(IBuffer& buffer, uint32_t slot) {
+        VulkanBuffer& ubo = static_cast<VulkanBuffer&>(buffer);
+        const ShaderBinding* binding = m_CurrentPipelineState->GetShaderLayout().GetBindingBySlot(slot);
+
+        if(binding == nullptr) {
+            LOG_CORE_ERROR("Vulkan: Uniform binding at slot {0} not found!", slot);
+            return;
+        }
+
+        vk::DescriptorBufferInfo info{};
+        info.buffer = ubo.GetBuffer();
+        info.offset = 0;
+        info.range  = ubo.GetSize();
+
+        m_PendingSets[binding->set].buffers[binding->binding] = info;
+    }
+
+    // bind texture
+    void VulkanGraphicsDevice::BindTexture(ITexture& texture, uint32_t slot) {
+        VulkanTexture& tex = static_cast<VulkanTexture&>(texture);
+        const ShaderBinding* binding = m_CurrentPipelineState->GetShaderLayout().GetBindingBySlot(slot);
+        
+        if(binding == nullptr) {
+            LOG_CORE_ERROR("Vulkan: Texture binding at slot {0} not found!", slot);
+            return;
+        }
+
+        vk::DescriptorImageInfo info{};
+        info.imageView   = tex.GetImageView();
+        info.sampler     = tex.GetSampler();
+        info.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+
+        m_PendingSets[binding->set].textures[binding->binding] = info;
+    }
+
+    // Push constants
+    void VulkanGraphicsDevice::PushConstants(const void* data, uint32_t size) {
+        if (!m_CurrentPipelineState) {
+            LOG_CORE_WARN("Vulkan: Attempted to push constants without a bound Pipeline State!");
+            return;
+        }
+
+        if(data == nullptr) {
+            LOG_CORE_ERROR("Vulkan: Attempted to use invalid data with push constants!");
+            return;
+        }
+
+        auto& frame = m_Swapchain->GetFrame(m_FrameIndex);
+        auto& cmd = frame.GetCommandBuffer();
+
+        cmd.pushConstants(
+            *m_CurrentPipelineState->GetPipelineLayout(),
+            vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
+            0,
+            vk::ArrayProxy<const uint8_t>(size, static_cast<const uint8_t*>(data))
+        );
+    }
+
     // Draw call
-    void VulkanGraphicsDevice::SubmitDraw(IBuffer& vbo, IBuffer& ebo, uint32_t indexCount) {
+    void VulkanGraphicsDevice::DrawIndexed(uint32_t indexCount) {
         if (!m_CurrentPipelineState) {
             LOG_CORE_WARN("Vulkan: Attempted to draw without a bound Pipeline State!");
             return;
@@ -275,68 +337,18 @@ namespace Engine {
             // bind
             cmd.bindDescriptorSets(
                 vk::PipelineBindPoint::eGraphics,
-                m_CurrentPipelineState->GetLayout(),
+                m_CurrentPipelineState->GetPipelineLayout(),
                 setIdx,
                 ds,
                 nullptr
             );
         }
-
-        // Bind buffers
-        VulkanBuffer* vertexBuffer = static_cast<VulkanBuffer*>(&vbo);
-        cmd.bindVertexBuffers(0, {vertexBuffer->GetBuffer()}, {0});
-	
-        VulkanBuffer* indexBuffer = static_cast<VulkanBuffer*>(&ebo);
-        cmd.bindIndexBuffer(indexBuffer->GetBuffer(), 0, vk::IndexType::eUint16);
-        
+    
         // Draw
         cmd.drawIndexed(indexCount, 1, 0, 0, 0);
-        //cmd.draw(3, 1, 0, 0);
 
         // Clear pending sets
         m_PendingSets.clear();
-    }
-
-    // Push constants
-    void VulkanGraphicsDevice::PushConstants(const void* data, uint32_t size) {
-        if (!m_CurrentPipelineState) {
-            LOG_CORE_WARN("Vulkan: Attempted to push constants without a bound Pipeline State!");
-            return;
-        }
-
-        auto& frame = m_Swapchain->GetFrame(m_FrameIndex);
-        auto& cmd = frame.GetCommandBuffer();
-
-        cmd.pushConstants(
-            *m_CurrentPipelineState->GetLayout(),
-            vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
-            0,
-            vk::ArrayProxy<const uint8_t>(size, static_cast<const uint8_t*>(data))
-        );
-    }
-
-    // Bind uniform buffer
-    void VulkanGraphicsDevice::BindUniformBuffer(IBuffer& buffer, uint32_t binding, uint32_t set) {
-        VulkanBuffer& ubo = static_cast<VulkanBuffer&>(buffer);
-    
-        vk::DescriptorBufferInfo info{};
-        info.buffer = ubo.GetBuffer();
-        info.offset = 0;
-        info.range  = ubo.GetSize();
-
-        m_PendingSets[set].buffers[binding] = info;
-    }
-
-    // bind texture
-    void VulkanGraphicsDevice::BindTexture(ITexture& texture, uint32_t binding, uint32_t set) {
-        VulkanTexture& tex = static_cast<VulkanTexture&>(texture);
-        
-        vk::DescriptorImageInfo info{};
-        info.imageView   = tex.GetImageView();
-        info.sampler     = tex.GetSampler();
-        info.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-
-        m_PendingSets[set].textures[binding] = info;
     }
 
     // Resize

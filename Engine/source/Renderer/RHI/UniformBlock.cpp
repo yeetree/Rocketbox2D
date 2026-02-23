@@ -20,14 +20,14 @@ namespace Engine
         // Get offset
         auto it = m_ElementCache.find(name);
         if (it == m_ElementCache.end()) {
-            LOG_CORE_WARN("Parameter {0} not found in uniform block {1}!", name, m_Binding.name);
+            LOG_CORE_WARN("Parameter \"{0}\" not found in uniform block \"{1}\"", name, m_Binding.name);
             return;
         }
 
         ShaderElement element = it->second;
 
         if(GetValueType(value) != element.type) {
-            LOG_CORE_WARN("Invalid value given for parameter {0} in uniform block {1}!", name, m_Binding.name);
+            LOG_CORE_WARN("Invalid value given for parameter \"{0}\" in uniform block \"{1}\"!", name, m_Binding.name);
         }
 
         // Get data in variant

@@ -6,10 +6,9 @@
 
 namespace Engine
 {
-    VulkanPipelineState::VulkanPipelineState(VulkanGraphicsDevice* graphicsDevice, const PipelineDesc& desc) : m_GraphicsDevice(graphicsDevice) {
+    VulkanPipelineState::VulkanPipelineState(VulkanGraphicsDevice* graphicsDevice, const PipelineDesc& desc)
+        : m_GraphicsDevice(graphicsDevice), m_ShaderLayout(desc.shaderLayout) {
         ENGINE_CORE_ASSERT(m_GraphicsDevice != nullptr, "Vulkan: invalid graphics device when creating pipeline state!");
-
-        LOG_CORE_TRACE("PSO Create begin. vert layout elements {0} stride: {1}", desc.vertexLayout.GetElements().size(), desc.vertexLayout.GetStride());
 
         // Get Vulkan Shader
         if(desc.shader == nullptr) {
@@ -38,7 +37,6 @@ namespace Engine
         // Attrib desc
         const std::vector<VertexElement>& elements = desc.vertexLayout.GetElements();
         for(int i = 0; i < elements.size(); i++) {
-            LOG_CORE_TRACE("Element {0}, Offset {1}, Size {2}", i, elements[i].offset, elements[i].size);
             attributeDescriptions.emplace_back(i, 0, GetVulkanFormat(elements[i].type), elements[i].offset);
         }
 
@@ -103,7 +101,7 @@ namespace Engine
         std::map<uint32_t, std::vector<vk::DescriptorSetLayoutBinding>> setGroups;
         uint32_t maxSetIndex = 0;
 
-        for (const ShaderBinding& sb : desc.shaderLayout.GetBindings()) {
+        for (const ShaderBinding& sb : m_ShaderLayout.GetBindings()) {
             vk::DescriptorSetLayoutBinding dlb{};
             dlb.binding = sb.binding;
             dlb.descriptorCount = 1;
@@ -152,7 +150,7 @@ namespace Engine
         layoutInfo.pushConstantRangeCount = (desc.pushConstantSize > 0) ? 1 : 0;
         layoutInfo.pPushConstantRanges = (desc.pushConstantSize > 0) ? &pushRange : nullptr;
 
-        m_Layout = vk::raii::PipelineLayout(m_GraphicsDevice->GetDevice().GetDevice(), layoutInfo);
+        m_PipelineLayout = vk::raii::PipelineLayout(m_GraphicsDevice->GetDevice().GetDevice(), layoutInfo);
 
         vk::GraphicsPipelineCreateInfo pipelineInfo{};
         pipelineInfo.pNext = &pipelineRenderingCreateInfo;
@@ -165,12 +163,11 @@ namespace Engine
         pipelineInfo.pMultisampleState = &multisampling;
         pipelineInfo.pColorBlendState = &colorBlending;
         pipelineInfo.pDynamicState = &dynamicState;
-        pipelineInfo.layout = m_Layout;
+        pipelineInfo.layout = m_PipelineLayout;
         pipelineInfo.renderPass = nullptr;
 
+
         m_Pipeline = m_GraphicsDevice->GetDevice().GetDevice().createGraphicsPipeline(nullptr, pipelineInfo);
-    
-        LOG_CORE_TRACE("PSO Create end");
     }
 
     VulkanPipelineState::~VulkanPipelineState() {
@@ -227,8 +224,12 @@ namespace Engine
         return m_Pipeline;
     }
 
-    vk::raii::PipelineLayout& VulkanPipelineState::GetLayout() {
-        return m_Layout;
+    vk::raii::PipelineLayout& VulkanPipelineState::GetPipelineLayout() {
+        return m_PipelineLayout;
+    }
+
+    ShaderLayout& VulkanPipelineState::GetShaderLayout() {
+        return m_ShaderLayout;
     }
 
     std::map<uint32_t, vk::raii::DescriptorSetLayout>& VulkanPipelineState::GetDescriptorSetLayouts() {

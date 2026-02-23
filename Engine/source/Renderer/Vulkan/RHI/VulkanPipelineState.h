@@ -16,7 +16,8 @@ namespace Engine {
 
         // Getters
         vk::raii::Pipeline& GetPipeline();
-        vk::raii::PipelineLayout& GetLayout();
+        vk::raii::PipelineLayout& GetPipelineLayout();
+        ShaderLayout& GetShaderLayout();
         std::map<uint32_t, vk::raii::DescriptorSetLayout>& GetDescriptorSetLayouts();
 
     private:
@@ -24,8 +25,10 @@ namespace Engine {
 
         // Vulkan members
         vk::raii::Pipeline m_Pipeline = nullptr;
-        vk::raii::PipelineLayout m_Layout = nullptr;
+        vk::raii::PipelineLayout m_PipelineLayout = nullptr;
         std::map<uint32_t, vk::raii::DescriptorSetLayout> m_DescriptorSetLayouts;
+
+        ShaderLayout m_ShaderLayout;
 
         static vk::Format GetVulkanFormat(VertexElementType type);
         static vk::ShaderStageFlagBits GetVulkanShaderStage(ShaderStage stage);

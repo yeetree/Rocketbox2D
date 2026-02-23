@@ -40,10 +40,12 @@ namespace Engine {
         virtual void SetClearColor(Vec4 color) = 0;
         
         virtual void BindPipelineState(IPipelineState& pipeline) = 0;
-        virtual void SubmitDraw(IBuffer& vbo, IBuffer& ebo, uint32_t indexCount) = 0;
+        virtual void BindVertexBuffer(IBuffer& buffer) = 0;
+        virtual void BindIndexBuffer(IBuffer& buffer) = 0;
+        virtual void BindUniformBuffer(IBuffer& buffer, uint32_t slot) = 0;
+        virtual void BindTexture(ITexture& texture, uint32_t slot) = 0;
         virtual void PushConstants(const void* data, uint32_t size) = 0;
-        virtual void BindUniformBuffer(IBuffer& buffer, uint32_t binding, uint32_t set) = 0;
-        virtual void BindTexture(ITexture& texture, uint32_t binding, uint32_t set) = 0;
+        virtual void DrawIndexed(uint32_t indexCount) = 0;
 
         // Resize
         virtual void Resize(int width, int height) = 0;

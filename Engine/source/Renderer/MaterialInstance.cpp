@@ -22,7 +22,7 @@ namespace Engine
                 return;
             }
         }
-        LOG_CORE_WARN("Parameter '{0}' not found in any uniform block in shader layout.", name);
+        LOG_CORE_WARN("Parameter \"{0}\" not found in any uniform block in shader layout.", name);
     }
 
     void MaterialInstance::SetTexture(const std::string& name, Ref<ITexture> tex) {
@@ -34,11 +34,11 @@ namespace Engine
             uint32_t slot = it->second;
             m_Textures[slot] = tex;
         } else {
-            LOG_CORE_WARN("Texture '{0}' not found in shader layout.", name);
+            LOG_CORE_WARN("Texture \"{0}\" not found in shader layout.", name);
         }
     }
 
-    std::map<std::string, UniformBlock>& MaterialInstance::GetUniformBlocks() {
+    std::map<uint32_t, UniformBlock>& MaterialInstance::GetUniformBlocks() {
         return m_UniformBlocks;
     }
 
@@ -50,7 +50,7 @@ namespace Engine
         return m_TextureSlots;
     }
 
-    const ShaderLayout& MaterialInstance::GetLayout() const { return m_Parent->GetLayout(); }
+    const ShaderLayout& MaterialInstance::GetShaderLayout() const { return m_Parent->GetShaderLayout(); }
 
     Ref<IShader>  MaterialInstance::GetShader() { return m_Parent->GetShader(); }
     Ref<Material> MaterialInstance::GetParent() const { return m_Parent; }

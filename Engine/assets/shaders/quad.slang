@@ -17,7 +17,6 @@ struct VSOutput {
     float2 coords;
 };
 
-// Use your actual binding slots
 [[vk::binding(0, 0)]] ConstantBuffer<GlobalUniformData> global;
 [[vk::binding(0, 1)]] ConstantBuffer<LocalUniformData> local;
 [[vk::binding(1, 1)]] Sampler2D texture;

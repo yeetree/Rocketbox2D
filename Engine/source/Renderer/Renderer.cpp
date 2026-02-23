@@ -64,20 +64,39 @@ namespace Engine
 
         // shader layout
         ShaderLayout shaderLayout = ShaderLayout{
-            // Global: Binding 0, Set 0
+            // 0: Global: Binding 0, Set 0
             ShaderBinding(
-                ShaderBindingType::UniformBuffer,"global", 0, 0, 0, 
-                { ShaderElement(ShaderDataType::Mat4, "viewProjection") }),
+                ShaderBindingType::UniformBuffer, "global", 0, 0, 0, 
+                {
+                    ShaderElement(ShaderDataType::Mat4, "viewProjection")
+                }
+            ),
             
-            // Local: Binding 0, Set 1
+            // 1: Local: Binding 0, Set 1
             ShaderBinding(
                 ShaderBindingType::UniformBuffer, "local", 1, 0, 1, 
-                { ShaderElement(ShaderDataType::Mat4, "transform"), 
-                ShaderElement(ShaderDataType::Vec4, "tint") }),
+                {
+                    ShaderElement(ShaderDataType::Mat4, "transform"), 
+                    ShaderElement(ShaderDataType::Vec4, "tint")
+                }
+            ),
             
-            // Texture: Binding 1, Set 1
+            // 2: Texture: Binding 1, Set 1
             ShaderBinding(ShaderBindingType::Sampler, "texture", 2, 1, 1)
         };
+
+        // create global uniform block
+        m_GlobalData = UniformBlock(*shaderLayout.GetBindingBySlot(0));
+
+        // Create uniform buffer for global data
+        BufferDesc globalDesc{
+            .size = m_GlobalData.GetSize(),
+            .type = BufferType::Uniform,
+            .data = m_GlobalData.GetData(),
+            .isDynamic = true,
+        };
+
+        m_GlobalBuffer = m_GraphicsDevice->CreateBuffer(globalDesc);
 
         // Create material
         m_QuadMaterial = CreateRef<Material>(shader, shaderLayout);
@@ -107,7 +126,8 @@ namespace Engine
 
     void Renderer::BeginScene(const Mat4& viewProjection) {
         m_FrameBuffers.clear();
-        m_QuadMaterial->Set("viewProjection", viewProjection);
+        m_GlobalData.Set("viewProjection", viewProjection);
+        m_GlobalBuffer->UpdateData(m_GlobalData.GetData(), m_GlobalData.GetSize(), 0);
     }
 
     void Renderer::EndScene() {
@@ -127,45 +147,36 @@ namespace Engine
             auto pso = GetOrCreatePSO(cmd.mesh, cmd.material);
             if (pso->GetID() != lastPSO) {
                 m_GraphicsDevice->BindPipelineState(*pso);
+                // Bind global data
+                m_GraphicsDevice->BindUniformBuffer(*m_GlobalBuffer, 0);
                 lastPSO = pso->GetID();
             }
 
-            // Handle Uniform Blocks
-            auto& blocks = cmd.material->GetUniformBlocks();
-            for (auto& [name, block] : blocks) {
-                // Upload data
-                //block.Upload(m_GraphicsDevice);
-                //m_FrameBuffers.push_back(block.GetUniformBuffer());
-
-                // Bind
-                //m_GraphicsDevice->BindUniformBuffer(
-                //    *block.GetUniformBuffer(),
-                //    block.GetBinding().binding,
-                //    block.GetBinding().set
-                //);
+            // Uniforms
+            for (auto& [slot, block] : cmd.material->GetUniformBlocks()) {
+                Ref<IBuffer> matBuffer = m_BufferPool.GetNext(m_GraphicsDevice, block.GetSize());
+                matBuffer->UpdateData(block.GetData(), block.GetSize(), 0);
+                m_GraphicsDevice->BindUniformBuffer(*matBuffer, slot);
             }
 
-            // Handle Textures
-            for (const auto& [slot, tex] : cmd.material->GetTextures()) {
-                const ShaderBinding* binding = cmd.material->GetLayout().GetBindingBySlot(slot);
-                if (binding) {
-                    m_GraphicsDevice->BindTexture(*tex, binding->binding, binding->set);
-                }
+            // Textures
+            for (auto& [slot, tex] : cmd.material->GetTextures()) {
+                m_GraphicsDevice->BindTexture(*tex, slot);
             }
 
-            m_GraphicsDevice->SubmitDraw(
-                *cmd.mesh->GetVertexBuffer(), 
-                *cmd.mesh->GetIndexBuffer(), 
-                cmd.mesh->GetIndexCount()
-            );
+            m_GraphicsDevice->BindVertexBuffer(*cmd.mesh->GetVertexBuffer());
+            m_GraphicsDevice->BindIndexBuffer(*cmd.mesh->GetIndexBuffer());
+
+            m_GraphicsDevice->DrawIndexed(cmd.mesh->GetIndexCount());
         }
         m_CommandQueue.clear();
+        m_BufferPool.Reset();
     }
 
     Ref<IPipelineState> Renderer::GetOrCreatePSO(Ref<Mesh> mesh, Ref<Material> material) {
         uint64_t shaderID = material->GetShader()->GetID();
         uint64_t vertLayoutHash = mesh->GetLayout().GetHash();
-        uint64_t shaderLayoutHash = material->GetLayout().GetHash();
+        uint64_t shaderLayoutHash = material->GetShaderLayout().GetHash();
         
         // XOR Combine for a simple unique key
         uint64_t psoKey = shaderID ^ (vertLayoutHash + 0x9e3779b9 + (shaderID << 6) + (shaderID >> 2));
@@ -174,7 +185,7 @@ namespace Engine
             PipelineDesc desc{};
             desc.shader = material->GetShader().get();
             desc.vertexLayout = mesh->GetLayout();
-            desc.shaderLayout = material->GetLayout();
+            desc.shaderLayout = material->GetShaderLayout();
             desc.fillMode = FillMode::Fill;
             desc.cullMode = CullMode::None;
             desc.topology = PrimitiveTopology::TriangleList;

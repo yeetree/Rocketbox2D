@@ -42,10 +42,12 @@ namespace Engine {
 
         // Bind Pipeline state
         void BindPipelineState(IPipelineState& pipeline) override;
-        void SubmitDraw(IBuffer& vbo, IBuffer& ebo, uint32_t indexCount) override;
+        void BindVertexBuffer(IBuffer& buffer) override;
+        void BindIndexBuffer(IBuffer& buffer) override;
+        void BindUniformBuffer(IBuffer& buffer, uint32_t slot) override;
+        void BindTexture(ITexture& texture, uint32_t slot) override;
         void PushConstants(const void* data, uint32_t size) override;
-        void BindUniformBuffer(IBuffer& buffer, uint32_t binding, uint32_t set) override;
-        void BindTexture(ITexture& texture, uint32_t binding, uint32_t set) override;
+        void DrawIndexed(uint32_t indexCount) override;
 
         // Resize
         void Resize(int width, int height) override;

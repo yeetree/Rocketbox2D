@@ -70,7 +70,7 @@ namespace Engine {
     }
 
     void VulkanBuffer::UpdateData(const void* data, size_t size, size_t offset) {
-        if(data == nullptr) {
+        if(data == nullptr || size < 1) {
             return;
         }
         

@@ -22,17 +22,17 @@ namespace Engine
         virtual void Set(const std::string& name, const ShaderDataValue& value);
         virtual void SetTexture(const std::string& name, Ref<ITexture> tex);
 
-        virtual std::map<std::string, UniformBlock>& GetUniformBlocks();
+        virtual std::map<uint32_t, UniformBlock>& GetUniformBlocks();
         virtual std::map<uint32_t, Ref<ITexture>>& GetTextures();
         virtual std::map<std::string, uint32_t>& GetTextureSlots();
-        virtual const ShaderLayout& GetLayout() const;
+        virtual const ShaderLayout& GetShaderLayout() const;
         virtual Ref<IShader> GetShader();
 
     private:
         Ref<IShader> m_Shader;
-        ShaderLayout m_Layout;
+        ShaderLayout m_ShaderLayout;
 
-        std::map<std::string, UniformBlock> m_UniformBlocks;
+        std::map<uint32_t, UniformBlock> m_UniformBlocks;
         std::map<std::string, uint32_t> m_TextureSlots;
         std::map<uint32_t, Ref<ITexture>> m_Textures;
         
