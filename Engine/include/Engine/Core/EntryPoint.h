@@ -3,8 +3,6 @@
 
 // from https://github.com/TheCherno/Hazel/blob/master/Hazel/src/Hazel/Core/EntryPoint.h
 
-#include <SDL3/SDL_main.h>
-
 #include "Engine/Core/Base.h"
 #include "Engine/Core/Log.h"
 #include "Engine/Core/Application.h"

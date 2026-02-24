@@ -1,6 +1,9 @@
 #include "Renderer/Vulkan/RHI/VulkanGraphicsDevice.h"
+#include "Engine/Core/Base.h"
 #include "Engine/Core/Log.h"
+#include "Engine/Core/Assert.h"
 #include "Engine/Core/FileSystem.h"
+#include "Renderer/Vulkan/IVulkanGraphicsBridge.h"
 #include "Renderer/Vulkan/RHI/VulkanBuffer.h"
 #include "Renderer/Vulkan/RHI/VulkanPipelineState.h"
 #include "Renderer/Vulkan/RHI/VulkanShader.h"
@@ -9,12 +12,18 @@
 
 namespace Engine {
 
-    VulkanGraphicsDevice::VulkanGraphicsDevice(SDL_Window* window) : m_FrameIndex(0), m_ImageIndex(0) {
+    VulkanGraphicsDevice::VulkanGraphicsDevice(IGraphicsBridge* graphicsBridge, IWindow* window) : m_FrameIndex(0), m_ImageIndex(0) {
         LOG_CORE_INFO("Vulkan: Creating Vulkan graphics device...");
+
+        ENGINE_CORE_ASSERT(graphicsBridge != nullptr, "Vulkan: VulkanGraphicsDevice(): graphicsBridge is nullptr!");
+        ENGINE_CORE_ASSERT(window != nullptr, "Vulkan: VulkanGraphicsDevice(): window is nullptr!");
         
-        m_Context = CreateScope<VulkanContext>(window);
+        // trust
+        IVulkanGraphicsBridge* vkGfxBridge = static_cast<IVulkanGraphicsBridge*>(graphicsBridge);
+
+        m_Context = CreateScope<VulkanContext>(vkGfxBridge, window);
         m_Device = CreateScope<VulkanDevice>(*m_Context);
-        m_Swapchain = CreateScope<VulkanSwapchain>(*m_Context, *m_Device);
+        m_Swapchain = CreateScope<VulkanSwapchain>(*m_Context, *m_Device, window);
     }
 
     VulkanGraphicsDevice::~VulkanGraphicsDevice() {
@@ -96,9 +105,7 @@ namespace Engine {
 
         // Resize logic
         if (result == vk::Result::eErrorOutOfDateKHR) {
-            int w, h;
-            SDL_GetWindowSize(m_Context->GetWindow(), &w, &h);
-            Resize(w, h);
+            Resize(m_Window->GetWidth(), m_Window->GetHeight());
             return;
         }
 
@@ -192,9 +199,7 @@ namespace Engine {
         try {
             (void)m_Device->GetQueue().presentKHR(presentInfo);
         } catch (const vk::OutOfDateKHRError&) {
-            int w, h;
-            SDL_GetWindowSize(m_Context->GetWindow(), &w, &h);
-            Resize(w, h);
+            Resize(m_Window->GetWidth(), m_Window->GetHeight());
         }
 
         m_FrameIndex = (m_FrameIndex + 1) % k_MaxFramesInFlight;
@@ -263,7 +268,10 @@ namespace Engine {
         info.offset = 0;
         info.range  = ubo.GetSize();
 
-        m_PendingSets[binding->set].buffers[binding->binding] = info;
+        auto& key = m_PendingSets[binding->set];
+        key.buffers[binding->binding] = info;
+        HashCombine(key.hash, (uint64_t)(VkBuffer)info.buffer);
+        HashCombine(key.hash, (uint64_t)binding->binding);
     }
 
     // bind texture
@@ -281,7 +289,12 @@ namespace Engine {
         info.sampler     = tex.GetSampler();
         info.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
 
-        m_PendingSets[binding->set].textures[binding->binding] = info;
+        auto& key = m_PendingSets[binding->set];
+        key.textures[binding->binding] = info;
+        HashCombine(key.hash, (uint64_t)(VkImageLayout)info.imageLayout);
+        HashCombine(key.hash, (uint64_t)(VkImageView)info.imageView);
+        HashCombine(key.hash, (uint64_t)(VkSampler)info.sampler);
+        HashCombine(key.hash, (uint64_t)binding->binding);
     }
 
     // Push constants
@@ -353,7 +366,7 @@ namespace Engine {
 
     // Resize
     void VulkanGraphicsDevice::Resize(int width, int height) {
-        m_Swapchain->Resize(*m_Context, *m_Device, width, height);
+        m_Swapchain->Rebuild(*m_Context, *m_Device, width, height, m_Window->IsVSync());
     }
 
     // Gives GraphicsDevice chance to finish work before app can destroy

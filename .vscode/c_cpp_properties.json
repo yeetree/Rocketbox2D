@@ -13,7 +13,8 @@
                 "${workspaceFolder}/vendor/spdlog/include",
                 "${VULKAN_SDK}/include",
                 "C:\\VulkanSDK\\1.4.341.1\\Include",
-                "C:/VulkanSDK/1.4.341.1/Include/vma"
+                "C:/VulkanSDK/1.4.341.1/Include/vma",
+                "/home/vinny/VulkanSDK/1.4.335.0/x86_64/include/vma"
             ],
             "defines": [
                 "_DEBUG",

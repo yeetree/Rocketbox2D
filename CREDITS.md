@@ -24,7 +24,7 @@ This software uses the following third-party components:
 Full license text for each component can be found in their respective directories
 
 Special thanks to [The Cherno](https://www.youtube.com/@TheCherno) / Yan Chernikov for his extremely valuable [Game Engine Series](https://www.youtube.com/playlist?list=PLlrATfBNZ98dC-V-N3m0Go4deliWHPFwT)
-Since bits and pieces of his [Hazel Engine](https://github.com/TheCherno/Hazel) have been used, I will include it's license as well:
+Since bits and pieces of his [Hazel Engine](https://github.com/TheCherno/Hazel) have been used, I will include its license as well:
 
 * Hazel: [https://github.com/TheCherno/Hazel](https://github.com/TheCherno/Hazel)
     * Location: Various locations in `/Engine`

@@ -1,14 +1,19 @@
 #ifndef RENDERER_VULKAN_VULKANCONTEXT
 #define RENDERER_VULKAN_VULKANCONTEXT
 
-#include <SDL3/SDL.h>
 #include <vulkan/vulkan_raii.hpp>
+
+// fwd
+namespace Engine {
+    class IVulkanGraphicsBridge;
+    class IWindow;
+}
 
 // Manages Vulkan Context
 class VulkanContext {
 public:
     // Constructor: Creates an VulkanContext
-    VulkanContext(SDL_Window* window);
+    VulkanContext(Engine::IVulkanGraphicsBridge* graphicsBridge, Engine::IWindow* window);
     ~VulkanContext();
 
     // Prevent copying
@@ -19,7 +24,6 @@ public:
     vk::raii::Instance& GetInstance();
     vk::raii::PhysicalDevice& GetPhysicalDevice();
     vk::raii::SurfaceKHR& GetSurface();
-    SDL_Window* GetWindow();
 
 private:
     // Debug Callback
@@ -32,13 +36,10 @@ private:
     vk::raii::SurfaceKHR m_Surface = nullptr;
     vk::raii::PhysicalDevice m_PhysicalDevice = nullptr;
 
-    // SDL members
-    SDL_Window* m_Window = nullptr;
-
     // Private helper functions
-    void CreateInstance();
+    void CreateInstance(Engine::IVulkanGraphicsBridge* graphicsBridge);
     void SetupDebugMessanger();
-    void CreateSurface();
+    void CreateSurface(Engine::IVulkanGraphicsBridge* graphicsBridge, Engine::IWindow* window);
     void PickPhysicalDevice();
 };
 

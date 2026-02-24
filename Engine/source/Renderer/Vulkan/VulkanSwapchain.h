@@ -6,6 +6,7 @@
 #include "Engine/Core/Base.h"
 #include "Renderer/Vulkan/VulkanFrame.h"
 #include "Renderer/Vulkan/VulkanConstants.h"
+#include "Engine/Platform/IWindow.h"
 
 // fwd
 class VulkanContext;
@@ -14,7 +15,7 @@ class VulkanDevice;
 class VulkanSwapchain {
 public:
     // Constructor: Creates an VulkanSwapchain
-    VulkanSwapchain(VulkanContext& context, VulkanDevice& device);
+    VulkanSwapchain(VulkanContext& context, VulkanDevice& device, Engine::IWindow* window);
     ~VulkanSwapchain();
 
     // Prevent copying
@@ -34,8 +35,8 @@ public:
     vk::raii::Semaphore& GetImageAvailableSemaphore(uint32_t index);
     vk::raii::Semaphore& GetRenderFinishedSemaphore(uint32_t index);
 
-    // Public member function to resize swapchain
-    void Resize(VulkanContext& context, VulkanDevice& device, int width, int height);
+    // Public member function to rebuild swapchain
+    void Rebuild(VulkanContext& context, VulkanDevice& device, int width, int height, bool vsync);
 
 private:
     // Members
@@ -51,13 +52,13 @@ private:
     std::vector<vk::raii::ImageView> m_SwapchainImageViews;
 
     // Private helper functions
-    void CreateSwapChain(VulkanContext& context, VulkanDevice& device);
+    void CreateSwapChain(VulkanContext& context, VulkanDevice& device, Engine::IWindow* window);
     void CreateImageViews(VulkanDevice& device);
     void CreateSyncObjects(VulkanDevice& device);
 
     // Static private utility functions
     static vk::SurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats);
-    static vk::PresentModeKHR ChooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes);
+    static vk::PresentModeKHR ChooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes, bool vsync);
     vk::Extent2D ChooseSwapExtent(int width, int height, const vk::SurfaceCapabilitiesKHR& capabilities);
     static uint32_t ChooseSwapMinImageCount(vk::SurfaceCapabilitiesKHR const &surfaceCapabilities);
 };

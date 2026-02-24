@@ -1,14 +1,18 @@
 #include "Renderer/Vulkan/VulkanContext.h"
 #include "Renderer/Vulkan/VulkanConstants.h"
 #include "Engine/Core/Log.h"
-#include <SDL3/SDL_vulkan.h>
+#include "Engine/Core/Assert.h"
+#include "Renderer/Vulkan/IVulkanGraphicsBridge.h"
+#include "Engine/Platform/IWindow.h"
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE;
 
-VulkanContext::VulkanContext(SDL_Window* window) : m_Window(window) {
-    CreateInstance();    
+VulkanContext::VulkanContext(Engine::IVulkanGraphicsBridge* graphicsBridge, Engine::IWindow* window) {
+    ENGINE_CORE_ASSERT(graphicsBridge != nullptr, "Vulkan: VulkanContext(): graphicsBridge is nullptr!");
+    ENGINE_CORE_ASSERT(window != nullptr, "Vulkan: VulkanContext(): window is nullptr!");
+    CreateInstance(graphicsBridge);    
     SetupDebugMessanger();
-    CreateSurface();
+    CreateSurface(graphicsBridge, window);
     PickPhysicalDevice();
 }
 
@@ -32,7 +36,7 @@ VKAPI_ATTR vk::Bool32 VKAPI_CALL VulkanContext::DebugCallback(vk::DebugUtilsMess
     return vk::False;
 }
 
-void VulkanContext::CreateInstance() {
+void VulkanContext::CreateInstance(Engine::IVulkanGraphicsBridge* graphicsBridge) {
     LOG_CORE_INFO("Vulkan: Creating Vulkan instance...");
 
     VULKAN_HPP_DEFAULT_DISPATCHER.init(vkGetInstanceProcAddr);
@@ -64,11 +68,9 @@ void VulkanContext::CreateInstance() {
         return; // Failure
     }
 
-    // Get required extensions for SDL
-    uint32_t SDLExtensionCount = 0;
-    char const * const * SDLExtensions = SDL_Vulkan_GetInstanceExtensions(&SDLExtensionCount);
-    std::vector extensions(SDLExtensions, SDLExtensions + SDLExtensionCount);
-    
+    // Get required extensions for platform
+    std::vector<const char*> extensions = graphicsBridge->GetRequiredExtensions();
+
     // Add Engine extensions
     if (k_EnableValidationLayers) {
         extensions.push_back(vk::EXTDebugUtilsExtensionName );
@@ -114,15 +116,10 @@ void VulkanContext::SetupDebugMessanger() {
     m_DebugMessenger = m_Instance.createDebugUtilsMessengerEXT(debugUtilsMessengerCreateInfoEXT);
 }
 
-void VulkanContext::CreateSurface() {
+void VulkanContext::CreateSurface(Engine::IVulkanGraphicsBridge* graphicsBridge, Engine::IWindow* window) {
     LOG_CORE_INFO("Vulkan: Creating surface...");
 
-    // Thank god we use SDL
-    VkSurfaceKHR surface;
-    if (!SDL_Vulkan_CreateSurface(m_Window, *m_Instance, NULL, &surface)) {
-        throw std::runtime_error(std::format("Vulkan: Could not create surface: SDL: {0}", SDL_GetError()));
-        return; // Failure
-    }
+    VkSurfaceKHR surface = graphicsBridge->CreateSurface(*m_Instance, window);
     m_Surface = vk::raii::SurfaceKHR(m_Instance, surface);
 }
 
@@ -166,7 +163,7 @@ void VulkanContext::PickPhysicalDevice() {
 
         uint32_t graphicsIdx = static_cast<uint32_t>(std::distance(queueFamilies.begin(), it));
 
-        // 3. Extension Check
+        // Extension Check
         auto availableExtensions = device.enumerateDeviceExtensionProperties();
         bool extensionsFound = true;
         for (const char* required : k_DeviceExtensions) {
@@ -205,8 +202,4 @@ vk::raii::PhysicalDevice& VulkanContext::GetPhysicalDevice() {
 
 vk::raii::SurfaceKHR& VulkanContext::GetSurface() {
     return m_Surface;
-}
-
-SDL_Window* VulkanContext::GetWindow() {
-    return m_Window;
 }

@@ -1,7 +1,6 @@
 #ifndef RENDERER_VULKAN_VULKANGRAPHICSDEVICE
 #define RENDERER_VULKAN_VULKANGRAPHICSDEVICE
 
-#include <SDL3/SDL.h>
 #include <vulkan/vulkan_raii.hpp>
 
 #include "Renderer/Vulkan/VulkanContext.h"
@@ -12,6 +11,9 @@
 #include "Engine/Renderer/RHI/IShader.h"
 #include "Engine/Renderer/RHI/IPipelineState.h"
 
+#include "Engine/Platform/IWindow.h"
+#include "Engine/Platform/IGraphicsBridge.h"
+
 namespace Engine {
     // Fwd:
     class VulkanBuffer;
@@ -20,8 +22,8 @@ namespace Engine {
     // Vulkan Implementation of IGraphicsDevice
     class VulkanGraphicsDevice : public IGraphicsDevice {
     public:
-        // Constructor: Creates an VulkanGraphicsDevice with SDL_Window
-        VulkanGraphicsDevice(SDL_Window* window);
+        // Constructor: Creates an VulkanGraphicsDevice
+        VulkanGraphicsDevice(IGraphicsBridge* graphicsBridge, IWindow* window);
         ~VulkanGraphicsDevice() override;
 
         // Prevent copying
@@ -87,6 +89,9 @@ namespace Engine {
         // Frame info
         uint32_t m_FrameIndex;
         uint32_t m_ImageIndex;
+
+        // Window
+        IWindow* m_Window;
 
         // Current PSO
         VulkanPipelineState* m_CurrentPipelineState;

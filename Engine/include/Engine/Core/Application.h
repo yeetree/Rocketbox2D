@@ -3,13 +3,13 @@
 
 #include "engine_export.h"
 
-#include <SDL3/SDL.h>
-
 #include <string>
 #include <cstdint>
 
 #include "Engine/Core/Base.h"
 
+#include "Engine/Platform/IPlatform.h"
+#include "Engine/Platform/IWindow.h"
 #include "Engine/Renderer/RHI/IGraphicsDevice.h"
 #include "Engine/Core/ResourceManager.h"
 #include "Engine/Core/Input.h"
@@ -25,13 +25,14 @@ namespace Engine {
 
         static Application& Get();
 
-        void Init(int width, int height, std::string title, SDL_WindowFlags flags);
+        void Init(const WindowProperties& properties);
         void Run();
 
         IGraphicsDevice& GetGraphicsDevice();
         Renderer& GetRenderer();
         ResourceManager& GetResourceManager();
         Input& GetInput();
+        IWindow& GetWindow();
 
         int GetWindowWidth();
         int GetWindowHeight();
@@ -51,12 +52,10 @@ namespace Engine {
 
         bool m_Running;
 
-        SDL_Window* m_Window;
-        int m_WindowWidth, m_WindowHeight;
-        float m_AspectRatio;
-
         uint64_t m_TicksPrevious;
         
+        Scope<IPlatform> m_Platform;
+        Scope<IWindow> m_Window;
         Scope<Input> m_Input;
         Scope<ResourceManager> m_ResourceManager;
         Scope<Renderer> m_Renderer;

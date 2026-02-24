@@ -12,37 +12,53 @@ float fwrap(float x, float min, float max) {
 }
 
 class SpriteScript : public ScriptableEntity {
+    Vec2 velocity;
+    float rotSpeed;
+    
     void OnStart() override {
-
+        float angle = (rand() % 360) * 3.14159f / 180.0f;
+        float speed = 50.0f + (rand() % 150);
+        
+        velocity = Vec2(std::cos(angle) * speed, std::sin(angle) * speed);
+        rotSpeed = 1.0f + (static_cast<float>(rand() % 100) / 20.0f);
     }
 
     void OnUpdate(float dt) override {
-        GetComponent<TransformComponent>().rotation += dt * 6.0;
+        auto& transform = GetComponent<TransformComponent>();
+        
+        // Move
+        transform.position.x += velocity.x * dt;
+        transform.position.y += velocity.y * dt;
+        
+        // Rotate
+        transform.rotation +=rotSpeed * dt;
+
+        if (std::abs(transform.position.x) > 400.0f) velocity.x *= -1.0f;
+        if (std::abs(transform.position.y) > 300.0f) velocity.y *= -1.0f;
     }
 };
 
 class EngineTestApp : public Application {
 public:
     Scene scene;
-    Entity entity;
-    Entity entity2;
 
     void OnStart() override {
         scene.OnStart();
 
-        GetResourceManager().LoadTexture("container", "Assets/container.jpg");
         GetResourceManager().LoadTexture("face", "Assets/awesomeface.png");
+        Ref<ITexture> tex = GetResourceManager().GetTexture("face");
 
-        entity = scene.CreateEntity();
-        entity.AddComponent<SpriteComponent>(GetResourceManager().GetTexture("face"));
-        entity.GetComponent<TransformComponent>().scale = Vec2(100, 100);
-        entity.AddComponent<NativeScriptComponent>().Bind<SpriteScript>();
-
-        entity2 = scene.CreateEntity();
-        entity2.AddComponent<SpriteComponent>(GetResourceManager().GetTexture("container"));
-        entity2.GetComponent<TransformComponent>().position = Vec2(-100, -100);
-        entity2.GetComponent<TransformComponent>().scale = Vec2(150, 150);
-        entity2.AddComponent<NativeScriptComponent>().Bind<SpriteScript>();
+        // Spawn sprites
+        for (int i = 0; i < 1000; i++) {
+            Entity e = scene.CreateEntity();
+            
+            auto& transform = e.GetComponent<TransformComponent>();
+            transform.position = Vec2((rand() % 600) - 300, (rand() % 400) - 200);
+            transform.scale = Vec2(32, 32);
+            
+            e.AddComponent<SpriteComponent>(tex, Vec4(1.0f));
+            e.AddComponent<NativeScriptComponent>().Bind<SpriteScript>();
+        }
     }
 
     void OnInput(SDL_Event event) override {
@@ -51,6 +67,7 @@ public:
 
     void OnUpdate(float dt) override {
         scene.OnUpdate(dt);
+        LOG_INFO("FPS: {0}", 1 / dt);
     }
 
     void OnRender() override {
@@ -64,7 +81,15 @@ public:
 
 int Engine::EntryPoint(int argc, char **argv) {
     EngineTestApp app;
-    app.Init(800, 600, "VKTestApp", SDL_WINDOW_RESIZABLE);
+    WindowProperties props = {
+        .title = "VKTestApp",
+        .width = 800,
+        .height = 600,
+        .api = GraphicsAPI::Vulkan,
+        .resizeable = true,
+        .vsync = true,
+    };
+    app.Init(props);
     app.Run();
     return 0;
 }

@@ -22,7 +22,7 @@ namespace Engine {
         void EndScene();
         void Submit(Ref<Mesh> mesh, Ref<Material> material, const Mat4& transform, uint32_t layer);
 
-        void DrawQuad(const Ref<ITexture>& texture, const Vec4& color, const Mat4& transform, uint32_t layer);
+        void DrawSprite(const Ref<ITexture>& texture, const Vec4& color, const Mat4& transform, uint32_t layer);
 
     private:
         void Flush();
@@ -39,13 +39,25 @@ namespace Engine {
             uint64_t sortKey; 
         };
 
+        struct SpriteUniform {
+            alignas(16) Mat4 transform;
+            alignas(16) Vec4 color;
+        };
+
+        struct SpriteCommand {
+            Ref<ITexture> texture;
+            SpriteUniform data;
+            uint64_t layer;
+        };
+
         IGraphicsDevice* m_GraphicsDevice;
 
         Mat4 m_ViewProjection;
 
         std::vector<RenderCommand> m_CommandQueue;
+        std::vector<SpriteCommand> m_SpriteQueue;
+        
         std::map<uint64_t, Ref<IPipelineState>> m_PSOCache;
-        std::vector<Ref<IBuffer>> m_FrameBuffers; // keep buffers alive during frame
 
         struct BufferPool {
             std::vector<Ref<IBuffer>> pool;
@@ -72,7 +84,7 @@ namespace Engine {
 
         // Quads
         Ref<Mesh> m_QuadMesh;
-        Ref<Material> m_QuadMaterial;
+        Ref<IPipelineState> m_SpritePipeline;
         
         // Default
         Ref<ITexture> m_DefaultTexture;

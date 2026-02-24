@@ -98,8 +98,17 @@ namespace Engine
 
         m_GlobalBuffer = m_GraphicsDevice->CreateBuffer(globalDesc);
 
-        // Create material
-        m_QuadMaterial = CreateRef<Material>(shader, shaderLayout);
+        // create sprite pipeline
+        PipelineDesc spriteDesc;
+        spriteDesc.shader = shader.get();
+        spriteDesc.shaderLayout = shaderLayout;
+        spriteDesc.vertexLayout = vertLayout;
+        spriteDesc.pushConstantSize = 0;
+        spriteDesc.fillMode = FillMode::Fill;
+        spriteDesc.cullMode = CullMode::None;
+        spriteDesc.topology = PrimitiveTopology::TriangleList;
+        spriteDesc.enableBlending = true;
+        m_SpritePipeline = m_GraphicsDevice->CreatePipelineState(spriteDesc);
     }
 
     void Renderer::Submit(Ref<Mesh> mesh, Ref<Material> material, const Mat4& transform, uint32_t layer) {
@@ -114,18 +123,18 @@ namespace Engine
         m_CommandQueue.push_back(cmd);
     }
 
-    void Renderer::DrawQuad(const Ref<ITexture>& texture, const Vec4& color, const Mat4& transform, uint32_t layer) {
-        auto instance = CreateRef<MaterialInstance>(m_QuadMaterial);
-    
-        instance->SetTexture("texture", texture);
-        instance->Set("tint", color);
-        instance->Set("transform", transform);
-
-        Submit(m_QuadMesh, std::static_pointer_cast<Material>(instance), transform, layer);
+    void Renderer::DrawSprite(const Ref<ITexture>& texture, const Vec4& color, const Mat4& transform, uint32_t layer) {
+        m_SpriteQueue.push_back(SpriteCommand{
+            .texture = texture,
+            .data = SpriteUniform{
+                .transform = transform,
+                .color = color
+            },
+            .layer = layer
+        });
     }
 
     void Renderer::BeginScene(const Mat4& viewProjection) {
-        m_FrameBuffers.clear();
         m_GlobalData.Set("viewProjection", viewProjection);
         m_GlobalBuffer->UpdateData(m_GlobalData.GetData(), m_GlobalData.GetSize(), 0);
     }
@@ -135,6 +144,11 @@ namespace Engine
         std::sort(m_CommandQueue.begin(), m_CommandQueue.end(), 
             [](const RenderCommand& a, const RenderCommand& b) {
                 return a.sortKey > b.sortKey;
+        });
+
+        std::sort(m_SpriteQueue.begin(), m_SpriteQueue.end(), 
+            [](const SpriteCommand& a, const SpriteCommand& b) {
+                return a.layer > b.layer;
         });
 
         Flush();
@@ -167,9 +181,24 @@ namespace Engine
             m_GraphicsDevice->BindVertexBuffer(*cmd.mesh->GetVertexBuffer());
             m_GraphicsDevice->BindIndexBuffer(*cmd.mesh->GetIndexBuffer());
 
-            m_GraphicsDevice->DrawIndexed(cmd.mesh->GetIndexCount());
+            //m_GraphicsDevice->DrawIndexed(cmd.mesh->GetIndexCount());
         }
+
+        // Sprite renderer
+        m_GraphicsDevice->BindPipelineState(*m_SpritePipeline);
+        m_GraphicsDevice->BindUniformBuffer(*m_GlobalBuffer, 0);
+        m_GraphicsDevice->BindVertexBuffer(*m_QuadMesh->GetVertexBuffer());
+        m_GraphicsDevice->BindIndexBuffer(*m_QuadMesh->GetIndexBuffer());
+        for(auto& cmd : m_SpriteQueue) {
+            Ref<IBuffer> localBuffer = m_BufferPool.GetNext(m_GraphicsDevice, sizeof(SpriteUniform));
+            localBuffer->UpdateData(&cmd.data, sizeof(SpriteUniform), 0);
+            m_GraphicsDevice->BindUniformBuffer(*localBuffer, 1);
+            m_GraphicsDevice->BindTexture(*cmd.texture, 2);
+            m_GraphicsDevice->DrawIndexed(m_QuadMesh->GetIndexCount());
+        }
+
         m_CommandQueue.clear();
+        m_SpriteQueue.clear();
         m_BufferPool.Reset();
     }
 

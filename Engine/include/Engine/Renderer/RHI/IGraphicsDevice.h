@@ -5,23 +5,22 @@
 
 #include <cstdint>
 
-#include <SDL3/SDL.h>
 
 #include "Engine/Core/Base.h"
 #include "Engine/Renderer/RHI/IBuffer.h"
 #include "Engine/Renderer/RHI/IShader.h"
 #include "Engine/Renderer/RHI/ITexture.h"
 #include "Engine/Renderer/RHI/IPipelineState.h"
+#include "Engine/Renderer/RHI/GraphicsAPI.h"
+#include "Engine/Platform/IWindow.h"
+#include "Engine/Platform/IGraphicsBridge.h"
 
 namespace Engine {
-    // What backend to create (Only Vulkan for now)
-    enum class GraphicsAPI { Vulkan };
-
     // Creates resources for rendering and dispatches draw calls
     class ENGINE_EXPORT IGraphicsDevice {
     public:
         // Static function to create a graphics device implementation and select backend
-        static Scope<IGraphicsDevice> Create(GraphicsAPI api, SDL_Window* window);
+        static Scope<IGraphicsDevice> Create(GraphicsAPI api, IGraphicsBridge* graphicsBridge, IWindow* window);
 
         virtual ~IGraphicsDevice() = default;
 

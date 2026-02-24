@@ -4,9 +4,9 @@
 namespace Engine
 {
     // Static function to create GraphicsDevice with selected graphics api
-    Scope<IGraphicsDevice> IGraphicsDevice::Create(GraphicsAPI api, SDL_Window* window) {
+    Scope<IGraphicsDevice> IGraphicsDevice::Create(GraphicsAPI api, IGraphicsBridge* graphicsBridge, IWindow* window) {
         switch (api) {
-            case GraphicsAPI::Vulkan: return CreateScope<VulkanGraphicsDevice>(window);
+            case GraphicsAPI::Vulkan: return CreateScope<VulkanGraphicsDevice>(graphicsBridge, window);
         }
         return nullptr;
     }

@@ -3,19 +3,21 @@
 
 #include <vulkan/vulkan_raii.hpp>
 #include <map>
+#include <unordered_map>
 
 // fwd
 class VulkanDevice;
 
 // Information for binding a set
 struct DescriptorSetKey {
-    // binding info
+    size_t hash = 0;
+
     std::map<uint32_t, vk::DescriptorBufferInfo> buffers;
     std::map<uint32_t, vk::DescriptorImageInfo> textures;
 
-    bool operator<(const DescriptorSetKey& other) const {
-        if (buffers != other.buffers) return buffers < other.buffers;
-        return textures < other.textures;
+    bool operator==(const DescriptorSetKey& other) const {
+        if (hash != other.hash) return false;
+        return buffers == other.buffers && textures == other.textures;
     }
 };
 
@@ -30,8 +32,15 @@ public:
 private:
     VulkanDevice& m_Device;
     vk::raii::DescriptorPool m_Pool = nullptr;
+
+    // hasher for unordered_map
+    struct DescriptorSetHasher {
+        size_t operator()(const DescriptorSetKey& key) const {
+            return key.hash;
+        }
+    };
     
-    std::map<DescriptorSetKey, vk::DescriptorSet> m_SetCache;
+    std::unordered_map<DescriptorSetKey, vk::DescriptorSet, DescriptorSetHasher> m_SetCache;
 };
 
 #endif // RENDERER_VULKAN_RHI_VULKANDESCRIPTORMANAGER

@@ -3,10 +3,8 @@
 #include "Renderer/Vulkan/VulkanDevice.h"
 #include "Engine/Core/Log.h"
 
-
-
-VulkanSwapchain::VulkanSwapchain(VulkanContext& context, VulkanDevice& device) {
-    CreateSwapChain(context, device);
+VulkanSwapchain::VulkanSwapchain(VulkanContext& context, VulkanDevice& device, Engine::IWindow* window) {
+    CreateSwapChain(context, device, window);
     CreateImageViews(device);
     CreateSyncObjects(device);
 
@@ -23,15 +21,13 @@ VulkanSwapchain::~VulkanSwapchain() {
     // Nothing
 }
 
-void VulkanSwapchain::CreateSwapChain(VulkanContext& context, VulkanDevice& device) {
+void VulkanSwapchain::CreateSwapChain(VulkanContext& context, VulkanDevice& device, Engine::IWindow* window) {
     LOG_CORE_INFO("Vulkan: Creating Swap Chain...");
 
     // Get surface formats and extent
     vk::SurfaceCapabilitiesKHR surfaceCapabilities = context.GetPhysicalDevice().getSurfaceCapabilitiesKHR( context.GetSurface() );
     m_SwapchainSurfaceFormat = ChooseSwapSurfaceFormat(context.GetPhysicalDevice().getSurfaceFormatsKHR( context.GetSurface() ));
-    int width, height;
-    SDL_GetWindowSizeInPixels(context.GetWindow(), &width, &height);
-    m_SwapchainExtent = ChooseSwapExtent(width, height, surfaceCapabilities);
+    m_SwapchainExtent = ChooseSwapExtent(window->GetWidth(), window->GetHeight(), surfaceCapabilities);
 
     // Create swapchain
     vk::SwapchainCreateInfoKHR swapChainCreateInfo;
@@ -46,7 +42,7 @@ void VulkanSwapchain::CreateSwapChain(VulkanContext& context, VulkanDevice& devi
     swapChainCreateInfo.imageSharingMode = vk::SharingMode::eExclusive;
     swapChainCreateInfo.preTransform = surfaceCapabilities.currentTransform;
     swapChainCreateInfo.compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque;
-    swapChainCreateInfo.presentMode = ChooseSwapPresentMode(context.GetPhysicalDevice().getSurfacePresentModesKHR( context.GetSurface() ));
+    swapChainCreateInfo.presentMode = ChooseSwapPresentMode(context.GetPhysicalDevice().getSurfacePresentModesKHR( context.GetSurface() ), false);
     swapChainCreateInfo.clipped = true;
     swapChainCreateInfo.oldSwapchain = nullptr;
 
@@ -94,13 +90,17 @@ vk::SurfaceFormatKHR VulkanSwapchain::ChooseSwapSurfaceFormat(const std::vector<
     return availableFormats[0];
 }
 
-vk::PresentModeKHR VulkanSwapchain::ChooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes) {
+vk::PresentModeKHR VulkanSwapchain::ChooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes, bool vsync) {
+    if(vsync) {
+        return vk::PresentModeKHR::eImmediate; // Guarunteed
+    }
+    
     for (const auto& availablePresentMode : availablePresentModes) {
         if (availablePresentMode == vk::PresentModeKHR::eMailbox) {
             return availablePresentMode;
         }
     }
-    return vk::PresentModeKHR::eFifo; // Garunteed
+    return vk::PresentModeKHR::eFifo; // Guarunteed
 }
 
 vk::Extent2D VulkanSwapchain::ChooseSwapExtent(int width, int height, const vk::SurfaceCapabilitiesKHR& capabilities) {
@@ -128,7 +128,7 @@ std::pair<vk::Result, uint32_t> VulkanSwapchain::AcquireNextImage(vk::raii::Sema
     return std::make_pair(result.result, result.value);
 }
 
-void VulkanSwapchain::Resize(VulkanContext& context, VulkanDevice& device, int width, int height) {
+void VulkanSwapchain::Rebuild(VulkanContext& context, VulkanDevice& device, int width, int height, bool vsync) {
     if (width == 0 || height == 0) return;
 
     device.GetDevice().waitIdle();
@@ -147,7 +147,7 @@ void VulkanSwapchain::Resize(VulkanContext& context, VulkanDevice& device, int w
     swapChainCreateInfo.imageUsage = vk::ImageUsageFlagBits::eColorAttachment;
     swapChainCreateInfo.preTransform = surfaceCapabilities.currentTransform;
     swapChainCreateInfo.compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque;
-    swapChainCreateInfo.presentMode = ChooseSwapPresentMode(context.GetPhysicalDevice().getSurfacePresentModesKHR(context.GetSurface()));
+    swapChainCreateInfo.presentMode = ChooseSwapPresentMode(context.GetPhysicalDevice().getSurfacePresentModesKHR(context.GetSurface()), vsync);
     swapChainCreateInfo.clipped = true;
     swapChainCreateInfo.oldSwapchain = *m_Swapchain;
 
