@@ -6,6 +6,8 @@
 namespace Engine
 {
     enum class KeyCode : uint16_t {
+        None                = 0,
+        
         // From glfw3.h (and then from https://github.com/TheCherno/Hazel/blob/master/Hazel/src/Hazel/Core/KeyCodes.h)
         Space               = 32,
         Apostrophe          = 39, /* ' */
@@ -59,9 +61,6 @@ namespace Engine
         Backslash           = 92,  /* \ */
         RightBracket        = 93,  /* ] */
         GraveAccent         = 96,  /* ` */
-
-        World1              = 161, /* non-US #1 */
-        World2              = 162, /* non-US #2 */
 
         /* Function keys */
         Escape              = 256,

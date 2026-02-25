@@ -2,26 +2,30 @@
 #define ENGINE_EVENTS_KEYEVENT
 
 #include "Engine/Events/Event.h"
+#include "Engine/Events/WindowEvent.h"
 #include "Engine/Input/KeyCode.h"
 
 namespace Engine {
 
-    class KeyEvent : public Event {
+	//fwd
+	class IWindow;
+
+    class KeyEvent : public WindowEvent {
 	public:
 		KeyCode GetKeyCode() const { return m_KeyCode; }
 
 		EVENT_CLASS_CATEGORY(EventCategory::Keyboard | EventCategory::Input)
 	protected:
-		KeyEvent(const KeyCode keycode)
-			: m_KeyCode(keycode) {}
+		KeyEvent(IWindow* window, const KeyCode keycode)
+			: WindowEvent(window), m_KeyCode(keycode) {}
 
 		KeyCode m_KeyCode;
 	};
 
 	class KeyPressedEvent : public KeyEvent {
 	public:
-		KeyPressedEvent(const KeyCode keycode, bool isRepeat = false)
-			: KeyEvent(keycode), m_IsRepeat(isRepeat) {}
+		KeyPressedEvent(IWindow* window, const KeyCode keycode, bool isRepeat = false)
+			: KeyEvent(window, keycode), m_IsRepeat(isRepeat) {}
 
 		bool IsRepeat() const { return m_IsRepeat; }
 
@@ -32,8 +36,8 @@ namespace Engine {
 
 	class KeyReleasedEvent : public KeyEvent {
 	public:
-		KeyReleasedEvent(const KeyCode keycode)
-			: KeyEvent(keycode) {}
+		KeyReleasedEvent(IWindow* window, const KeyCode keycode)
+			: KeyEvent(window, keycode) {}
 
 		EVENT_CLASS_TYPE(EventType::KeyReleased)
 	};

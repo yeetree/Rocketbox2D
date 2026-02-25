@@ -8,6 +8,8 @@
 
 #include "Engine/Core/Base.h"
 
+#include "Engine/Events/Event.h"
+
 #include "Engine/Platform/IPlatform.h"
 #include "Engine/Platform/IWindow.h"
 #include "Engine/Renderer/RHI/IGraphicsDevice.h"
@@ -26,6 +28,7 @@ namespace Engine {
         static Application& Get();
 
         void Init(const WindowProperties& properties);
+        void EventCallback(Event& event);
         void Run();
 
         IGraphicsDevice& GetGraphicsDevice();
@@ -41,7 +44,7 @@ namespace Engine {
 
         virtual void OnStart() = 0;
 
-        virtual void OnInput(SDL_Event event) = 0;
+        virtual void OnEvent(Event& event) = 0;
         virtual void OnUpdate(float dt) = 0;
         virtual void OnRender() = 0;
 
@@ -51,8 +54,6 @@ namespace Engine {
         static Application *s_Instance;
 
         bool m_Running;
-
-        uint64_t m_TicksPrevious;
         
         Scope<IPlatform> m_Platform;
         Scope<IWindow> m_Window;

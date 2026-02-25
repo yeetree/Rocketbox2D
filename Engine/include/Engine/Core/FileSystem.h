@@ -11,7 +11,7 @@ namespace Engine
 {
     class ENGINE_EXPORT FileSystem {
     public:
-        static void SetBasePath(const char* basePath);
+        static void SetBasePath(const std::string& basePath);
         static std::vector<char> ReadFile(const std::string &path);
         static std::vector<uint32_t> ReadSPV(const std::string &path);
         static bool Exists(const std::string &path);

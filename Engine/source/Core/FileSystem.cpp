@@ -7,7 +7,7 @@
 
 std::filesystem::path Engine::FileSystem::s_RootPath = "";
 
-void Engine::FileSystem::SetBasePath(const char* basePath) {
+void Engine::FileSystem::SetBasePath(const std::string& basePath) {
     // Gets the absolute path of base path
     std::filesystem::path exePath = std::filesystem::absolute(basePath);
     s_RootPath = exePath;

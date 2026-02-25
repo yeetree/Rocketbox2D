@@ -1,5 +1,5 @@
-#ifndef RENDERER_VULKAN_VULKANGRAPHICSDEVICE
-#define RENDERER_VULKAN_VULKANGRAPHICSDEVICE
+#ifndef RENDERER_VULKAN_RHI_VULKANGRAPHICSDEVICE
+#define RENDERER_VULKAN_RHI_VULKANGRAPHICSDEVICE
 
 #include <vulkan/vulkan_raii.hpp>
 
@@ -16,7 +16,6 @@
 
 namespace Engine {
     // Fwd:
-    class VulkanBuffer;
     class VulkanPipelineState;
 
     // Vulkan Implementation of IGraphicsDevice
@@ -41,6 +40,8 @@ namespace Engine {
         void EndFrame() override;
         void Present() override;
         void SetClearColor(Vec4 color) override;
+        void SetVSync(bool vsync) override;
+        bool IsVSync() override;
 
         // Bind Pipeline state
         void BindPipelineState(IPipelineState& pipeline) override;
@@ -51,8 +52,8 @@ namespace Engine {
         void PushConstants(const void* data, uint32_t size) override;
         void DrawIndexed(uint32_t indexCount) override;
 
-        // Resize
-        void Resize(int width, int height) override;
+        // Request to update swapchain (Window resize, VSync)
+        void UpdateSwapchain() override;
 
         // Vulkan-Specific
 
@@ -81,6 +82,10 @@ namespace Engine {
         // Gives GraphicsDevice chance to finish work before app can destroy
         void OnDestroy() override;
 
+        // Handles rebuilding swapchain
+        void RebuildSwapchain();
+        bool m_NeedRebuildSwapchain = false;
+
         // Vulkan state
         Scope<VulkanContext> m_Context;
         Scope<VulkanDevice> m_Device;
@@ -92,6 +97,7 @@ namespace Engine {
 
         // Window
         IWindow* m_Window;
+        bool m_VSync = false;
 
         // Current PSO
         VulkanPipelineState* m_CurrentPipelineState;
@@ -105,4 +111,4 @@ namespace Engine {
 
 } // namespace Engine
 
-#endif // RENDERER_VULKAN_VULKANGRAPHICSDEVICE
+#endif // RENDERER_VULKAN_RHI_VULKANGRAPHICSDEVICE

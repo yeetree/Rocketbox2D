@@ -10,7 +10,7 @@ namespace Engine
 {
     enum class EventType {
         None = 0,
-		WindowClose, WindowResize,
+        Quit, WindowClosed, WindowResized,
 		KeyPressed, KeyReleased,
 		MouseButtonPressed, MouseButtonReleased, MouseMoved, MouseWheelScrolled
     };
@@ -18,10 +18,11 @@ namespace Engine
     enum class EventCategory : unsigned int {
         None = 0,
         Application    = BIT(0),
-		Input          = BIT(1),
-		Keyboard       = BIT(2),
-		Mouse          = BIT(3),
-		MouseButton    = BIT(4)
+        Window         = BIT(1),
+		Input          = BIT(2),
+		Keyboard       = BIT(3),
+		Mouse          = BIT(4),
+		MouseButton    = BIT(5)
     };
 
     // Event category operators
@@ -67,17 +68,38 @@ namespace Engine
 	public:
 		virtual ~Event() = default;
 
-		bool Handled = false;
+		bool handled = false;
 
 		virtual EventType GetEventType() const = 0;
-		virtual const char* GetName() const = 0;
 		virtual EventCategory GetCategoryFlags() const = 0;
-		virtual std::string ToString() const { return GetName(); }
 
 		bool IsInCategory(EventCategory category)
 		{
-			(GetCategoryFlags() & category) != EventCategory::None;
+			return (GetCategoryFlags() & category) != EventCategory::None;
 		}
+	};
+
+    class EventDispatcher
+	{
+	public:
+		EventDispatcher(Event& event)
+			: m_Event(event)
+		{
+		}
+		
+		// F will be deduced by the compiler
+		template<typename T, typename F>
+		bool Dispatch(const F& func)
+		{
+			if (m_Event.GetEventType() == T::GetStaticType())
+			{
+				m_Event.handled |= func(static_cast<T&>(m_Event));
+				return true;
+			}
+			return false;
+		}
+	private:
+		Event& m_Event;
 	};
 
 } // namespace Engine

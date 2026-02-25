@@ -4,6 +4,7 @@
 #include "Engine/Scene/ScriptableEntity.h"
 #include "Engine/Core/Application.h"
 #include "Engine/Core/Log.h"
+#include "Engine/Events/WindowEvent.h"
 #include <glm/gtc/matrix_transform.hpp>
 
 namespace Engine
@@ -43,15 +44,18 @@ namespace Engine
         m_DefaultCamera = Camera(height);
     }
 
-    void Scene::OnInput(SDL_Event event) {
-        if(event.type == SDL_EVENT_WINDOW_RESIZED) {
+    void Scene::OnEvent(Event& event) {
+        EventDispatcher dispatcher(event);
+
+        dispatcher.Dispatch<WindowResizedEvent>([this](WindowResizedEvent& e){
             m_DefaultCamera.OnResize();
             // Entity + CameraComponent
             for (auto [entity, cam] : m_Registry.view<CameraComponent>().each()) {
                 // Set aspect ratio
                 cam.camera.OnResize();
             };
-        }
+            return false;
+        });
 
         // Entity + NativeScriptComponent
         for (auto [entity, nsc] : m_Registry.view<NativeScriptComponent>().each()) {
@@ -62,7 +66,7 @@ namespace Engine
                 nsc.Instance->OnStart();
             }
 
-            nsc.Instance->OnInput(event);
+            nsc.Instance->OnEvent(event);
         };
     }
 

@@ -1,11 +1,11 @@
 #ifndef ENGINE_SCENE_SCRIPTABLEENTITY
 #define ENGINE_SCENE_SCRIPTABLEENTITY
 
-#include <SDL3/SDL.h>
-
 #include "Engine/Scene/Entity.h"
 
 namespace Engine {
+    class Event;
+
     class ScriptableEntity {
     public:
         virtual ~ScriptableEntity() {}
@@ -24,7 +24,7 @@ namespace Engine {
     protected:
         virtual void OnStart() {}
         virtual void OnDestroy() {}
-        virtual void OnInput(SDL_Event event) {}
+        virtual void OnEvent(Event& event) {}
         virtual void OnUpdate(float ts) {}
 
     private:

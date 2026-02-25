@@ -12,7 +12,8 @@
 
 namespace Engine {
 
-    VulkanGraphicsDevice::VulkanGraphicsDevice(IGraphicsBridge* graphicsBridge, IWindow* window) : m_FrameIndex(0), m_ImageIndex(0) {
+    VulkanGraphicsDevice::VulkanGraphicsDevice(IGraphicsBridge* graphicsBridge, IWindow* window)
+        : m_Window(window), m_FrameIndex(0), m_ImageIndex(0) {
         LOG_CORE_INFO("Vulkan: Creating Vulkan graphics device...");
 
         ENGINE_CORE_ASSERT(graphicsBridge != nullptr, "Vulkan: VulkanGraphicsDevice(): graphicsBridge is nullptr!");
@@ -87,6 +88,12 @@ namespace Engine {
 
     // Frame Management
     void VulkanGraphicsDevice::BeginFrame() {    
+        // Rebuild swapchain if needed
+        if(m_NeedRebuildSwapchain) {
+            RebuildSwapchain();
+            m_NeedRebuildSwapchain = false;
+        }
+
         // Get frame
         auto& frame = m_Swapchain->GetFrame(m_FrameIndex);
         auto& device = m_Device->GetDevice(); 
@@ -105,7 +112,7 @@ namespace Engine {
 
         // Resize logic
         if (result == vk::Result::eErrorOutOfDateKHR) {
-            Resize(m_Window->GetWidth(), m_Window->GetHeight());
+            m_NeedRebuildSwapchain = true;
             return;
         }
 
@@ -199,7 +206,7 @@ namespace Engine {
         try {
             (void)m_Device->GetQueue().presentKHR(presentInfo);
         } catch (const vk::OutOfDateKHRError&) {
-            Resize(m_Window->GetWidth(), m_Window->GetHeight());
+            m_NeedRebuildSwapchain = true;
         }
 
         m_FrameIndex = (m_FrameIndex + 1) % k_MaxFramesInFlight;
@@ -208,6 +215,15 @@ namespace Engine {
     void VulkanGraphicsDevice::SetClearColor(Vec4 color) {
         m_ClearColor = vk::ClearColorValue(color.r, color.g, color.b, color.a);
     }
+
+    void VulkanGraphicsDevice::SetVSync(bool vsync) {
+        m_NeedRebuildSwapchain = m_VSync != vsync;
+        m_VSync = vsync;
+    }
+
+    bool VulkanGraphicsDevice::IsVSync() {
+        return m_VSync;
+    };
 
     vk::raii::CommandBuffer VulkanGraphicsDevice::BeginOneTimeCommands() {
         vk::CommandBufferAllocateInfo allocInfo;
@@ -365,9 +381,14 @@ namespace Engine {
     }
 
     // Resize
-    void VulkanGraphicsDevice::Resize(int width, int height) {
-        m_Swapchain->Rebuild(*m_Context, *m_Device, width, height, m_Window->IsVSync());
+    void VulkanGraphicsDevice::UpdateSwapchain() {
+        m_NeedRebuildSwapchain = true;
     }
+
+    void VulkanGraphicsDevice::RebuildSwapchain() {
+        m_Swapchain->Rebuild(*m_Context, *m_Device, m_Window->GetWidth(), m_Window->GetHeight(), m_VSync);
+    }
+
 
     // Gives GraphicsDevice chance to finish work before app can destroy
     void VulkanGraphicsDevice::OnDestroy() {

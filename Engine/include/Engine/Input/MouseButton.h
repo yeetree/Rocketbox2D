@@ -6,6 +6,8 @@
 namespace Engine
 {
     enum class MouseButton : uint8_t {
+        None                = 0,
+
         // from glfw3.h (and then from https://github.com/TheCherno/Hazel/blob/master/Hazel/src/Hazel/Core/MouseCodes.h)
         Button0                = 0,
         Button1                = 1,

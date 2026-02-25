@@ -27,10 +27,10 @@ target_include_directories(Engine
 target_link_libraries(Engine 
     PUBLIC 
         glm::glm 
-        SDL3::SDL3-shared 
         EnTT::EnTT 
         spdlog::spdlog
     PRIVATE 
+        SDL3::SDL3-shared 
         Vulkan::Vulkan
         VMA::VMA
 )

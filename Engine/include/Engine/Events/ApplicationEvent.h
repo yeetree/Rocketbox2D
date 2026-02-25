@@ -4,29 +4,12 @@
 #include "Engine/Events/Event.h"
 
 namespace Engine {
-
-	class WindowResizeEvent : public Event
+	class QuitEvent : public Event
 	{
 	public:
-		WindowResizeEvent(unsigned int width, unsigned int height)
-			: m_Width(width), m_Height(height) {}
+		QuitEvent() = default;
 
-		unsigned int GetWidth() const { return m_Width; }
-		unsigned int GetHeight() const { return m_Height; }
-
-		EVENT_CLASS_TYPE(EventType::WindowResize)
-		EVENT_CLASS_CATEGORY(EventCategory::Application)
-
-	private:
-		unsigned int m_Width, m_Height;
-	};
-
-	class WindowCloseEvent : public Event
-	{
-	public:
-		WindowCloseEvent() = default;
-
-		EVENT_CLASS_TYPE(EventType::WindowResize)
+		EVENT_CLASS_TYPE(EventType::Quit)
 		EVENT_CLASS_CATEGORY(EventCategory::Application)
 	};
 }

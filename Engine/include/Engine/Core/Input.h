@@ -3,36 +3,41 @@
 
 #include "engine_export.h"
 
-#include <SDL3/SDL.h>
 #include <cstdint>
+#include <bitset>
 
 #include "Engine/Math/Vector.h"
 
 namespace Engine {
+    enum class KeyCode : uint16_t;
+    enum class MouseButton : uint8_t;
+    class Event;
+
     class ENGINE_EXPORT Input {
     public:
-        static bool IsKeyDown(SDL_Scancode key);
-        static bool IsKeyJustPressed(SDL_Scancode key);
-        static bool IsKeyJustReleased(SDL_Scancode key);
+        static bool IsKeyDown(KeyCode key);
+        static bool IsKeyJustPressed(KeyCode key);
+        static bool IsKeyJustReleased(KeyCode key);
 
         static Vec2 GetMousePosition();
         static Vec2 GetMouseDelta();
 
-        static bool IsMouseButtonDown(uint8_t button);
-        static bool IsMouseButtonJustPressed(uint8_t button);
-        static bool IsMouseButtonJustReleased(uint8_t button);
+        static bool IsMouseButtonDown(MouseButton button);
+        static bool IsMouseButtonJustPressed(MouseButton button);
+        static bool IsMouseButtonJustReleased(MouseButton button);
 
     private:
         friend class Application; 
         static Input* s_Instance;
-        void OnUpdate();
+        void OnEvent(Event& event);
 
         Vec2 m_PreviousMousePosition;
         Vec2 m_CurrentMousePosition;
-        uint32_t m_PreviousMouseButtonState;
-        uint32_t m_CurrentMouseButtonState;
-        const bool* m_PreviousKeyState;
-        const bool* m_CurrentKeyState;
+        
+        std::bitset<512> m_CurrentKeyState;
+        std::bitset<512> m_PreviousKeyState;
+        std::bitset<8> m_CurrentMouseState;
+        std::bitset<8> m_PreviousMouseState;
     };
 }
 

@@ -37,6 +37,8 @@ namespace Engine {
         virtual void EndFrame() = 0;
         virtual void Present() = 0;
         virtual void SetClearColor(Vec4 color) = 0;
+        virtual void SetVSync(bool vsync) = 0;
+        virtual bool IsVSync() = 0;
         
         virtual void BindPipelineState(IPipelineState& pipeline) = 0;
         virtual void BindVertexBuffer(IBuffer& buffer) = 0;
@@ -47,7 +49,7 @@ namespace Engine {
         virtual void DrawIndexed(uint32_t indexCount) = 0;
 
         // Resize
-        virtual void Resize(int width, int height) = 0;
+        virtual void UpdateSwapchain() = 0;
     private:
         friend class Application;
         // Gives GraphicsDevice chance to finish current work before app can destroy

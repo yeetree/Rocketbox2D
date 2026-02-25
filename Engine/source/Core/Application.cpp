@@ -2,10 +2,16 @@
 #include "Engine/Core/FileSystem.h"
 #include "Engine/Core/Log.h"
 #include "Engine/Core/Assert.h"
+
+#include "Engine/Events/Event.h"
+#include "Engine/Events/ApplicationEvent.h"
+#include "Engine/Events/WindowEvent.h"
+#include "Engine/Events/KeyEvent.h"
+#include "Engine/Events/MouseEvent.h"
+
 #include <iostream>
 #include <cstdint>
 
-#include <SDL3/SDL.h>
 
 namespace Engine {
 
@@ -20,6 +26,9 @@ namespace Engine {
         // Initialize platform
         m_Platform = IPlatform::Create(GraphicsAPI::Vulkan);
         ENGINE_CORE_ASSERT(m_Platform, "Platform is null!");
+
+        // Set event callback
+        m_Platform->SetEventCallback(std::bind(&Engine::Application::EventCallback, this, std::placeholders::_1));
     }
 
     Application& Application::Get() { return *s_Instance; }
@@ -27,7 +36,7 @@ namespace Engine {
     IGraphicsDevice& Application::GetGraphicsDevice() { return *m_GraphicsDevice; }
     Renderer& Application::GetRenderer() { return *m_Renderer; }
     ResourceManager& Application::GetResourceManager() { return *m_ResourceManager; }
-    Input& Application::GetInput() { return *m_Input; }
+    //Input& Application::GetInput() { return *m_Input; }
 
     int Application::GetWindowWidth() { return m_Window->GetWidth(); }
     int Application::GetWindowHeight() { return m_Window->GetHeight(); }
@@ -51,17 +60,16 @@ namespace Engine {
 
         // Create input
         LOG_CORE_INFO("Initializing input...");
-        //m_Input = CreateScope<Input>();
-        //Input::s_Instance = m_Input.get(); // Engine is friend to Input class, we set it's instance for it.
+        m_Input = CreateScope<Input>();
+        Input::s_Instance = m_Input.get(); // Engine is friend to Input class, we set it's instance for it.
 
         // Init filesystem (set base path)
         LOG_CORE_INFO("Initializing filesystem...");
-        FileSystem::SetBasePath(SDL_GetBasePath());
+        FileSystem::SetBasePath(m_Platform->GetBasePath());
 
         // Create graphics device
         LOG_CORE_INFO("Initializing graphics device...");
         m_GraphicsDevice = IGraphicsDevice::Create(GraphicsAPI::Vulkan, &m_Platform->GetGraphicsBridge(), m_Window.get());
-        //m_GraphicsDevice->Resize(m_WindowWidth, m_WindowHeight);
 
         // Create Renderer2D
         LOG_CORE_INFO("Initializing renderer...");
@@ -74,6 +82,36 @@ namespace Engine {
         LOG_CORE_INFO("Initialization complete.");
     }
 
+    void Application::EventCallback(Event& event) {
+        EventDispatcher dispatcher(event);
+
+        dispatcher.Dispatch<QuitEvent>([this](QuitEvent& e){
+            m_Running = false;
+            return false;
+        });
+
+        dispatcher.Dispatch<WindowClosedEvent>([this](WindowClosedEvent& e){
+            // Check if it's closing the main window
+            if(&e.GetWindow() == m_Window.get()) {
+                m_Running = false;
+                return true; // Only handle if it is the main window
+            }
+            return false;
+        });
+
+        dispatcher.Dispatch<WindowResizedEvent>([this](WindowResizedEvent& e){
+            // Check if it's resizing the main window
+            if(&e.GetWindow() == m_Window.get()) {
+                m_GraphicsDevice->UpdateSwapchain(); // Ask GraphicsDevice to update swapchain
+            }
+            return false;
+        });
+
+        // pass event on
+        m_Input->OnEvent(event);
+        OnEvent(event);
+    }
+
     void Application::Run() {
         if(m_Running)
             return;
@@ -82,27 +120,16 @@ namespace Engine {
 
         OnStart();
 
-        m_TicksPrevious = SDL_GetTicks();
+        double timePrev = m_Platform->GetTime();
         while(m_Running) {
-            // Get ticks & dt
-            uint64_t ticksNow = SDL_GetTicks();
-            float dt = (ticksNow - m_TicksPrevious) / 1000.0f;
+            // Get time & dt
+            double timeNow = m_Platform->GetTime();
+            float dt = static_cast<float>(timeNow - timePrev);
 
             // Input
             //m_Input->OnUpdate(); // Process input in Input first
 
-            SDL_Event event;
-            while(SDL_PollEvent(&event)) {
-                switch(event.type) {
-                    case SDL_EVENT_QUIT:
-                        m_Running = false;
-                        break;
-                    case SDL_EVENT_WINDOW_RESIZED:
-                        //m_GraphicsDevice->Resize(m_WindowWidth, m_WindowHeight);
-                        break;
-                }
-                OnInput(event);
-            }
+            m_Platform->PollEvents(); // Process input events
 
             // Update
             OnUpdate(dt);
@@ -113,8 +140,8 @@ namespace Engine {
             m_GraphicsDevice->EndFrame();
             m_GraphicsDevice->Present();
 
-            // Update ticks
-            m_TicksPrevious = ticksNow;
+            // Update time
+            timePrev = timeNow;
         }
         LOG_CORE_INFO("Shutting down...");
         m_GraphicsDevice->OnDestroy();

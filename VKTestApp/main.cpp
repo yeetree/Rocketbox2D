@@ -49,7 +49,7 @@ public:
         Ref<ITexture> tex = GetResourceManager().GetTexture("face");
 
         // Spawn sprites
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 10; i++) {
             Entity e = scene.CreateEntity();
             
             auto& transform = e.GetComponent<TransformComponent>();
@@ -61,8 +61,8 @@ public:
         }
     }
 
-    void OnInput(SDL_Event event) override {
-        scene.OnInput(event);
+    void OnEvent(Event& event) override {
+        scene.OnEvent(event);
     }
 
     void OnUpdate(float dt) override {
@@ -87,7 +87,6 @@ int Engine::EntryPoint(int argc, char **argv) {
         .height = 600,
         .api = GraphicsAPI::Vulkan,
         .resizeable = true,
-        .vsync = true,
     };
     app.Init(props);
     app.Run();

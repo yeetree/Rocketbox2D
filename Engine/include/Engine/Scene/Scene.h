@@ -7,11 +7,11 @@
 #include "Engine/Renderer/Camera.h"
 
 #include <entt/entt.hpp>
-#include <SDL3/SDL.h>
 
 namespace Engine
 {
     class Entity;
+    class Event;
 
     // Scene.h
     class ENGINE_EXPORT Scene {
@@ -23,7 +23,7 @@ namespace Engine
         Entity GetEntity(const std::string& name);
 
         void OnStart();
-        void OnInput(SDL_Event event);
+        void OnEvent(Event& event);
         void OnUpdate(float dt);
         void OnRender();
 
