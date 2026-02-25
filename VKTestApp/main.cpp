@@ -45,11 +45,12 @@ public:
     void OnStart() override {
         scene.OnStart();
 
+        GetGraphicsDevice().SetVSync(true);
         GetResourceManager().LoadTexture("face", "Assets/awesomeface.png");
         Ref<ITexture> tex = GetResourceManager().GetTexture("face");
 
         // Spawn sprites
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 1000; i++) {
             Entity e = scene.CreateEntity();
             
             auto& transform = e.GetComponent<TransformComponent>();

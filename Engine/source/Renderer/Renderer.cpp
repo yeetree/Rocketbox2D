@@ -181,7 +181,7 @@ namespace Engine
             m_GraphicsDevice->BindVertexBuffer(*cmd.mesh->GetVertexBuffer());
             m_GraphicsDevice->BindIndexBuffer(*cmd.mesh->GetIndexBuffer());
 
-            //m_GraphicsDevice->DrawIndexed(cmd.mesh->GetIndexCount());
+            m_GraphicsDevice->DrawIndexed(cmd.mesh->GetIndexCount());
         }
 
         // Sprite renderer
