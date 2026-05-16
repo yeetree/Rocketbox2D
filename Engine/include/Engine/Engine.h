@@ -4,12 +4,16 @@
 #include "Engine/Core/EntryPoint.h"
 
 #include "Engine/Core/Application.h"
-#include "Engine/Core/FileSystem.h"
-#include "Engine/Core/ResourceManager.h"
-#include "Engine/Core/Input.h"
+//#include "Engine/Core/FileSystem.h"
+//#include "Engine/Core/Input.h"
 #include "Engine/Core/Log.h"
 #include "Engine/Core/Base.h"
 
+#include "Engine/Resources/Resource.h"
+#include "Engine/Resources/ResourceLoader.h"
+#include "Engine/Resources/ResourceManager.h"
+
+/*
 #include "Engine/Renderer/RHI/IBuffer.h"
 #include "Engine/Renderer/RHI/IGraphicsDevice.h"
 #include "Engine/Renderer/RHI/IPipelineState.h"
@@ -27,6 +31,7 @@
 #include "Engine/Scene/Entity.h"
 #include "Engine/Scene/Components.h"
 #include "Engine/Scene/ScriptableEntity.h"
+*/
 
 #include "Engine/Math/Vector.h"
 #include "Engine/Math/Matrix.h"

@@ -8,14 +8,9 @@
 
 #include "Engine/Core/Base.h"
 
-#include "Engine/Events/Event.h"
+#include "Engine/Core/ServiceLocator.h"
 
-#include "Engine/Platform/IPlatform.h"
-#include "Engine/Platform/IWindow.h"
-#include "Engine/Renderer/RHI/IGraphicsDevice.h"
-#include "Engine/Core/ResourceManager.h"
-#include "Engine/Core/Input.h"
-#include "Engine/Renderer/Renderer.h"
+#include "Engine/Resources/ResourceManager.h"
 #include "Engine/Math/Vector.h"
 
 namespace Engine {
@@ -27,24 +22,15 @@ namespace Engine {
 
         static Application& Get();
 
-        void Init(const WindowProperties& properties);
-        void EventCallback(Event& event);
+        ServiceLocator& GetServiceLocator();
+
+        void Init();
+        //void EventCallback(Event& event);
         void Run();
-
-        IGraphicsDevice& GetGraphicsDevice();
-        Renderer& GetRenderer();
-        ResourceManager& GetResourceManager();
-        Input& GetInput();
-        IWindow& GetWindow();
-
-        int GetWindowWidth();
-        int GetWindowHeight();
-        iVec2 GetWindowSize();
-        float GetAspectRatio();
 
         virtual void OnStart() = 0;
 
-        virtual void OnEvent(Event& event) = 0;
+        //virtual void OnEvent(Event& event) = 0;
         virtual void OnUpdate(float dt) = 0;
         virtual void OnRender() = 0;
 
@@ -53,14 +39,14 @@ namespace Engine {
     private:
         static Application *s_Instance;
 
-        bool m_Running;
+        ServiceLocator *m_Locator;
         
-        Scope<IPlatform> m_Platform;
-        Scope<IWindow> m_Window;
-        Scope<Input> m_Input;
+        //Scope<Input> m_Input;
+        //Scope<FileSystem> m_FileSystem;
         Scope<ResourceManager> m_ResourceManager;
-        Scope<Renderer> m_Renderer;
-        Scope<IGraphicsDevice> m_GraphicsDevice;
+        //Scope<Renderer> m_Renderer;
+
+        bool m_Running;
     };
 } // namespace Engine
 

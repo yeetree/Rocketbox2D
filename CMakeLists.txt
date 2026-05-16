@@ -30,4 +30,6 @@ include(ScaryVoodooMagic)
 add_subdirectory(Engine)
 
 # TestApp
-add_subdirectory(VKTestApp)
+# add_subdirectory(VKTestApp)
+
+add_subdirectory(CoreTest)

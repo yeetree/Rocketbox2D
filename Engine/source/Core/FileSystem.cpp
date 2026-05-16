@@ -5,12 +5,16 @@
 #include <sstream>
 #include <filesystem>
 
-std::filesystem::path Engine::FileSystem::s_RootPath = "";
+
+Engine::FileSystem::FileSystem(const std::string& basePath)
+{
+    SetBasePath(basePath);
+}
 
 void Engine::FileSystem::SetBasePath(const std::string& basePath) {
     // Gets the absolute path of base path
     std::filesystem::path exePath = std::filesystem::absolute(basePath);
-    s_RootPath = exePath;
+    s_BasePath = exePath;
 }
 
 std::vector<char> Engine::FileSystem::ReadFile(const std::string &path)
@@ -75,5 +79,5 @@ bool Engine::FileSystem::Exists(const std::string &path) {
 }
 
 std::string Engine::FileSystem::GetAbsolutePath(const std::string& relativePath) {
-    return (s_RootPath / relativePath).string();
+    return (s_BasePath / relativePath).string();
 }

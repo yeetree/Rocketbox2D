@@ -20,6 +20,9 @@ This software uses the following third-party components:
 * stb (stb_image.h): [https://github.com/nothings/stb](https://github.com/nothings/stb)
     * Location: `/vendor/stb`
     * License: [MIT](https://opensource.org/license/mit) or [Public Domain](https://unlicense.org/)
+* C++ Simple ServiceLocator: [https://github.com/Seng3694/ServiceLocator/](https://github.com/Seng3694/ServiceLocator/)
+    * Location: '/include/Engine/Core/ServiceLocator.h' and '/source/Engine/Core/ServiceLocator.cpp'
+    * License: [MIT](https://opensource.org/license/mit)
 
 Full license text for each component can be found in their respective directories
 

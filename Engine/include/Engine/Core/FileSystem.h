@@ -11,13 +11,16 @@ namespace Engine
 {
     class ENGINE_EXPORT FileSystem {
     public:
-        static void SetBasePath(const std::string& basePath);
-        static std::vector<char> ReadFile(const std::string &path);
-        static std::vector<uint32_t> ReadSPV(const std::string &path);
-        static bool Exists(const std::string &path);
-        static std::string GetAbsolutePath(const std::string& relativePath);
+        FileSystem(const std::string& basePath = "");
+        ~FileSystem();
+
+        void SetBasePath(const std::string& basePath);
+        std::vector<char> ReadFile(const std::string &path);
+        std::vector<uint32_t> ReadSPV(const std::string &path);
+        bool Exists(const std::string &path);
+        std::string GetAbsolutePath(const std::string& relativePath);
     private:
-        static std::filesystem::path s_RootPath;
+        std::filesystem::path s_BasePath;
     };
 } // namespace Engine
 
