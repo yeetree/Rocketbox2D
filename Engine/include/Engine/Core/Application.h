@@ -7,10 +7,14 @@
 #include <cstdint>
 
 #include "Engine/Core/Base.h"
-
+#include "Engine/Core/Timer.h"
 #include "Engine/Core/ServiceLocator.h"
 
+#include "Engine/Platform/IPlatform.h"
+#include "Engine/Platform/IWindow.h"
+
 #include "Engine/Resources/ResourceManager.h"
+
 #include "Engine/Math/Vector.h"
 
 namespace Engine {
@@ -24,7 +28,7 @@ namespace Engine {
 
         ServiceLocator& GetServiceLocator();
 
-        void Init();
+        void Init(const WindowProperties& properties);
         //void EventCallback(Event& event);
         void Run();
 
@@ -39,14 +43,17 @@ namespace Engine {
     private:
         static Application *s_Instance;
 
-        ServiceLocator *m_Locator;
+        Scope<ServiceLocator> m_Locator;
         
         //Scope<Input> m_Input;
         //Scope<FileSystem> m_FileSystem;
+        Scope<IPlatform> m_Platform;
+        Scope<IWindow> m_Window;
         Scope<ResourceManager> m_ResourceManager;
         //Scope<Renderer> m_Renderer;
 
         bool m_Running;
+        Timer m_Timer;
     };
 } // namespace Engine
 

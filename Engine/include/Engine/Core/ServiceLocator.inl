@@ -1,5 +1,4 @@
 #include "Engine/Core/ServiceLocator.h"
-
 #include <type_traits>
 
 template<typename T>
@@ -17,6 +16,7 @@ void Engine::ServiceLocator::RegisterCreator(std::function<Ref<T>()> creator)
 	if (m_Creators.find(hash) == m_Creators.end())
 		m_Creators.emplace(hash, creator);
 }
+
 
 template<typename T>
 Engine::Ref<T> Engine::ServiceLocator::Get() const

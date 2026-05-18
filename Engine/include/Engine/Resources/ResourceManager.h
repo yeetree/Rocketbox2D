@@ -9,8 +9,8 @@
 
 #include "Engine/Core/Base.h"
 
-#include "Engine/Resources/Resource.h"
-#include "Engine/Resources/ResourceLoader.h"
+#include "Engine/Resources/IResource.h"
+#include "Engine/Resources/IResourceLoader.h"
 
 namespace Engine
 {
@@ -57,7 +57,7 @@ namespace Engine
         }
 
         template<typename T>
-        Ref<T> Set(const std::string& identifier, Scope<Resource> resource)
+        Ref<T> Set(const std::string& identifier, Scope<IResource> resource)
         {
             std::type_index typeId = typeid(T);
             m_Resources[typeId][identifier] = std::move(resource);
@@ -70,10 +70,10 @@ namespace Engine
             auto typeIt = m_Loaders.find(typeId);
             if(typeIt != m_Loaders.end())
             {
-                Scope<Resource> scope = typeIt->second->Load(info);
+                Scope<IResource> scope = typeIt->second->Load(info);
                 if(scope)
                 {
-                    Ref<Resource> ref = std::move(scope);
+                    Ref<IResource> ref = std::move(scope);
                     m_Resources[typeId][identifier] = ref;
                     return std::static_pointer_cast<T>(ref);
                 }
@@ -88,10 +88,10 @@ namespace Engine
             auto typeIt = m_Loaders.find(typeId);
             if(typeIt != m_Loaders.end())
             {
-                Scope<Resource> scope = typeIt->second->Create(info);
+                Scope<IResource> scope = typeIt->second->Create(info);
                 if(scope)
                 {
-                    Ref<Resource> ref = std::move(scope);
+                    Ref<IResource> ref = std::move(scope);
                     m_Resources[typeId][identifier] = ref;
                     return std::static_pointer_cast<T>(ref);
                 }
@@ -107,7 +107,7 @@ namespace Engine
         }
         
     private:
-        std::unordered_map<std::type_index, std::unordered_map<std::string, Ref<Resource>>> m_Resources;
+        std::unordered_map<std::type_index, std::unordered_map<std::string, Ref<IResource>>> m_Resources;
         std::unordered_map<std::type_index, Scope<IResourceLoader>> m_Loaders;
     };
 } // namespace Engine

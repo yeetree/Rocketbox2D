@@ -17,18 +17,17 @@ namespace Engine {
 
     Application *Application::s_Instance = nullptr;
 
-    Application::Application() : m_Running(false) {
+    Application::Application() : m_Running(false), m_Timer() {
         if (s_Instance) {
             return; 
         }
         s_Instance = this;
 
-        m_Locator = new ServiceLocator();
+        m_Locator = CreateScope<ServiceLocator>();
 
         // Initialize platform
-        //m_Platform = IPlatform::Create(GraphicsAPI::Vulkan);
-        //ENGINE_CORE_ASSERT(m_Platform, "Platform is null!");
-        //s_Locator->RegisterInstance<IPlatform>(m_Platform.get());
+        m_Platform = IPlatform::Create();
+        ENGINE_CORE_ASSERT(m_Platform, "Platform is null!");
         
         // Set event callback
         //m_Platform->SetEventCallback(std::bind(&Engine::Application::EventCallback, this, std::placeholders::_1));
@@ -38,16 +37,16 @@ namespace Engine {
 
     ServiceLocator& Application::GetServiceLocator() { return *m_Locator; }
 
-    void Application::Init() {
+    void Application::Init(const WindowProperties& properties) {
         
         // Initialize logger
         Log::Init();
         LOG_CORE_INFO("Engine version Rocketbox2D_In_Development");
 
         // Create window
-        //LOG_CORE_INFO("Creating window...");
-        //m_Window = m_Platform->CreateWindow(properties);
-        //s_Locator->RegisterInstance<IWindow>(m_Window.get());
+        LOG_CORE_INFO("Creating window...");
+        m_Window = m_Platform->CreateWindow(properties);
+        m_Locator->RegisterInstance<IWindow>(m_Window.get());
         
 
         // Create input
@@ -114,10 +113,11 @@ namespace Engine {
             return;
 
         m_Running = true;
+        m_Timer.Reset();
 
         OnStart();
 
-        //double timePrev = m_Platform->GetTime();
+        double timePrev = m_Timer.DGetTime();
         while(m_Running) {
             // Get time & dt
             //double timeNow = m_Platform->GetTime();
