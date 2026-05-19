@@ -1,20 +1,20 @@
 #include "Engine/Core/ServiceLocator.h"
 #include <type_traits>
 
-template<typename T>
-void Engine::ServiceLocator::RegisterExternalInstance(T* instance)
-{
-	const size_t hash = typeid(T).hash_code();
-	if (m_ExternalInstances.find(hash) == m_ExternalInstances.end())
-		m_ExternalInstances.emplace(hash, (void*)instance);
-}
+//template<typename T>
+//void Engine::ServiceLocator::RegisterExternalInstance(T* instance)
+//{
+//	const size_t hash = typeid(T).hash_code();
+//	if (m_ExternalInstances.find(hash) == m_ExternalInstances.end())
+//		m_ExternalInstances.emplace(hash, (void*)instance);
+//}
 
 template<typename T>
-void Engine::ServiceLocator::RegisterInstance(T* instance)
+void Engine::ServiceLocator::RegisterInstance(Ref<T> instance)
 {
 	const size_t hash = typeid(T).hash_code();
 	if (m_Instances.find(hash) == m_Instances.end())
-		m_Instances.emplace(hash, Ref<void>(instance));
+		m_Instances.emplace(hash, instance);
 }
 
 

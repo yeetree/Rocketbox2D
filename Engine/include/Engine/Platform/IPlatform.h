@@ -22,9 +22,7 @@ namespace Engine
     public:
         virtual ~IPlatform() = default;
 
-        // Temporary
         virtual void PollEvents() = 0;
-        virtual bool ShouldExit() const = 0;
 
         virtual Scope<IWindow> CreateWindow(const WindowProperties& props) = 0;
 

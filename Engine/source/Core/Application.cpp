@@ -33,9 +33,9 @@ namespace Engine {
         //m_Platform->SetEventCallback(std::bind(&Engine::Application::EventCallback, this, std::placeholders::_1));
     }
 
-    Application& Application::Get() { return *s_Instance; }
+    Application* Application::Get() { return s_Instance; }
 
-    ServiceLocator& Application::GetServiceLocator() { return *m_Locator; }
+    ServiceLocator* Application::GetServiceLocator() { return m_Locator.get(); }
 
     void Application::Init(const WindowProperties& properties) {
         
@@ -45,8 +45,8 @@ namespace Engine {
 
         // Create window
         LOG_CORE_INFO("Creating window...");
-        m_Window = m_Platform->CreateWindow(properties);
-        m_Locator->RegisterExternalInstance<IWindow>(m_Window.get());
+        m_Window = std::move(m_Platform->CreateWindow(properties));
+        m_Locator->RegisterInstance<IWindow>(m_Window);
         
 
         // Create input
@@ -71,42 +71,33 @@ namespace Engine {
 
         // Create resource manager
         LOG_CORE_INFO("Initializing resource manager...");
-        m_ResourceManager = CreateScope<ResourceManager>();
-        m_Locator->RegisterExternalInstance<ResourceManager>(m_ResourceManager.get());
+        m_ResourceManager = CreateRef<ResourceManager>();
+        m_Locator->RegisterInstance<ResourceManager>(m_ResourceManager);
+
+        // Create string registry
+        LOG_CORE_INFO("Initializing string registry...");
+        m_StringRegistry = CreateRef<StringRegistry>();
+        m_Locator->RegisterInstance<StringRegistry>(m_StringRegistry);
+
+        // Create event manager
+        LOG_CORE_INFO("Initializing event manager...");
+        m_EventManager = CreateRef<EventManager>();
+        m_Locator->RegisterInstance<EventManager>(m_EventManager);
+
+        // Subscribe to event callback
+        // Bind both parameters (EventType and Event) so the resulting callable
+        // matches the EventCallback signature expected by SubscribeAll.
+        m_EventListenerID = m_EventManager->SubscribeAll(std::bind(&Engine::Application::EventCallback, this, std::placeholders::_1, std::placeholders::_2));
 
         LOG_CORE_INFO("Initialization complete.");
     }
 
-    //void Application::EventCallback(Event& event) {
-        /*
-        EventDispatcher dispatcher(event);
-
-        dispatcher.Dispatch<QuitEvent>([this](QuitEvent& e){
+    void Application::EventCallback(EventType type, const Event& event) {
+        if(type == Hash32("Engine::Application::Quit"))
+        {
             m_Running = false;
-            return false;
-        });
-
-        dispatcher.Dispatch<WindowClosedEvent>([this](WindowClosedEvent& e){
-            // Check if it's closing the main window
-            if(&e.GetWindow() == m_Window.get()) {
-                m_Running = false;
-                return true; // Only handle if it is the main window
-            }
-            return false;
-        });
-
-        dispatcher.Dispatch<WindowResizedEvent>([this](WindowResizedEvent& e){
-            // Check if it's resizing the main window
-            if(&e.GetWindow() == m_Window.get()) {
-                m_GraphicsDevice->UpdateSwapchain(); // Ask GraphicsDevice to update swapchain
-            }
-            return false;
-        });
-
-        // pass event on
-        m_Input->OnEvent(event);
-        OnEvent(event);*/
-    //}
+        }
+    }
 
     void Application::Run() {
         if(m_Running)
@@ -120,18 +111,17 @@ namespace Engine {
         double timePrev = m_Timer.DGetTime();
         while(m_Running) {
             // Get time & dt
-            //double timeNow = m_Platform->GetTime();
-            //float dt = static_cast<float>(timeNow - timePrev);
-            float dt = 0;
-
-            // Input
-            //m_Input->OnUpdate(); // Process input in Input first
+            float timeNow = m_Timer.GetTime();
+            float dt = timeNow - timePrev;
 
             m_Platform->PollEvents(); // Process input events
-            m_Running = !m_Platform->ShouldExit();
+
+            m_EventManager->FlushEvents();
 
             // Update
             OnUpdate(dt);
+
+            m_EventManager->FlushEvents();
 
             // Render
             //m_GraphicsDevice->BeginFrame();
@@ -140,19 +130,15 @@ namespace Engine {
             //m_GraphicsDevice->Present();
 
             // Update time
-            //timePrev = timeNow;
+            timePrev = timeNow;
         }
         LOG_CORE_INFO("Shutting down...");
+        m_EventManager->UnsubscribeAll(m_EventListenerID);
         //m_GraphicsDevice->OnDestroy();
         OnDestroy();
     }
 
     Application::~Application() {
-        m_ResourceManager.reset();
-        m_Window.reset();
-        m_Platform.reset();        
-        m_Locator.reset();
-        //m_Renderer.reset();
-        //m_GraphicsDevice.reset();
+
     }
 } // namespace Engine

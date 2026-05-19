@@ -27,6 +27,7 @@ namespace Engine
         template<typename T>
         Ref<T> Get(const std::string& identifier) const
         {
+            static_assert(std::derived_from<T, IResource>, "T must be derived from IResource");
             std::type_index typeId = typeid(T);
             auto typeIt = m_Resources.find(typeId);
             if(typeIt != m_Resources.end())
@@ -43,6 +44,7 @@ namespace Engine
         template<typename T>
         bool Has(const std::string& identifier) const
         {
+            static_assert(std::derived_from<T, IResource>, "T must be derived from IResource");
             std::type_index typeId = typeid(T);
             auto typeIt = m_Resources.find(typeId);
             if(typeIt != m_Resources.end())
@@ -59,6 +61,7 @@ namespace Engine
         template<typename T>
         Ref<T> Set(const std::string& identifier, Scope<IResource> resource)
         {
+            static_assert(std::derived_from<T, IResource>, "T must be derived from IResource");
             std::type_index typeId = typeid(T);
             m_Resources[typeId][identifier] = std::move(resource);
         }
@@ -66,6 +69,7 @@ namespace Engine
         template<typename T>
         Ref<T> Load(const std::string& identifier, const ResourceInfo& info)
         {
+            static_assert(std::derived_from<T, IResource>, "T must be derived from IResource");
             std::type_index typeId = typeid(T);
             auto typeIt = m_Loaders.find(typeId);
             if(typeIt != m_Loaders.end())
@@ -84,6 +88,7 @@ namespace Engine
         template<typename T>
         Ref<T> Create(const std::string& identifier, const ResourceInfo& info)
         {
+            static_assert(std::derived_from<T, IResource>, "T must be derived from IResource");
             std::type_index typeId = typeid(T);
             auto typeIt = m_Loaders.find(typeId);
             if(typeIt != m_Loaders.end())
@@ -102,6 +107,7 @@ namespace Engine
         template<typename T>
         void RegisterLoader(Scope<IResourceLoader> loader)
         {
+            static_assert(std::derived_from<T, IResource>, "T must be derived from IResource");
             std::type_index typeId = typeid(T);
             m_Loaders[typeId] = std::move(loader);
         }

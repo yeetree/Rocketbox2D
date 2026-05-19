@@ -1,10 +1,11 @@
 #include "Platform/SDL3/SDL3Platform.h"
 #include "Platform/SDL3/SDL3Window.h"
 #include "Engine/Core/Log.h"
+#include "Engine/Core/Application.h"
 
 namespace Engine
 {
-    SDL3Platform::SDL3Platform() : m_ShouldExit(false)
+    SDL3Platform::SDL3Platform()
     {
         if(!SDL_Init(SDL_INIT_VIDEO))
         {
@@ -36,16 +37,15 @@ namespace Engine
         {
             if (event.type == SDL_EVENT_QUIT)
             {
-                m_ShouldExit = true;
+                Ref<EventManager> em = Application::Get()->GetServiceLocator()->Get<EventManager>();
+                if(em)
+                {
+                    em->QueueEvent(Hash32("Engine::Application::Quit"), CreateScope<Event>());
+                }
             }
         }         
     }
 
-    bool SDL3Platform::ShouldExit() const
-    {
-        return m_ShouldExit;
-    }
-    
     Scope<IWindow> SDL3Platform::CreateWindow(const WindowProperties& properties)
     {
         Scope<SDL3Window> window = CreateScope<SDL3Window>(properties);

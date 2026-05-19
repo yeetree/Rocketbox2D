@@ -9,11 +9,14 @@
 #include "Engine/Core/Base.h"
 #include "Engine/Core/Timer.h"
 #include "Engine/Core/ServiceLocator.h"
+#include "Engine/Core/StringRegistry.h"
 
 #include "Engine/Platform/IPlatform.h"
 #include "Engine/Platform/IWindow.h"
 
 #include "Engine/Resources/ResourceManager.h"
+
+#include "Engine/Events/EventManager.h"
 
 #include "Engine/Math/Vector.h"
 
@@ -24,9 +27,9 @@ namespace Engine {
         Application();
         ~Application();
 
-        static Application& Get();
+        static Application* Get();
 
-        ServiceLocator& GetServiceLocator();
+        ServiceLocator* GetServiceLocator();
 
         void Init(const WindowProperties& properties);
         //void EventCallback(Event& event);
@@ -47,10 +50,15 @@ namespace Engine {
         
         //Scope<Input> m_Input;
         //Scope<FileSystem> m_FileSystem;
-        Scope<IPlatform> m_Platform;
-        Scope<IWindow> m_Window;
-        Scope<ResourceManager> m_ResourceManager;
+        Ref<IPlatform> m_Platform;
+        Ref<IWindow> m_Window;
+        Ref<ResourceManager> m_ResourceManager;
+        Ref<StringRegistry> m_StringRegistry;
+        Ref<EventManager> m_EventManager;
         //Scope<Renderer> m_Renderer;
+
+        void EventCallback(EventType type, const Event& event);
+        EventListenerID m_EventListenerID;
 
         bool m_Running;
         Timer m_Timer;
