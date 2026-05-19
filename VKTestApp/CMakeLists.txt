@@ -4,4 +4,4 @@
 set(APP_SOURCES main.cpp)
 
 engine_add_project(VKTestApp "${APP_SOURCES}" "./Assets" "./Assets")
-add_slang_shader(VKTestApp "./shaders/test.slang" "./shaders/slang.spv" "vertMain" "fragMain")
+# add_slang_shader(VKTestApp "./shaders/test.slang" "./shaders/slang.spv" "vertMain" "fragMain")

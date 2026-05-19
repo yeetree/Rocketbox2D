@@ -15,9 +15,15 @@
 namespace Engine
 {
     class ENGINE_EXPORT SDL3Platform : public IPlatform {
+    private:
+        bool m_ShouldExit;        
     public:
         SDL3Platform();
         ~SDL3Platform() override;
+
+        // Temporary
+        void PollEvents() override;
+        bool ShouldExit() const override;
 
         // Resource creation
         Scope<IWindow> CreateWindow(const WindowProperties& properties) override;

@@ -13,5 +13,6 @@ Engine::ServiceLocator::~ServiceLocator()
 void Engine::ServiceLocator::Clear()
 {
     m_Instances.clear();
-	m_Creators.clear();
+    m_ExternalInstances.clear();
+    m_Creators.clear();
 }

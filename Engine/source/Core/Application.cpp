@@ -46,7 +46,7 @@ namespace Engine {
         // Create window
         LOG_CORE_INFO("Creating window...");
         m_Window = m_Platform->CreateWindow(properties);
-        m_Locator->RegisterInstance<IWindow>(m_Window.get());
+        m_Locator->RegisterExternalInstance<IWindow>(m_Window.get());
         
 
         // Create input
@@ -72,7 +72,7 @@ namespace Engine {
         // Create resource manager
         LOG_CORE_INFO("Initializing resource manager...");
         m_ResourceManager = CreateScope<ResourceManager>();
-        m_Locator->RegisterInstance<ResourceManager>(m_ResourceManager.get());
+        m_Locator->RegisterExternalInstance<ResourceManager>(m_ResourceManager.get());
 
         LOG_CORE_INFO("Initialization complete.");
     }
@@ -127,7 +127,8 @@ namespace Engine {
             // Input
             //m_Input->OnUpdate(); // Process input in Input first
 
-            //m_Platform->PollEvents(); // Process input events
+            m_Platform->PollEvents(); // Process input events
+            m_Running = !m_Platform->ShouldExit();
 
             // Update
             OnUpdate(dt);
@@ -148,6 +149,9 @@ namespace Engine {
 
     Application::~Application() {
         m_ResourceManager.reset();
+        m_Window.reset();
+        m_Platform.reset();        
+        m_Locator.reset();
         //m_Renderer.reset();
         //m_GraphicsDevice.reset();
     }

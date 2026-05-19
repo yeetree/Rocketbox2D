@@ -2,6 +2,7 @@
 #define ENGINE_CORE_BASE
 
 #include <memory>
+#include <cstdint>
 
 #include "Engine/Core/PlatformDetection.h"
 

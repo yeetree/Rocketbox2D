@@ -4,7 +4,7 @@
 
 namespace Engine
 {
-    SDL3Platform::SDL3Platform()
+    SDL3Platform::SDL3Platform() : m_ShouldExit(false)
     {
         if(!SDL_Init(SDL_INIT_VIDEO))
         {
@@ -27,6 +27,23 @@ namespace Engine
     SDL3Platform::~SDL3Platform()
     {
         SDL_Quit();
+    }
+
+    void SDL3Platform::PollEvents()
+    {
+        SDL_Event event;
+        while (SDL_PollEvent(&event))
+        {
+            if (event.type == SDL_EVENT_QUIT)
+            {
+                m_ShouldExit = true;
+            }
+        }         
+    }
+
+    bool SDL3Platform::ShouldExit() const
+    {
+        return m_ShouldExit;
     }
     
     Scope<IWindow> SDL3Platform::CreateWindow(const WindowProperties& properties)

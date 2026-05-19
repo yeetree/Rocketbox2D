@@ -2,12 +2,21 @@
 #include <type_traits>
 
 template<typename T>
+void Engine::ServiceLocator::RegisterExternalInstance(T* instance)
+{
+	const size_t hash = typeid(T).hash_code();
+	if (m_ExternalInstances.find(hash) == m_ExternalInstances.end())
+		m_ExternalInstances.emplace(hash, (void*)instance);
+}
+
+template<typename T>
 void Engine::ServiceLocator::RegisterInstance(T* instance)
 {
 	const size_t hash = typeid(T).hash_code();
 	if (m_Instances.find(hash) == m_Instances.end())
 		m_Instances.emplace(hash, Ref<void>(instance));
 }
+
 
 template<typename T>
 void Engine::ServiceLocator::RegisterCreator(std::function<Ref<T>()> creator)

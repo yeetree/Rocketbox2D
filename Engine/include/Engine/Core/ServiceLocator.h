@@ -20,9 +20,15 @@ namespace Engine
 
         void Clear();
 
+        // Register an external instance that is not owned by ServiceLocator.
+        template<typename T>
+	    void RegisterExternalInstance(T* instance = new T());
+
+        // Register an instance that is owned by ServiceLocator.
         template<typename T>
 	    void RegisterInstance(T* instance = new T());
 
+        // Register a creator function for type T. Creator will be called to create instance on Get<T>().
         template<typename T>
 	    void RegisterCreator(std::function<Ref<T>()> creator = []() { return CreateRef<T>(); });
 
@@ -30,6 +36,7 @@ namespace Engine
 	    Ref<T> Get() const;
 
     private:
+        std::unordered_map<size_t, void*> m_ExternalInstances;
         std::unordered_map<size_t, Ref<void>> m_Instances;
         std::unordered_map<size_t, std::function<Ref<void>()>> m_Creators;
     };
