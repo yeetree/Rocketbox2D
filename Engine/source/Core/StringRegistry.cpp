@@ -1,22 +1,20 @@
 #include "Engine/Core/StringRegistry.h"
 #include "Engine/Core/Hash.h"
+#include "Core/EngineStrings.h"
+
 
 namespace Engine
 {
+    std::unordered_map<uint32_t, std::string> StringRegistry::m_HashToString;
 
-    StringRegistry::~StringRegistry()
-    {
-        Clear();
-    }
-
-    size_t StringRegistry::GetID(const std::string& str)
+    uint32_t StringRegistry::GetID(const std::string& str)
     {
         if(str.length() == 0)
         {
             return 0;
         }
 
-        size_t hash = Hash32(str);
+        uint32_t hash = Hash32(str);
         hash = (hash == 0) ? 1 : hash; // Reserve 0
 
         auto it = m_HashToString.find(hash);
@@ -27,7 +25,7 @@ namespace Engine
         return hash;
     }
 
-    std::string_view StringRegistry::GetString(uint32_t id) const
+    std::string_view StringRegistry::GetString(uint32_t id)
     {
         if(id == 0)
         {
@@ -42,8 +40,12 @@ namespace Engine
         return "";
     }
 
-    void StringRegistry::Clear()
+    void StringRegistry::Reset()
     {
         m_HashToString.clear();
+        for(const char* str : EngineStrings)
+        {
+            GetID(str);
+        }
     }
 } // namespace Engine

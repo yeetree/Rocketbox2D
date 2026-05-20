@@ -4,20 +4,18 @@
 #include "engine_export.h"
 
 #include "Engine/Core/Base.h"
-#include "Engine/Core/Hash.h"
+#include "Engine/Core/StringName.h"
 
 #include <string>
 #include <cstdint>
 
 namespace Engine {
-
-    using EventType = uint32_t; 
-
     class ENGINE_EXPORT Event {
     private:
-        EventType m_Type;
+        StringName m_Type;
 
     public:
+        Event(const StringName& type) : m_Type(type) {};
         virtual ~Event() = default;
     };
 

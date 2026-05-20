@@ -12,16 +12,16 @@ namespace Engine
     class ENGINE_EXPORT StringRegistry
     {
     private:
-        std::unordered_map<uint32_t, std::string> m_HashToString;
+        StringRegistry() = default;
+
+        static std::unordered_map<uint32_t, std::string> m_HashToString;
 
     public:
-        StringRegistry() = default;
-        ~StringRegistry();
+        static uint32_t GetID(const std::string& str);
+        static std::string_view GetString(uint32_t id);
 
-        size_t GetID(const std::string& str);
-        std::string_view GetString(uint32_t id) const;
-
-        void Clear();
+        // Clear map and register engine strings. See source/Core/EngineStrings.h
+        static void Reset();
     };
 } // namespace Engine
 

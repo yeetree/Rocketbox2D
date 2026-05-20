@@ -2,13 +2,13 @@
 
 namespace Engine
 {
-    EventListenerID EventManager::Subscribe(EventType type, const EventCallback& callback)
+    EventListenerID EventManager::Subscribe(StringName type, const EventCallback& callback)
     {
         m_Subscribers[type][m_NextListenerID] = callback;
         return m_NextListenerID++;
     }
 
-    void EventManager::Unsubscribe(EventType type, EventListenerID id)
+    void EventManager::Unsubscribe(StringName type, EventListenerID id)
     {
         auto typeIt = m_Subscribers.find(type);
         if(typeIt != m_Subscribers.end())
@@ -36,7 +36,7 @@ namespace Engine
         }
     }
 
-    void EventManager::Dispatch(EventType type, const Event& event)
+    void EventManager::Dispatch(StringName type, const Event& event)
     {
         auto typeIt = m_Subscribers.find(type);
         if(typeIt != m_Subscribers.end())
@@ -54,7 +54,7 @@ namespace Engine
     }
 
     // On FlushEvents
-    void EventManager::QueueEvent(EventType type, Scope<Event> event)
+    void EventManager::QueueEvent(StringName type, Scope<Event> event)
     {
         m_EventQueue.emplace(type, std::move(event));
     }

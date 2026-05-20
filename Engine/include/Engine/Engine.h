@@ -5,7 +5,6 @@
 
 #include "Engine/Core/Application.h"
 //#include "Engine/Core/FileSystem.h"
-//#include "Engine/Core/Input.h"
 #include "Engine/Core/Log.h"
 #include "Engine/Core/Timer.h"
 #include "Engine/Core/Base.h"
@@ -15,6 +14,13 @@
 #include "Engine/Resources/ResourceManager.h"
 
 #include "Engine/Platform/IWindow.h"
+
+#include "Engine/Events/Event.h"
+#include "Engine/Events/EventManager.h"
+
+#include "Engine/Input/KeyCode.h"
+#include "Engine/Input/InputAxis.h"
+#include "Engine/Input/Input.h"
 
 /*
 #include "Engine/Renderer/RHI/IBuffer.h"

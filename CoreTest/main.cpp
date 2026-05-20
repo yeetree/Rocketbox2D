@@ -8,7 +8,10 @@ using namespace Engine;
 class EngineTestApp : public Application {
 public:
     void OnStart() override {
-
+        Ref<Input> in = GetServiceLocator()->Get<Input>();
+        in->MapAction("testButton", KeyCode::B);
+        in->MapAction("testDigitalAxis", KeyCode::C, KeyCode::D);
+        in->MapAction("testAnalogAxis", InputAxis::MouseX);
     }
 
     //void OnEvent(Event& event) override {
@@ -16,7 +19,12 @@ public:
     //}
 
     void OnUpdate(float dt) override {
-
+        Ref<Input> in = GetServiceLocator()->Get<Input>();
+        if(in->IsKeyDown(KeyCode::A))
+        {
+            LOG_INFO("A press!");
+        }
+        LOG_INFO("Test: DB: {0}, DA: {1}, AA: {2}", in->IsActionDown("testButton"), in->GetAction("testDigitalAxis"), in->GetAction("testAnalogAxis"));
     }
 
     void OnRender() override {

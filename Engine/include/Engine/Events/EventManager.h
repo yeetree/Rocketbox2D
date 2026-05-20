@@ -4,7 +4,7 @@
 #include "engine_export.h"
 
 #include "Engine/Core/Base.h"
-#include "Engine/Core/StringRegistry.h"
+#include "Engine/Core/StringName.h"
 
 #include "Engine/Events/Event.h"
 
@@ -15,22 +15,22 @@
 namespace Engine
 {
     using EventCallback = std::function<void(const Event&)>;
-    using AllEventCallback = std::function<void(EventType type, const Event&)>;
+    using AllEventCallback = std::function<void(StringName type, const Event&)>;
 
-    using EventListenerID = uint32_t;
+    using EventListenerID = size_t;
 
     class EventManager
     {
     private:
         struct QueuedEvent
         {
-            QueuedEvent(EventType t, Scope<Event> e) : type(t), event(std::move(e)) {};
-            EventType type;
+            QueuedEvent(StringName t, Scope<Event> e) : type(t), event(std::move(e)) {};
+            StringName type;
             Scope<Event> event;
         };
 
     
-        std::unordered_map<EventType, std::unordered_map<EventListenerID, EventCallback>> m_Subscribers;
+        std::unordered_map<StringName, std::unordered_map<EventListenerID, EventCallback>> m_Subscribers;
         std::unordered_map<EventListenerID, AllEventCallback> m_AllSubscribers;
         std::queue<QueuedEvent> m_EventQueue;
         EventListenerID m_NextListenerID = 0;
@@ -38,17 +38,17 @@ namespace Engine
     public:
         EventManager() = default;
 
-        EventListenerID Subscribe(EventType type, const EventCallback& callback);
-        void Unsubscribe(EventType type, EventListenerID id);
+        EventListenerID Subscribe(StringName type, const EventCallback& callback);
+        void Unsubscribe(StringName type, EventListenerID id);
 
         EventListenerID SubscribeAll(const AllEventCallback& callback);
         void UnsubscribeAll(EventListenerID id);
 
         // Immediate
-        void Dispatch(EventType type, const Event& event);
+        void Dispatch(StringName type, const Event& event);
 
         // On FlushEvents
-        void QueueEvent(EventType type, Scope<Event> event);
+        void QueueEvent(StringName type, Scope<Event> event);
         void FlushEvents();
     };
 } // namespace Engine

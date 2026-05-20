@@ -21,7 +21,7 @@ namespace Engine
             throw std::runtime_error(std::format("SDL3: Window could not be created! Error: {0}", SDL_GetError()));
             return; // Failure
         }
-
+    
         // TEMP:
         // Draw one frame to show window
         SDL_Renderer* renderer = SDL_CreateRenderer(m_Window, NULL);

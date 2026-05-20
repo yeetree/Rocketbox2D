@@ -47,12 +47,6 @@ namespace Engine {
         LOG_CORE_INFO("Creating window...");
         m_Window = std::move(m_Platform->CreateWindow(properties));
         m_Locator->RegisterInstance<IWindow>(m_Window);
-        
-
-        // Create input
-        //LOG_CORE_INFO("Initializing input...");
-        //m_Input = CreateScope<Input>();
-        //s_Locator->RegisterInstance<Input>(m_Input.get());
 
         // Init filesystem
         //LOG_CORE_INFO("Initializing filesystem...");
@@ -74,15 +68,15 @@ namespace Engine {
         m_ResourceManager = CreateRef<ResourceManager>();
         m_Locator->RegisterInstance<ResourceManager>(m_ResourceManager);
 
-        // Create string registry
-        LOG_CORE_INFO("Initializing string registry...");
-        m_StringRegistry = CreateRef<StringRegistry>();
-        m_Locator->RegisterInstance<StringRegistry>(m_StringRegistry);
-
         // Create event manager
         LOG_CORE_INFO("Initializing event manager...");
         m_EventManager = CreateRef<EventManager>();
         m_Locator->RegisterInstance<EventManager>(m_EventManager);
+
+        // Create input
+        LOG_CORE_INFO("Initializing input...");
+        m_Input = CreateRef<Input>();
+        m_Locator->RegisterInstance<Input>(m_Input);
 
         // Subscribe to event callback
         // Bind both parameters (EventType and Event) so the resulting callable
@@ -92,8 +86,8 @@ namespace Engine {
         LOG_CORE_INFO("Initialization complete.");
     }
 
-    void Application::EventCallback(EventType type, const Event& event) {
-        if(type == Hash32("Engine::Application::Quit"))
+    void Application::EventCallback(StringName type, const Event& event) {
+        if(type == Hash32("Quit"))
         {
             m_Running = false;
         }
@@ -105,6 +99,8 @@ namespace Engine {
 
         m_Running = true;
         m_Timer.Reset();
+
+        StringRegistry::Reset();
 
         OnStart();
 
@@ -121,6 +117,8 @@ namespace Engine {
             // Update
             OnUpdate(dt);
 
+            m_Input->Update();
+
             m_EventManager->FlushEvents();
 
             // Render
@@ -129,6 +127,7 @@ namespace Engine {
             //m_GraphicsDevice->EndFrame();
             //m_GraphicsDevice->Present();
 
+            
             // Update time
             timePrev = timeNow;
         }
