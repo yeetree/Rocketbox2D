@@ -100,7 +100,7 @@ namespace Engine {
         m_Running = true;
         m_Timer.Reset();
 
-        StringRegistry::Reset();
+        StringName::Reset();
 
         OnStart();
 

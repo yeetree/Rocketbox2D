@@ -24,7 +24,7 @@ public:
         {
             LOG_INFO("A press!");
         }
-        LOG_INFO("Test: DB: {0}, DA: {1}, AA: {2}", in->IsActionDown("testButton"), in->GetAction("testDigitalAxis"), in->GetAction("testAnalogAxis"));
+        LOG_INFO("FPS: {0}", 1 / dt);
     }
 
     void OnRender() override {

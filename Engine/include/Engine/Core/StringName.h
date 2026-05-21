@@ -4,8 +4,9 @@
 #include "engine_export.h"
 
 #include "Engine/Core/Hash.h"
-#include "Engine/Core/StringRegistry.h"
 
+#include <deque>
+#include <unordered_map>
 #include <string>
 
 namespace Engine
@@ -13,22 +14,32 @@ namespace Engine
     class ENGINE_EXPORT StringName
     {
     private:
+        // Class
         uint32_t m_Hash;
 
-    public:
-        StringName(uint32_t hash) : m_Hash(hash) {};
-        StringName(const std::string& string) : m_Hash(StringRegistry::GetID(string)) {};
-        StringName(const char* string) : m_Hash(StringRegistry::GetID(string)) {};
-    
-        uint32_t GetHash() const { return m_Hash; }
-        std::string_view GetString() const { return StringRegistry::GetString(m_Hash); }
-    
-        operator uint32_t() const { return m_Hash; }
+        // Static string internment
+        static std::deque<std::string> s_Strings; 
+        static std::unordered_map<uint32_t, size_t> s_Registry; 
 
+        static uint32_t GetID(std::string_view str);
+
+    public:
+        StringName(uint32_t hash) : m_Hash(hash) {}
+        StringName(const std::string& string) : m_Hash(GetID(string)) {}
+        StringName(const char* string) : m_Hash(GetID(string)) {}
+
+        uint32_t GetHash() const { return m_Hash; }
+        
+        std::string_view GetString() const; 
+
+        operator uint32_t() const { return m_Hash; }
         bool operator==(const StringName& other) const { return m_Hash == other.m_Hash; }
         bool operator==(const uint32_t& other) const { return m_Hash == other; }
+
+        static void Reset();
+        
     };
-} // namespace Engine
+}
 
 // Hack into hash
 namespace std

@@ -45,6 +45,9 @@ namespace Engine {
         return std::make_shared<T>(std::forward<Args>(args)...);
     }
 
+    template<typename T>
+    using Weak = std::weak_ptr<T>;
+
     inline void HashCombine(size_t& seed, uint64_t value) {
         seed ^= std::hash<uint64_t>{}(value) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
     }
