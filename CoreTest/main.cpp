@@ -9,9 +9,7 @@ class EngineTestApp : public Application {
 public:
     void OnStart() override {
         Ref<Input> in = GetServiceLocator()->Get<Input>();
-        in->MapAction("testButton", KeyCode::B);
-        in->MapAction("testDigitalAxis", KeyCode::C, KeyCode::D);
-        in->MapAction("testAnalogAxis", InputAxis::MouseX);
+        in->MapAction("printFPS", KeyCode::A);
     }
 
     //void OnEvent(Event& event) override {
@@ -20,11 +18,11 @@ public:
 
     void OnUpdate(float dt) override {
         Ref<Input> in = GetServiceLocator()->Get<Input>();
-        if(in->IsKeyDown(KeyCode::A))
+        if(in->IsActionPressed("printFPS"))
         {
-            LOG_INFO("A press!");
+            LOG_INFO("FPS: {0}", 1 / dt);
         }
-        LOG_INFO("FPS: {0}", 1 / dt);
+        
     }
 
     void OnRender() override {

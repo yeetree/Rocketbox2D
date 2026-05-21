@@ -3,6 +3,8 @@
 #include "Engine/Core/Log.h"
 #include "Engine/Core/Assert.h"
 
+#include "Engine/Platform/IGraphicsBridge.h"
+
 //#include "Engine/Events/Event.h"
 //#include "Engine/Events/ApplicationEvent.h"
 //#include "Engine/Events/WindowEvent.h"
@@ -54,9 +56,10 @@ namespace Engine {
         //s_Locator->RegisterInstance<FileSystem>(m_FileSystem.get());
 
         // Create graphics device
-        //LOG_CORE_INFO("Initializing graphics device...");
-        //m_GraphicsDevice = IGraphicsDevice::Create(GraphicsAPI::Vulkan, &m_Platform->GetGraphicsBridge(), m_Window.get());
-        //s_Locator->RegisterInstance<IGraphicsDevice>(m_GraphicsDevice.get());
+        LOG_CORE_INFO("Initializing graphics device...");
+        Ref<IGraphicsBridge> bridge = IGraphicsBridge::Create(m_Window->GetAPI());
+        m_GraphicsDevice = IGraphicsDevice::Create(m_Window->GetAPI(), bridge, m_Window);
+        m_Locator->RegisterInstance<IGraphicsDevice>(m_GraphicsDevice);
 
         // Create Renderer2D
         //LOG_CORE_INFO("Initializing renderer...");

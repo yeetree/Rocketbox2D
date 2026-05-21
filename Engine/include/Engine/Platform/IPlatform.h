@@ -13,6 +13,7 @@
 
 namespace Engine
 {
+    // Abstracts platform-specific functions into a unified interface
     class ENGINE_EXPORT IPlatform
     {
     protected:

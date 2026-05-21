@@ -4,7 +4,7 @@
 
 namespace Engine
 {
-    SDL3Window::SDL3Window(const WindowProperties& props) : m_Width(props.width), m_Height(props.height)
+    SDL3Window::SDL3Window(const WindowProperties& props) : IWindow(Platform::SDL, props.api), m_Width(props.width), m_Height(props.height)
     {
         SDL_WindowFlags flags = 0;
 

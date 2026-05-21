@@ -13,6 +13,8 @@
 #include "Engine/Platform/IPlatform.h"
 #include "Engine/Platform/IWindow.h"
 
+#include "Engine/RHI/IGraphicsDevice.h"
+
 #include "Engine/Resources/ResourceManager.h"
 
 #include "Engine/Events/EventManager.h"
@@ -52,6 +54,7 @@ namespace Engine {
         //Scope<Input> m_Input;
         //Scope<FileSystem> m_FileSystem;
         Ref<IPlatform> m_Platform;
+        Ref<IGraphicsDevice> m_GraphicsDevice;
         Ref<IWindow> m_Window;
         Ref<ResourceManager> m_ResourceManager;
         Ref<EventManager> m_EventManager;
