@@ -94,6 +94,7 @@ namespace Engine {
         {
             m_Running = false;
         }
+        OnEvent(type, event);
     }
 
     void Application::Run() {
@@ -136,7 +137,7 @@ namespace Engine {
         }
         LOG_CORE_INFO("Shutting down...");
         m_EventManager->UnsubscribeAll(m_EventListenerID);
-        //m_GraphicsDevice->OnDestroy();
+        m_GraphicsDevice->OnDestroy();
         OnDestroy();
     }
 

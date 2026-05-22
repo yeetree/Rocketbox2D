@@ -15,7 +15,9 @@ namespace Engine
         "MouseMoved",
         "MouseScrolled",
         "MouseButtonPressed",
-        "MouseButtonReleased",
+        "MouseButtonReleased"
+        "WindowMoved",
+        "WindowResized",
     };
 } // namespace Engine
 

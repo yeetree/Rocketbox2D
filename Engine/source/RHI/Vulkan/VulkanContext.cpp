@@ -27,7 +27,10 @@ namespace Engine
         //    vmaDestroyAllocator(m_Allocator);
         //    m_Allocator = nullptr;
         //}
-        m_Bridge->DestroySurface(*m_Instance, *m_Surface);
+
+        // please kindy see source/RHI/Vulkan/IVulkanGraphicsBridge.h
+        // m_Bridge->DestroySurface(*m_Instance, *m_Surface);
+
         m_Surface.clear();
     }
 
@@ -266,5 +269,14 @@ namespace Engine
         m_GraphicsQueue.queue = vk::raii::Queue(m_Device, m_GraphicsQueue.familyIndex, 0);
 
         VULKAN_HPP_DEFAULT_DISPATCHER.init(*m_Instance, vkGetInstanceProcAddr, *m_Device, vkGetDeviceProcAddr);
+    }
+
+    void VulkanContext::CreateCommandPool()
+    {
+        LOG_CORE_INFO("Vulkan: Creating Command pool...");
+        vk::CommandPoolCreateInfo poolInfo;
+        poolInfo.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
+        poolInfo.queueFamilyIndex = m_GraphicsQueue.familyIndex;
+        m_CommandPool = vk::raii::CommandPool(m_Device, poolInfo);
     }
 } // namespace Engine

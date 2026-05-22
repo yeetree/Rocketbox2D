@@ -7,6 +7,7 @@
 
 #include "Engine/RHI/GraphicsAPI.h"
 #include "Engine/RHI/ITexture.h"
+#include "Engine/RHI/ICommandBuffer.h"
 
 namespace Engine
 {
@@ -18,27 +19,29 @@ namespace Engine
     };
 
     // Decribes how a surface should be created
-    struct SwapChainDesc {
+    struct SwapchainDesc {
         uint32_t width, height;
         PresentMode presentation;
         TextureFormat format;
     };
 
-    // ISwapChain manages a collection of framebuffers that are rendering targets for the GPU
+    // ISwapchain manages a collection of framebuffers that are rendering targets for the GPU
     // before being presented to the screen.
-    class ENGINE_EXPORT ISwapChain {
+    class ENGINE_EXPORT ISwapchain {
     public:
-        virtual ~ISwapChain() = default;
+        virtual ~ISwapchain() = default;
 
-        // SwapChain config
+        // Swapchain config
         virtual void Resize(uint32_t width, uint32_t height) = 0; // Called on window resize events
         virtual void SetPresentation(PresentMode presentation) = 0;
 
-        // Blocks until GPU is ready to begin drawing
-        virtual void BeginFrame() = 0;
+        // Blocks until GPU is ready to begin drawing.
+        // This CAN return nullptr if the GPU needs to skip this frame,
+        // so make sure to check before recording anything!
+        virtual ICommandBuffer* BeginFrame() = 0;
 
         // Presents image, begins working on next.
-        virtual void EndFrame() = 0;
+        virtual void EndFrame(ICommandBuffer* cmd) = 0;
     };
 } // namespace Engine
 

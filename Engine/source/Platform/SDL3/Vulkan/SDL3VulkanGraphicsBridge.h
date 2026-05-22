@@ -15,7 +15,8 @@ namespace Engine
         ~SDL3VulkanGraphicsBridge() override = default;
 
         VkSurfaceKHR CreateSurface(VkInstance instance, Ref<IWindow> window) override;
-        void DestroySurface(VkInstance instance, VkSurfaceKHR surface) override;
+        // void DestroySurface(VkInstance instance, VkSurfaceKHR surface) override;
+        // please kindy see source/RHI/Vulkan/IVulkanGraphicsBridge.h
          
         std::vector<const char*> GetInstanceExtensions() override;
     };

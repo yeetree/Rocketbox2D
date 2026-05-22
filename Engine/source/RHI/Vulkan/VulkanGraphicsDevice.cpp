@@ -1,5 +1,7 @@
 #include "RHI/Vulkan/VulkanGraphicsDevice.h"
 
+#include "RHI/Vulkan/VulkanSwapchain.h"
+
 #include "Engine/Core/Log.h"
 #include "Engine/Core/Assert.h"
 
@@ -22,9 +24,15 @@ namespace Engine
 
     }
 
-    Scope<ISwapChain> VulkanGraphicsDevice::CreateSwapChain(const SwapChainDesc& desc)
+    Scope<ISwapchain> VulkanGraphicsDevice::CreateSwapchain(const SwapchainDesc& desc)
     {
-        return nullptr;
+        return CreateScope<VulkanSwapchain>(m_Context, desc);
+    }
+
+    void VulkanGraphicsDevice::OnDestroy()
+    {
+        m_Context->GetDevice().waitIdle();
+        m_Context.reset();
     }
 
 } // namespace Engine

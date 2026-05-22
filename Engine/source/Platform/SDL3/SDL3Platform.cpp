@@ -4,6 +4,7 @@
 #include "Engine/Core/Application.h"
 #include "Engine/Events/KeyEvent.h"
 #include "Engine/Events/MouseEvent.h"
+#include "Engine/Events/WindowEvent.h"
 
 namespace Engine
 {
@@ -34,6 +35,8 @@ namespace Engine
 
     void SDL3Platform::PollEvents()
     {
+        Ref<EventManager> em = Application::Get()->GetServiceLocator()->Get<EventManager>();
+        Ref<Input> in = Application::Get()->GetServiceLocator()->Get<Input>();
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
@@ -41,7 +44,6 @@ namespace Engine
             {
                 case SDL_EVENT_QUIT:
                 {
-                    Ref<EventManager> em = Application::Get()->GetServiceLocator()->Get<EventManager>();
                     if(em)
                     {
                         em->QueueEvent(Hash32("Quit"), CreateScope<Event>(Hash32("Quit")));
@@ -51,8 +53,6 @@ namespace Engine
                 
                 case SDL_EVENT_KEY_DOWN:
                 {
-                    Ref<EventManager> em = Application::Get()->GetServiceLocator()->Get<EventManager>();
-                    Ref<Input> in = Application::Get()->GetServiceLocator()->Get<Input>();
                     KeyCode k = SDLToKeyCode(event.key.key);
                     if(em)
                     {
@@ -67,8 +67,6 @@ namespace Engine
 
                 case SDL_EVENT_KEY_UP:
                 {
-                    Ref<EventManager> em = Application::Get()->GetServiceLocator()->Get<EventManager>();
-                    Ref<Input> in = Application::Get()->GetServiceLocator()->Get<Input>();
                     KeyCode k = SDLToKeyCode(event.key.key);
                     if(em)
                     {
@@ -83,8 +81,6 @@ namespace Engine
 
                 case SDL_EVENT_MOUSE_BUTTON_DOWN:
                 {
-                    Ref<EventManager> em = Application::Get()->GetServiceLocator()->Get<EventManager>();
-                    Ref<Input> in = Application::Get()->GetServiceLocator()->Get<Input>();
                     MouseButton k = SDLToMouseButton(event.button.button);
                     if(em)
                     {
@@ -99,8 +95,6 @@ namespace Engine
 
                 case SDL_EVENT_MOUSE_MOTION:
                 {
-                    Ref<EventManager> em = Application::Get()->GetServiceLocator()->Get<EventManager>();
-                    Ref<Input> in = Application::Get()->GetServiceLocator()->Get<Input>();
                     if(em)
                     {
                         em->QueueEvent(Hash32("MouseMoved"), CreateScope<MouseMovedEvent>(event.motion.xrel, event.motion.yrel));
@@ -115,8 +109,6 @@ namespace Engine
 
                 case SDL_EVENT_MOUSE_WHEEL:
                 {
-                    Ref<EventManager> em = Application::Get()->GetServiceLocator()->Get<EventManager>();
-                    Ref<Input> in = Application::Get()->GetServiceLocator()->Get<Input>();
                     if(em)
                     {
                         em->QueueEvent(Hash32("MouseScrolled"), CreateScope<MouseScrolledEvent>(event.wheel.x, event.wheel.y));
@@ -125,6 +117,25 @@ namespace Engine
                     {
                         in->SetAxisState(InputAxis::ScrollX, event.wheel.x);
                         in->SetAxisState(InputAxis::ScrollY, event.wheel.y);
+                    }
+                    break;
+                }
+
+                case SDL_EVENT_WINDOW_MOVED:
+                {
+                    if(em)
+                    {
+                        em->QueueEvent(Hash32("WindowMoved"), CreateScope<WindowMovedEvent>(event.window.data1, event.window.data2));
+                    }
+                    break;
+                }
+
+                case SDL_EVENT_WINDOW_RESIZED:
+                {
+                    if(em)
+                    {
+                        // Important for graphics, dispatch immediately
+                        em->Dispatch(Hash32("WindowResized"), WindowResizedEvent(event.window.data1, event.window.data2));
                     }
                     break;
                 }

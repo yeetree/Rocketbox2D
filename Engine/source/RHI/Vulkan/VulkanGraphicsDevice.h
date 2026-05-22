@@ -22,7 +22,9 @@ namespace Engine
         VulkanGraphicsDevice(Ref<IGraphicsBridge> bridge, Ref<IWindow> window);
         ~VulkanGraphicsDevice() override;
 
-        Scope<ISwapChain> CreateSwapChain(const SwapChainDesc& desc) override;
+        Scope<ISwapchain> CreateSwapchain(const SwapchainDesc& desc) override;
+
+        void OnDestroy() override;
 
     };
 } // namespace Engine

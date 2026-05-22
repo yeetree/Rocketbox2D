@@ -27,10 +27,13 @@ namespace Engine
         return surface;
     }
 
+    // please kindy see source/RHI/Vulkan/IVulkanGraphicsBridge.h
+    /*
     void SDL3VulkanGraphicsBridge::DestroySurface(VkInstance instance, VkSurfaceKHR surface)
     {
         SDL_Vulkan_DestroySurface(instance, surface, NULL);
     }
+    */
     
     std::vector<const char*> SDL3VulkanGraphicsBridge::GetInstanceExtensions()
     {

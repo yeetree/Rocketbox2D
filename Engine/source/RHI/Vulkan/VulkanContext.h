@@ -25,6 +25,7 @@ namespace Engine
         vk::raii::PhysicalDevice m_PhysicalDevice = nullptr;
         vk::raii::Device m_Device = nullptr;
         VulkanQueue m_GraphicsQueue;
+        vk::raii::CommandPool m_CommandPool = nullptr;
 
         // Debug callback
         static VKAPI_ATTR vk::Bool32 VKAPI_CALL DebugCallback(vk::DebugUtilsMessageSeverityFlagBitsEXT severity, vk::DebugUtilsMessageTypeFlagsEXT type, const vk::DebugUtilsMessengerCallbackDataEXT* pCallbackData, void*);
@@ -34,6 +35,7 @@ namespace Engine
         void CreateSurface(Ref<IWindow> window);
         void PickPhysicalDevice();
         void CreateLogicalDevice();
+        void CreateCommandPool();
         
     public:
         VulkanContext(Ref<IVulkanGraphicsBridge> bridge, Ref<IWindow> window);
@@ -47,6 +49,7 @@ namespace Engine
         vk::raii::SurfaceKHR& GetSurface() { return m_Surface; }
         vk::raii::PhysicalDevice& GetPhysicalDevice() { return m_PhysicalDevice; }
         vk::raii::Device& GetDevice() { return m_Device; }
+        VulkanQueue& GetGraphicsQueue() { return m_GraphicsQueue; }
     };
 } // namespace Engine
 

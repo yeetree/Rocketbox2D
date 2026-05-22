@@ -19,7 +19,9 @@ namespace Engine
         virtual ~IVulkanGraphicsBridge() = default;
 
         virtual VkSurfaceKHR CreateSurface(VkInstance instance, Ref<IWindow> window) = 0;
-        virtual void DestroySurface(VkInstance instance, VkSurfaceKHR surface) = 0;
+        // virtual void DestroySurface(VkInstance instance, VkSurfaceKHR surface) = 0;
+        // Not needed. When wrapped into a vk::raii::SurfaceKHR with an instance,
+        // destruction is automatic. I'm leaving it here just in case...
 
         virtual std::vector<const char*> GetInstanceExtensions() = 0;
     };

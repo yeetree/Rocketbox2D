@@ -40,7 +40,7 @@ namespace Engine {
 
         virtual void OnStart() = 0;
 
-        //virtual void OnEvent(Event& event) = 0;
+        virtual void OnEvent(StringName type, const Event& event) = 0;
         virtual void OnUpdate(float dt) = 0;
         virtual void OnRender() = 0;
 
