@@ -19,29 +19,24 @@ namespace Engine
     };
 
     // Decribes how a surface should be created
-    struct SwapchainDesc {
+    struct SwapChainDesc {
         uint32_t width, height;
         PresentMode presentation;
         TextureFormat format;
     };
 
-    // ISwapchain manages a collection of framebuffers that are rendering targets for the GPU
+    // ISwapChain manages a collection of framebuffers that are rendering targets for the GPU
     // before being presented to the screen.
-    class ENGINE_EXPORT ISwapchain {
+    class ENGINE_EXPORT ISwapChain {
     public:
-        virtual ~ISwapchain() = default;
+        virtual ~ISwapChain() = default;
 
-        // Swapchain config
+        // SwapChain config
         virtual void Resize(uint32_t width, uint32_t height) = 0; // Called on window resize events
         virtual void SetPresentation(PresentMode presentation) = 0;
 
-        // Blocks until GPU is ready to begin drawing.
-        // This CAN return nullptr if the GPU needs to skip this frame,
-        // so make sure to check before recording anything!
-        virtual ICommandBuffer* BeginFrame() = 0;
-
-        // Presents image, begins working on next.
-        virtual void EndFrame(ICommandBuffer* cmd) = 0;
+        virtual ITexture* GetCurrentBackBuffer() = 0;
+        virtual void Present() = 0;
     };
 } // namespace Engine
 

@@ -57,8 +57,7 @@ namespace Engine {
 
         // Create graphics device
         LOG_CORE_INFO("Initializing graphics device...");
-        Ref<IGraphicsBridge> bridge = IGraphicsBridge::Create(m_Window->GetAPI());
-        m_GraphicsDevice = IGraphicsDevice::Create(m_Window->GetAPI(), bridge, m_Window);
+        m_GraphicsDevice = IGraphicsDevice::Create(m_Window->GetAPI());
         m_Locator->RegisterInstance<IGraphicsDevice>(m_GraphicsDevice);
 
         // Create Renderer2D

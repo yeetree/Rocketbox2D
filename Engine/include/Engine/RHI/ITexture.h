@@ -11,7 +11,10 @@ namespace Engine {
     enum class TextureFormat { RGBA8 };
 
     // Texture usage
-    enum class TextureUsage { Sampled };
+    enum TextureUsage {
+        Sampled         = 1,
+        RenderTarget    = 1 << 1
+    };
 
     // Decribes how a texture should be created
     struct TextureDesc {
@@ -20,7 +23,6 @@ namespace Engine {
         // uint32_t mips = 1;
         TextureFormat format = TextureFormat::RGBA8;
         TextureUsage usage = TextureUsage::Sampled;
-        const void* data = nullptr; // Initial data to be loaded, or nullptr for none.
     };
 
     // ITexture represents a texture in GPU memory.

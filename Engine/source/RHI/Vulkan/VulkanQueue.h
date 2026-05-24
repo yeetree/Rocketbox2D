@@ -7,11 +7,12 @@
 
 namespace Engine
 {
-    struct ENGINE_EXPORT VulkanQueue {
+    struct ENGINE_EXPORT VulkanQueue
+    {
         VulkanQueue(vk::raii::Queue q, uint32_t i) : queue(q), familyIndex(i) {}
         VulkanQueue() = default;
         vk::raii::Queue queue = nullptr;
-        uint32_t familyIndex = 0;
+        uint32_t familyIndex;
     };
 } // namespace Engine
 

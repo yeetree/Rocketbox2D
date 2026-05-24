@@ -25,8 +25,6 @@ namespace Engine
 
         Platform GetPlatform() const { return m_Platform; }
         GraphicsAPI GetAPI() const { return m_API; }
-
-        static Scope<IGraphicsBridge> Create(GraphicsAPI api);
     };
 } // namespace Engine
 

@@ -9,7 +9,7 @@ using namespace Engine;
 
 class EngineTestApp : public Application {
 public:
-    Scope<ISwapchain> sc;
+    Scope<ISwapChain> sc;
 
     void OnStart() override {
         Ref<Input> in = GetServiceLocator()->Get<Input>();
@@ -21,14 +21,14 @@ public:
         Ref<IGraphicsDevice> gd = GetServiceLocator()->Get<IGraphicsDevice>();
         Ref<IWindow> win = GetServiceLocator()->Get<IWindow>();
 
-        SwapchainDesc desc{
+        SwapChainDesc desc{
             .width = win->GetWidth(),
             .height = win->GetHeight(),
             .presentation = PresentMode::VSync,
             .format = TextureFormat::RGBA8
         };
 
-        sc = gd->CreateSwapchain(desc);
+        sc = gd->CreateSwapChain(desc);
     }
 
     void OnEvent(StringName type, const Event& event) override {
@@ -63,9 +63,7 @@ public:
     }
 
     void OnRender() override {
-        ICommandBuffer* buf = sc->BeginFrame();
-        if(!buf) return;
-        sc->EndFrame(buf);
+
     }
 
     void OnDestroy() override {

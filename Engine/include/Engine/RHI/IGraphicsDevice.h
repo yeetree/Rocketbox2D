@@ -9,8 +9,9 @@
 #include "Engine/Platform/IWindow.h"
 
 #include "Engine/RHI/GraphicsAPI.h"
-#include "Engine/RHI/ISwapchain.h"
+#include "Engine/RHI/ISwapChain.h"
 #include "Engine/RHI/ITexture.h"
+#include "Engine/RHI/ICommandBuffer.h"
 
 namespace Engine
 {
@@ -20,11 +21,19 @@ namespace Engine
     public:
         virtual ~IGraphicsDevice() = default;
 
-        virtual Scope<ISwapchain> CreateSwapchain(const SwapchainDesc& desc) = 0;
+        virtual Scope<ISwapChain> CreateSwapChain(const SwapChainDesc& desc) = 0;
+
+        // Frame pacing
+        virtual void BeginFrame() = 0;
+        virtual void EndFrame() = 0;
+
+        // Commands
+        virtual ICommandBuffer* GetCommandBuffer() = 0;
+        virtual void Submit(ICommandBuffer* cmd) = 0;
 
         virtual void OnDestroy() = 0;
 
-        static Scope<IGraphicsDevice> Create(GraphicsAPI api, Ref<IGraphicsBridge> graphicsBridge, Ref<IWindow> window);
+        static Scope<IGraphicsDevice> Create(GraphicsAPI api);
     };
 } // namespace Engine
 
