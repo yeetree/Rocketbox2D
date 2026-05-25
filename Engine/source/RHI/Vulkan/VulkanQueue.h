@@ -12,7 +12,7 @@ namespace Engine
         VulkanQueue(vk::raii::Queue q, uint32_t i) : queue(q), familyIndex(i) {}
         VulkanQueue() = default;
         vk::raii::Queue queue = nullptr;
-        uint32_t familyIndex;
+        uint32_t familyIndex = -1;
     };
 } // namespace Engine
 

@@ -4,13 +4,20 @@
 #include "Engine/RHI/IGraphicsDevice.h"
 
 #include "RHI/Vulkan/IVulkanGraphicsBridge.h"
+#include "RHI/Vulkan/VulkanContext.h"
 
 namespace Engine
 {
     class ENGINE_EXPORT VulkanGraphicsDevice : public IGraphicsDevice
     {
     private:
+        
+        // Frame pacing
+        uint32_t m_FrameIndex;
+        std::vector<vk::raii::Fence> m_Fences;
+
         Scope<IVulkanGraphicsBridge> m_Bridge;
+        Scope<VulkanContext> m_Context;
 
     public:
         VulkanGraphicsDevice(Scope<IVulkanGraphicsBridge> bridge);
@@ -22,9 +29,9 @@ namespace Engine
         void BeginFrame() override;
         void EndFrame() override;
 
-        // Commands
-        ICommandBuffer* GetCommandBuffer() override;
-        void Submit(ICommandBuffer* cmd) override;
+        // Swapchain passees
+        ICommandBuffer* BeginSwapChainPass(Ref<ISwapChain> swapchain) override;
+        void EndSwapChainPass(Ref<ISwapChain> swapchain, ICommandBuffer* cmd) override;
 
         void OnDestroy() override;
     };

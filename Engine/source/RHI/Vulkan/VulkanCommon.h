@@ -11,13 +11,14 @@ namespace Engine
     {
         ENGINE_EXPORT void TransitionImageLayout(
             vk::raii::CommandBuffer& cmd,
-            vk::Image               image,
-            vk::ImageLayout         oldLayout,
-            vk::ImageLayout         newLayout,
-            vk::AccessFlags2        srcAccess,
-            vk::AccessFlags2        dstAccess,
-            vk::PipelineStageFlags2 srcStage,
-            vk::PipelineStageFlags2 dstStage);
+            vk::Image                image,
+            vk::ImageLayout          oldLayout,
+            vk::ImageLayout          newLayout,
+            vk::AccessFlags2         srcAccess,
+            vk::AccessFlags2         dstAccess,
+            vk::PipelineStageFlags2  srcStage,
+            vk::PipelineStageFlags2  dstStage
+        );
     } // namespace VulkanCommon
 } // namespace Engine
 

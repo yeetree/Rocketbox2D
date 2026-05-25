@@ -20,10 +20,8 @@ namespace Engine
         virtual void End() = 0;
 
         // Render target
-        virtual void SetRenderTarget(Ref<ITexture> texture);
-
-        // Textures
-        virtual void Clear(Ref<ITexture> texture, Vec4 color);
+        virtual void BeginRendering(ITexture* renderTarget, Vec4 clearColor) = 0;
+        virtual void EndRendering() = 0;
     };
 }
 

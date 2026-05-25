@@ -27,9 +27,9 @@ namespace Engine
         virtual void BeginFrame() = 0;
         virtual void EndFrame() = 0;
 
-        // Commands
-        virtual ICommandBuffer* GetCommandBuffer() = 0;
-        virtual void Submit(ICommandBuffer* cmd) = 0;
+        // Swapchain passees
+        virtual ICommandBuffer* BeginSwapChainPass(Ref<ISwapChain> swapchain) = 0;
+        virtual void EndSwapChainPass(Ref<ISwapChain> swapchain, ICommandBuffer* cmd) = 0;
 
         virtual void OnDestroy() = 0;
 

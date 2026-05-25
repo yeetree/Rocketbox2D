@@ -9,7 +9,10 @@ using namespace Engine;
 
 class EngineTestApp : public Application {
 public:
-    Scope<ISwapChain> sc;
+    Ref<ISwapChain> sc;
+    Ref<ISwapChain> sc2;
+    Ref<IGraphicsDevice> gd;
+    Ref<IWindow> win2;
 
     void OnStart() override {
         Ref<Input> in = GetServiceLocator()->Get<Input>();
@@ -18,17 +21,27 @@ public:
         in->MapAction("vsync", KeyCode::W);
         in->MapAction("mailbox", KeyCode::E);
 
-        Ref<IGraphicsDevice> gd = GetServiceLocator()->Get<IGraphicsDevice>();
+        gd = GetServiceLocator()->Get<IGraphicsDevice>();
         Ref<IWindow> win = GetServiceLocator()->Get<IWindow>();
 
+        win2 = GetServiceLocator()->Get<IPlatform>()->CreateWindow({
+            .title = "Test!",
+            .width = 200,
+            .height = 200,
+            .api = GraphicsAPI::Vulkan,
+            .resizable = true,
+        });
+
         SwapChainDesc desc{
-            .width = win->GetWidth(),
-            .height = win->GetHeight(),
+            .window = win,
             .presentation = PresentMode::VSync,
             .format = TextureFormat::RGBA8
         };
 
         sc = gd->CreateSwapChain(desc);
+
+        desc.window = win2;
+        sc2 = gd->CreateSwapChain(desc);
     }
 
     void OnEvent(StringName type, const Event& event) override {
@@ -63,7 +76,27 @@ public:
     }
 
     void OnRender() override {
+        gd->BeginFrame();
 
+        ICommandBuffer* cmd = gd->BeginSwapChainPass(sc);
+
+        cmd->Begin();
+        cmd->BeginRendering(sc->GetCurrentBackBuffer(), Vec4(1.0f, 0.0f, 0.0f, 1.0f));
+        cmd->EndRendering();
+        cmd->End();
+
+        gd->EndSwapChainPass(sc, cmd);
+
+        ICommandBuffer* cmd2 = gd->BeginSwapChainPass(sc2);
+
+        cmd2->Begin();
+        cmd2->BeginRendering(sc2->GetCurrentBackBuffer(), Vec4(0.0f, 1.0f, 0.0f, 1.0f));
+        cmd2->EndRendering();
+        cmd2->End();
+
+        gd->EndSwapChainPass(sc2, cmd2);
+
+        gd->EndFrame();
     }
 
     void OnDestroy() override {

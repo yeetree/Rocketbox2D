@@ -1,8 +1,13 @@
+#define VMA_STATIC_VULKAN_FUNCTIONS 0
+#define VMA_DYNAMIC_VULKAN_FUNCTIONS 1
+#define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
 #include "RHI/Vulkan/VulkanContext.h"
 #include "RHI/Vulkan/VulkanConstants.h"
 
 #include "Engine/Core/Assert.h"
 #include "Engine/Core/Log.h"
+
+VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
 // Debug callback
 
@@ -34,15 +39,33 @@ namespace Engine
 {
     VulkanContext::VulkanContext(IVulkanGraphicsBridge* bridge)
     {
+        VULKAN_HPP_DEFAULT_DISPATCHER.init();
         CreateInstance(bridge);
+        VULKAN_HPP_DEFAULT_DISPATCHER.init(*m_Instance);
         SetupDebugMessenger();
         PickPhysicalDevice();
         CreateLogicalDevice(bridge);
+        VULKAN_HPP_DEFAULT_DISPATCHER.init(*m_Device);
+        CreateCommandPool();
+    }
+
+    VulkanContext::~VulkanContext()
+    {
+        if(m_Device != nullptr)
+        {
+            m_Device.waitIdle();
+        }
+
+        if(m_Allocator)
+        {
+            vmaDestroyAllocator(m_Allocator);
+        }
     }
 
     void VulkanContext::CreateInstance(IVulkanGraphicsBridge* bridge)
     {
         ENGINE_CORE_ASSERT(bridge != nullptr, "Vulkan: VulkanContext(): bridge is nullptr!");
+        LOG_CORE_INFO("Vulkan: Creating instance...");
 
         // Create instance
         // TODO: Vulkan: Get application info from here
@@ -57,7 +80,7 @@ namespace Engine
         // Get instance extensions and make sure they're all supported
         auto instanceExtensions = bridge->GetInstanceExtensions();
         // Add engine instance extensions
-        instanceExtensions.assign(k_InstanceExtensions.begin(), k_InstanceExtensions.end());
+        instanceExtensions.insert(instanceExtensions.end(), k_InstanceExtensions.begin(), k_InstanceExtensions.end());
         auto extensionProperties = m_Context.enumerateInstanceExtensionProperties();
         for(auto const& ext : instanceExtensions)
         {
@@ -79,7 +102,7 @@ namespace Engine
         std::vector<char const*> requiredLayers;
         if (k_EnableValidationLayers)
         {
-            requiredLayers.assign(k_ValidationLayers.begin(), k_ValidationLayers.end());
+            requiredLayers.insert(requiredLayers.end(), k_ValidationLayers.begin(), k_ValidationLayers.end());
         }
 
         // Check if the required layers are supported by the Vulkan implementation.
@@ -103,9 +126,9 @@ namespace Engine
         vk::InstanceCreateInfo createInfo{
             {},
             &appInfo,
-            requiredLayers.size(),
+            (uint32_t)requiredLayers.size(),
             requiredLayers.data(),
-            instanceExtensions.size(),
+            (uint32_t)instanceExtensions.size(),
             instanceExtensions.data()
         };
 
@@ -143,6 +166,7 @@ namespace Engine
 
     void VulkanContext::PickPhysicalDevice()
     {
+        LOG_CORE_INFO("Vulkan: Selecting physical device...");
         // Loop through physical GPUs and find worthy devices
         auto physicalDevices = m_Instance.enumeratePhysicalDevices();
         if (physicalDevices.empty())
@@ -158,31 +182,35 @@ namespace Engine
         //      k_DeviceExtensions
 
         std::vector<const char*> requiredDeviceExtensions;
-        requiredDeviceExtensions.assign(k_DeviceExtensions.begin(), k_DeviceExtensions.end());
+        requiredDeviceExtensions.insert(requiredDeviceExtensions.end(), k_DeviceExtensions.begin(), k_DeviceExtensions.end());
         
         for(auto const& physicalDevice : physicalDevices)
         {
+            LOG_CORE_INFO("Vulkan: Trying: {0}", std::string(physicalDevice.getProperties().deviceName));
             // Version
-            bool version = !physicalDevice.getProperties().apiVersion >= vk::ApiVersion12;
+            bool version = physicalDevice.getProperties().apiVersion >= vk::ApiVersion12;
             if(!version)
             {
+                LOG_CORE_WARN("Vulkan: - Skipped: Minimum Vulkan version not supported.");
                 continue;
             }
 
             // Queues
             auto queueFamilies = physicalDevice.getQueueFamilyProperties();
-            bool supportsGfxQ = !std::ranges::any_of(queueFamilies, [](auto const &qfp)
+            bool supportsGfxQ = std::ranges::any_of(queueFamilies, [](auto const &qfp)
             { 
                 return !!(qfp.queueFlags & vk::QueueFlagBits::eGraphics);
             });
             if(!supportsGfxQ)
             {
+                LOG_CORE_WARN("Vulkan: - Skipped: Does not have graphics queue support.");
                 continue;
             }
 
             // Extensions
-            auto availableExtensions = m_PhysicalDevice.enumerateDeviceExtensionProperties();
-            for(auto const& deviceExtension : requiredDeviceExtensions) // bite me
+            auto availableExtensions = physicalDevice.enumerateDeviceExtensionProperties();
+            bool allExtensionsSupported = true;
+            for(auto const& deviceExtension : requiredDeviceExtensions)
             {
                 if (
                     std::ranges::none_of(
@@ -194,12 +222,21 @@ namespace Engine
                     )
                 )
                 {
-                    // Extension not supported
-                    continue;
+                    LOG_CORE_WARN("Vulkan: - Extension not supported: {0}.", deviceExtension);
+                    allExtensionsSupported = false;
+                    break;
                 }
             }
 
+            if(!allExtensionsSupported)
+            {
+                LOG_CORE_WARN("Vulkan: - Skipped: Does not support all extensions.");
+                continue;
+            }
+
+            LOG_CORE_INFO("Vulkan: Selected: {0}", std::string(physicalDevice.getProperties().deviceName));
             m_PhysicalDevice = physicalDevice;
+            break;
         }
 
         if(m_PhysicalDevice == nullptr)
@@ -210,7 +247,7 @@ namespace Engine
 
     void VulkanContext::CreateLogicalDevice(IVulkanGraphicsBridge* bridge)
     {
-
+        LOG_CORE_INFO("Vulkan: Creating logical device...");
         // TODO: Vulkan: Pick separate graphics and presentation queues
         // TODO: Vulkan: Make feature selection less trash
 
@@ -251,8 +288,9 @@ namespace Engine
         );
 
         // Get features
-        vk::StructureChain<vk::PhysicalDeviceFeatures2, vk::PhysicalDeviceDynamicRenderingFeatures, vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT> featureChain;
+        vk::StructureChain<vk::PhysicalDeviceFeatures2, vk::PhysicalDeviceSynchronization2Features, vk::PhysicalDeviceDynamicRenderingFeatures, vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT> featureChain;
         featureChain.get<vk::PhysicalDeviceDynamicRenderingFeatures>().dynamicRendering = VK_TRUE;
+        featureChain.get<vk::PhysicalDeviceSynchronization2Features>().synchronization2 = VK_TRUE;
         featureChain.get<vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>().extendedDynamicState = VK_TRUE;
 
         // Device extensions
@@ -263,9 +301,10 @@ namespace Engine
         vk::DeviceCreateInfo deviceCreateInfo(
             {},
             1, &deviceQueueCreateInfo,
-            k_DeviceExtensions.size(), k_DeviceExtensions.data(),
-            0, nullptr
+            0, nullptr,
+            k_DeviceExtensions.size(), k_DeviceExtensions.data()
         );
+
         deviceCreateInfo.pNext = &featureChain.get<vk::PhysicalDeviceFeatures2>();
         
         m_Device = vk::raii::Device(m_PhysicalDevice, deviceCreateInfo);
@@ -273,4 +312,35 @@ namespace Engine
         m_GraphicsQueue.familyIndex = queueIndex;
         m_GraphicsQueue.queue = vk::raii::Queue(m_Device, queueIndex, 0);
     }
+
+    void VulkanContext::CreateAllocator()
+    {
+        LOG_CORE_INFO("Vulkan: Creating allocator...");
+
+        VmaVulkanFunctions vulkanFunctions = {};
+        vulkanFunctions.vkGetInstanceProcAddr = &vkGetInstanceProcAddr;
+        vulkanFunctions.vkGetDeviceProcAddr = &vkGetDeviceProcAddr;
+
+        VmaAllocatorCreateInfo allocatorCreateInfo = {};
+        allocatorCreateInfo.flags = VMA_ALLOCATOR_CREATE_EXT_MEMORY_BUDGET_BIT;
+        allocatorCreateInfo.vulkanApiVersion = VK_API_VERSION_1_2;
+        allocatorCreateInfo.physicalDevice = *m_PhysicalDevice;
+        allocatorCreateInfo.device = *m_Device;
+        allocatorCreateInfo.instance = *m_Instance;
+        allocatorCreateInfo.pVulkanFunctions = &vulkanFunctions;
+        
+        vmaCreateAllocator(&allocatorCreateInfo, &m_Allocator);
+    }
+
+    void VulkanContext::CreateCommandPool()
+    {
+        LOG_CORE_INFO("Vulkan: Creating command pool...");
+
+        vk::CommandPoolCreateInfo poolInfo(
+            vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
+            m_GraphicsQueue.familyIndex
+        );
+
+        m_CommandPool = vk::raii::CommandPool(m_Device, poolInfo);
+    };
 } // namespace Engine

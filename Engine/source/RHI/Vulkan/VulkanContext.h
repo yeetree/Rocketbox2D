@@ -7,6 +7,7 @@
 #include "RHI/Vulkan/VulkanQueue.h"
 
 #include <vulkan/vulkan_raii.hpp>
+#include <vk_mem_alloc.h>
 
 namespace Engine
 {
@@ -18,16 +19,28 @@ namespace Engine
         vk::raii::DebugUtilsMessengerEXT m_DebugMessenger = nullptr;
         vk::raii::PhysicalDevice m_PhysicalDevice = nullptr;
         vk::raii::Device m_Device = nullptr;
-
+        // TODO: Vulkan: Put command pool somewhere better
+        vk::raii::CommandPool m_CommandPool = nullptr;
+        VmaAllocator m_Allocator;
         VulkanQueue m_GraphicsQueue;
 
         void CreateInstance(IVulkanGraphicsBridge* bridge);
         void SetupDebugMessenger();
         void PickPhysicalDevice();
         void CreateLogicalDevice(IVulkanGraphicsBridge* bridge);
+        void CreateAllocator();
+        void CreateCommandPool();
 
     public:
         VulkanContext(IVulkanGraphicsBridge* bridge);
+        ~VulkanContext();
+
+        vk::raii::Instance& GetInstance() { return m_Instance; }
+        vk::raii::PhysicalDevice& GetPhysicalDevice() { return m_PhysicalDevice; }
+        vk::raii::Device& GetDevice() { return m_Device; }
+        vk::raii::CommandPool& GetCommandPool() { return m_CommandPool; }
+        VmaAllocator& GetAllocator() { return m_Allocator; }
+        VulkanQueue& GetGraphicsQueue() { return m_GraphicsQueue; }
     };
 } // namespace Engine
 

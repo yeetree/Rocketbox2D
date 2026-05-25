@@ -5,6 +5,8 @@
 
 #include "Engine/Core/Base.h"
 
+#include "Engine/Platform/IWindow.h"
+
 #include "Engine/RHI/GraphicsAPI.h"
 #include "Engine/RHI/ITexture.h"
 #include "Engine/RHI/ICommandBuffer.h"
@@ -20,7 +22,7 @@ namespace Engine
 
     // Decribes how a surface should be created
     struct SwapChainDesc {
-        uint32_t width, height;
+        Ref<IWindow> window;
         PresentMode presentation;
         TextureFormat format;
     };
@@ -36,7 +38,6 @@ namespace Engine
         virtual void SetPresentation(PresentMode presentation) = 0;
 
         virtual ITexture* GetCurrentBackBuffer() = 0;
-        virtual void Present() = 0;
     };
 } // namespace Engine
 

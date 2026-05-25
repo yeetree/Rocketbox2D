@@ -30,10 +30,12 @@ namespace Engine {
     private:
         uint32_t m_Width, m_Height;
         TextureFormat m_Format;
+        TextureUsage m_Usage;
         uint32_t m_ID;
 
     protected:
-        ITexture(uint32_t width, uint32_t height, TextureFormat format) : m_Width(width), m_Height(height), m_Format(format) {
+        ITexture(uint32_t width, uint32_t height, TextureFormat format, TextureUsage usage)
+            : m_Width(width), m_Height(height), m_Format(format), m_Usage(usage) {
             static uint32_t nextID = 1;
             m_ID = nextID++;
         }
@@ -44,6 +46,7 @@ namespace Engine {
         uint32_t GetWidth() const { return m_Width; }
         uint32_t GetHeight() const { return m_Height; }
         TextureFormat GetFormat() const { return m_Format; }
+        TextureUsage GetUsage() const { return m_Usage; }
         uint32_t GetID() const { return m_ID; }
     };
 

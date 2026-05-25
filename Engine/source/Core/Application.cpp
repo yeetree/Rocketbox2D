@@ -30,6 +30,7 @@ namespace Engine {
         // Initialize platform
         m_Platform = IPlatform::Create();
         ENGINE_CORE_ASSERT(m_Platform, "Platform is null!");
+        m_Locator->RegisterInstance<IPlatform>(m_Platform);
         
         // Set event callback
         //m_Platform->SetEventCallback(std::bind(&Engine::Application::EventCallback, this, std::placeholders::_1));
