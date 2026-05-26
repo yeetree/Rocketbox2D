@@ -1,6 +1,8 @@
 #include "RHI/Vulkan/RHI/VulkanGraphicsDevice.h"
 
 #include "RHI/Vulkan/RHI/VulkanSwapChain.h"
+#include "RHI/Vulkan/RHI/VulkanShader.h"
+#include "RHI/Vulkan/RHI/VulkanPipeline.h"
 #include "RHI/Vulkan/RHI/VulkanCommandBuffer.h"
 #include "RHI/Vulkan/VulkanConstants.h"
 
@@ -28,6 +30,17 @@ namespace Engine
     {
         return CreateScope<VulkanSwapChain>(m_Context.get(), m_Bridge.get(), desc);
     }
+
+    Scope<IShader> VulkanGraphicsDevice::CreateShader(const ShaderDesc& desc)
+    {
+        return CreateScope<VulkanShader>(m_Context.get(), desc);
+    }
+
+    Scope<IPipeline> VulkanGraphicsDevice::CreatePipeline(const PipelineDesc& desc)
+    {
+        return CreateScope<VulkanPipeline>(m_Context.get(), desc);
+    }
+
 
     // Frame pacing
     void VulkanGraphicsDevice::BeginFrame()

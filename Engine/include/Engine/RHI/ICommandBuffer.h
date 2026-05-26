@@ -6,6 +6,7 @@
 #include "Engine/Core/Base.h"
 
 #include "Engine/RHI/ITexture.h"
+#include "Engine/RHI/IPipeline.h"
 
 #include "Engine/Math/Vector.h"
 
@@ -16,12 +17,17 @@ namespace Engine
     public:
         virtual ~ICommandBuffer() = default;
 
+        // Command buffer
         virtual void Begin() = 0;
         virtual void End() = 0;
 
         // Render target
         virtual void BeginRendering(ITexture* renderTarget, Vec4 clearColor) = 0;
         virtual void EndRendering() = 0;
+
+        // Graphics
+        virtual void BindPipeline(IPipeline* pipeline) = 0;
+        virtual void Draw(uint32_t vertexCount, uint32_t instanceCount = 1, uint32_t firstVertex = 0, uint32_t firstInstance = 0) = 0;
     };
 }
 

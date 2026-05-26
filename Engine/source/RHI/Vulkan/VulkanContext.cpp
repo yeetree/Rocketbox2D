@@ -288,10 +288,11 @@ namespace Engine
         );
 
         // Get features
-        vk::StructureChain<vk::PhysicalDeviceFeatures2, vk::PhysicalDeviceSynchronization2Features, vk::PhysicalDeviceDynamicRenderingFeatures, vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT> featureChain;
-        featureChain.get<vk::PhysicalDeviceDynamicRenderingFeatures>().dynamicRendering = VK_TRUE;
-        featureChain.get<vk::PhysicalDeviceSynchronization2Features>().synchronization2 = VK_TRUE;
-        featureChain.get<vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>().extendedDynamicState = VK_TRUE;
+        vk::StructureChain<vk::PhysicalDeviceFeatures2, vk::PhysicalDeviceVulkan11Features, vk::PhysicalDeviceSynchronization2Features, vk::PhysicalDeviceDynamicRenderingFeatures, vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT> featureChain;
+        featureChain.get<vk::PhysicalDeviceDynamicRenderingFeatures>().dynamicRendering = vk::True;
+        featureChain.get<vk::PhysicalDeviceVulkan11Features>().shaderDrawParameters = vk::True;
+        featureChain.get<vk::PhysicalDeviceSynchronization2Features>().synchronization2 = vk::True;
+        featureChain.get<vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>().extendedDynamicState = vk::True;
 
         // Device extensions
         std::vector<char const*> requiredDeviceExtensions;

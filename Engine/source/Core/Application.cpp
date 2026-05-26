@@ -52,9 +52,9 @@ namespace Engine {
         m_Locator->RegisterInstance<IWindow>(m_Window);
 
         // Init filesystem
-        //LOG_CORE_INFO("Initializing filesystem...");
-        //m_FileSystem = CreateScope<FileSystem>(m_Platform->GetBasePath());
-        //s_Locator->RegisterInstance<FileSystem>(m_FileSystem.get());
+        LOG_CORE_INFO("Initializing filesystem...");
+        m_FileSystem = CreateRef<FileSystem>(m_Platform->GetBasePath());
+        m_Locator->RegisterInstance<FileSystem>(m_FileSystem);
 
         // Create graphics device
         LOG_CORE_INFO("Initializing graphics device...");

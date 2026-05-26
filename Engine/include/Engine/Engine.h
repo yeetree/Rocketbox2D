@@ -4,7 +4,7 @@
 #include "Engine/Core/EntryPoint.h"
 
 #include "Engine/Core/Application.h"
-//#include "Engine/Core/FileSystem.h"
+#include "Engine/Core/FileSystem.h"
 #include "Engine/Core/Log.h"
 #include "Engine/Core/Timer.h"
 #include "Engine/Core/Base.h"

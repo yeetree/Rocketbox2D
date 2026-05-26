@@ -12,7 +12,7 @@ namespace Engine
     class ENGINE_EXPORT FileSystem {
     public:
         FileSystem(const std::string& basePath = "");
-        ~FileSystem();
+        ~FileSystem() = default;
 
         void SetBasePath(const std::string& basePath);
         std::vector<char> ReadFile(const std::string &path);

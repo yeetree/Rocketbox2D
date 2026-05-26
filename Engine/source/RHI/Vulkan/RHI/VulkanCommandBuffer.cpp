@@ -1,5 +1,6 @@
 #include "RHI/Vulkan/RHI/VulkanCommandBuffer.h"
 #include "RHI/Vulkan/RHI/VulkanTexture.h"
+#include "RHI/Vulkan/RHI/VulkanPipeline.h"
 
 #include "Engine/Core/Assert.h"
 
@@ -87,6 +88,9 @@ namespace Engine
         );
 
         m_CommandBuffer.beginRendering(renderingInfo);
+
+        m_CommandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, static_cast<float>(m_CurrentRenderTarget->GetWidth()), static_cast<float>(m_CurrentRenderTarget->GetHeight()), 0.0f, 1.0f));
+        m_CommandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D(m_CurrentRenderTarget->GetWidth(), m_CurrentRenderTarget->GetHeight())));
     }
 
     void VulkanCommandBuffer::EndRendering()
@@ -105,6 +109,24 @@ namespace Engine
         );
 
         m_CurrentRenderTarget = nullptr;
+    }
+
+    void VulkanCommandBuffer::BindPipeline(IPipeline* pipeline)
+    {
+        if(pipeline == nullptr)
+        {
+            LOG_CORE_ERROR("Vulkan: VulkanCommandBuffer: BindPipeline(): pipeline is nullptr!");
+            return;
+        }
+
+        VulkanPipeline* vpipe = static_cast<VulkanPipeline*>(pipeline);
+
+        m_CommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, vpipe->GetPipeline());
+    }
+
+    void VulkanCommandBuffer::Draw(uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance)
+    {
+        m_CommandBuffer.draw(vertexCount, instanceCount, firstVertex, firstInstance);
     }
 
 

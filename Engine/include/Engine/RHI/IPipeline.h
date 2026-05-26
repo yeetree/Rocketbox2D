@@ -9,10 +9,23 @@
 
 namespace Engine
 {
+    enum class ENGINE_EXPORT PrimitiveTopology
+    {
+        PointList,
+        LineList,
+        TriangleList
+    };
 
     struct ENGINE_EXPORT PipelineDesc
     {
+        // Shader
         IShader* shader;
+
+        // Topology
+        PrimitiveTopology topology = PrimitiveTopology::TriangleList;
+
+        // Rasterization
+        bool blending = false;
     };
 
     class ENGINE_EXPORT IPipeline

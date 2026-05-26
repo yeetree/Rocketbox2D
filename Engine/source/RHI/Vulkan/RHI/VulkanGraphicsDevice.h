@@ -28,6 +28,8 @@ namespace Engine
         ~VulkanGraphicsDevice() = default;
 
         Scope<ISwapChain> CreateSwapChain(const SwapChainDesc& desc) override;
+        Scope<IShader> CreateShader(const ShaderDesc& desc) override;
+        Scope<IPipeline> CreatePipeline(const PipelineDesc& desc) override;
 
         // Frame pacing
         void BeginFrame() override;

@@ -28,6 +28,10 @@ namespace Engine
         void BeginRendering(ITexture* renderTarget, Vec4 clearColor) override;
         void EndRendering() override;
 
+        // Graphics
+        void BindPipeline(IPipeline* pipeline) override;
+        void Draw(uint32_t vertexCount, uint32_t instanceCount = 1, uint32_t firstVertex = 0, uint32_t firstInstance = 0) override;
+
         // Vulkan
         vk::raii::CommandBuffer& GetCommandBuffer() { return m_CommandBuffer; }
     };

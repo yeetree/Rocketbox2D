@@ -9,6 +9,7 @@
 #include "Engine/Core/Base.h"
 #include "Engine/Core/Timer.h"
 #include "Engine/Core/ServiceLocator.h"
+#include "Engine/Core/FileSystem.h"
 
 #include "Engine/Platform/IPlatform.h"
 #include "Engine/Platform/IWindow.h"
@@ -51,8 +52,7 @@ namespace Engine {
 
         Scope<ServiceLocator> m_Locator;
         
-        //Scope<Input> m_Input;
-        //Scope<FileSystem> m_FileSystem;
+        Ref<FileSystem> m_FileSystem;
         Ref<IPlatform> m_Platform;
         Ref<IGraphicsDevice> m_GraphicsDevice;
         Ref<IWindow> m_Window;

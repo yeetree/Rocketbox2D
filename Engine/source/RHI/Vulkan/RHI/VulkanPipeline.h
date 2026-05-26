@@ -5,13 +5,28 @@
 
 #include "RHI/Vulkan/VulkanContext.h"
 
+#include <vulkan/vulkan_raii.hpp>
+
 namespace Engine
 {
     class ENGINE_EXPORT VulkanPipeline : public IPipeline
     {
+    private:
+
+        // Vulkan
+        vk::raii::PipelineLayout m_Layout = nullptr;
+        vk::raii::Pipeline m_Pipeline = nullptr;
+
+        // Helpers
+        static vk::ShaderStageFlagBits GetShaderStage(ShaderStage stage);
+        static vk::PrimitiveTopology GetPrimitiveTopology(PrimitiveTopology topology);
+
     public:
         VulkanPipeline(VulkanContext* context, const PipelineDesc& desc);
         ~VulkanPipeline() override = default;
+
+        vk::raii::PipelineLayout& GetPipelineLayout() { return m_Layout; }
+        vk::raii::Pipeline& GetPipeline() { return m_Pipeline; }
     };
 } // namespace Engine
 

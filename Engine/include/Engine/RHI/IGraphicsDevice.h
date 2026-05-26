@@ -11,17 +11,22 @@
 #include "Engine/RHI/GraphicsAPI.h"
 #include "Engine/RHI/ISwapChain.h"
 #include "Engine/RHI/ITexture.h"
+#include "Engine/RHI/IShader.h"
+#include "Engine/RHI/IPipeline.h"
 #include "Engine/RHI/ICommandBuffer.h"
 
 namespace Engine
 {
-    // IGraphicsDevice represents the GPU itself. It handles resource creation and lifetime and memory management.
+    // IGraphicsDevice represents the GPU itself. It handles resource creation and lifetime, memory management,
+    // and frame pacing.
     class ENGINE_EXPORT IGraphicsDevice
     {
     public:
         virtual ~IGraphicsDevice() = default;
 
         virtual Scope<ISwapChain> CreateSwapChain(const SwapChainDesc& desc) = 0;
+        virtual Scope<IShader> CreateShader(const ShaderDesc& desc) = 0;
+        virtual Scope<IPipeline> CreatePipeline(const PipelineDesc& desc) = 0;
 
         // Frame pacing
         virtual void BeginFrame() = 0;
