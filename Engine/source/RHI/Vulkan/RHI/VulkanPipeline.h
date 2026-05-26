@@ -20,6 +20,7 @@ namespace Engine
         // Helpers
         static vk::ShaderStageFlagBits GetShaderStage(ShaderStage stage);
         static vk::PrimitiveTopology GetPrimitiveTopology(PrimitiveTopology topology);
+        static vk::Format GetVertexElementFormat(VertexElementType type);
 
     public:
         VulkanPipeline(VulkanContext* context, const PipelineDesc& desc);

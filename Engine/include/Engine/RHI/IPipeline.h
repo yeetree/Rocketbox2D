@@ -4,6 +4,7 @@
 #include "engine_export.h"
 
 #include "Engine/RHI/IShader.h"
+#include "Engine/RHI/VertexLayout.h"
 
 #include <cstdint>
 
@@ -20,6 +21,9 @@ namespace Engine
     {
         // Shader
         IShader* shader;
+
+        // Vertex attributes
+        VertexLayout vertexLayout;
 
         // Topology
         PrimitiveTopology topology = PrimitiveTopology::TriangleList;

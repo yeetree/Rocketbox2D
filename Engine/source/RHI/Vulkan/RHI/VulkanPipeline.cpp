@@ -28,6 +28,20 @@ namespace Engine
         return t;
     }
 
+    vk::Format VulkanPipeline::GetVertexElementFormat(VertexElementType type)
+    {
+        vk::Format e;
+        switch(type)
+        {
+            case VertexElementType::Int: e = vk::Format::eR32Sint; break;
+            case VertexElementType::Float: e = vk::Format::eR32Sfloat; break;
+            case VertexElementType::Vec2: e = vk::Format::eR32G32Sfloat; break;
+            case VertexElementType::Vec3: e = vk::Format::eR32G32B32Sfloat; break;
+            case VertexElementType::Vec4: e = vk::Format::eR32G32B32A32Sfloat; break;
+        }
+        return e;
+    }
+
     VulkanPipeline::VulkanPipeline(VulkanContext* context, const PipelineDesc& desc)
     {
         ENGINE_CORE_ASSERT(context != nullptr, "Vulkan: VulkanPipeline(): context is nullptr!");
@@ -50,7 +64,22 @@ namespace Engine
         }
 
         // Vertex attributes
-        vk::PipelineVertexInputStateCreateInfo vertexInputInfo;
+
+        // Binding desc
+        std::vector<vk::VertexInputAttributeDescription> attributeDescriptions{};
+        vk::VertexInputBindingDescription bindingDescription = { 0, desc.vertexLayout.GetStride(), vk::VertexInputRate::eVertex };
+        
+        // Attrib desc
+        const std::vector<VertexElement>& elements = desc.vertexLayout.GetElements();
+        for(int i = 0; i < elements.size(); i++) {
+            attributeDescriptions.emplace_back(i, 0, GetVertexElementFormat(elements[i].GetType()), elements[i].GetOffset());
+        }
+
+        vk::PipelineVertexInputStateCreateInfo vertexInputInfo{};
+        vertexInputInfo.vertexBindingDescriptionCount = 1;
+        vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+        vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+        vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 
         // Topology
         vk::PipelineInputAssemblyStateCreateInfo inputAssembly(

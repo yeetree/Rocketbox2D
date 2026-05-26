@@ -51,6 +51,7 @@ public:
 
         PipelineDesc pdesc {
             .shader = shader.get(),
+            .vertexLayout = {},
             .topology = PrimitiveTopology::TriangleList,
             .blending = false
         };
