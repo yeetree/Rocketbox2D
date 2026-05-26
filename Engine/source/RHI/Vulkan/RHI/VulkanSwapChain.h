@@ -32,9 +32,8 @@ namespace Engine
         uint32_t m_AcquiredImageIndex = 0;
 
         // Sync Objects
-        // Indexed by global frame index
-        std::vector<vk::raii::Semaphore> m_PresentCompleteSemaphores; // OS gives us backbuffer
-        std::vector<vk::raii::Semaphore> m_RenderFinishedSemaphores; // Finished drawing
+        std::vector<vk::raii::Semaphore> m_PresentCompleteSemaphores; // OS gives us backbuffer - Global frame index
+        std::vector<vk::raii::Semaphore> m_RenderFinishedSemaphores; // Finished drawing - Acquired image index
 
         // Helpers
         vk::PresentModeKHR GetPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes, PresentMode presentation);
@@ -66,9 +65,9 @@ namespace Engine
             return m_PresentCompleteSemaphores[frameIdx];
         }
 
-        vk::raii::Semaphore& GetRenderFinishedSemaphore(uint32_t frameIdx)
+        vk::raii::Semaphore& GetRenderFinishedSemaphore()
         {
-            return m_RenderFinishedSemaphores[frameIdx];
+            return m_RenderFinishedSemaphores[m_AcquiredImageIndex];
         }
     };
 } // namespace Engine

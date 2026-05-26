@@ -1,10 +1,12 @@
 #ifndef ENGINE_RHI_GRAPHICSAPI
 #define ENGINE_RHI_GRAPHICSAPI
 
+#include "engine_export.h"
+
 namespace Engine
 {
     // What backend to create
-    enum class GraphicsAPI { Vulkan };
+    enum class ENGINE_EXPORT GraphicsAPI { Vulkan };
 } // namespace Engine
 
 

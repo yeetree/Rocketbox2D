@@ -13,7 +13,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 # Vulkan
 find_package(Vulkan 1.2.197 REQUIRED)
 find_package(VMA REQUIRED)
-# find_program(SLANGC_EXECUTABLE slangc REQUIRED)
+find_program(SLANGC_EXECUTABLE slangc REQUIRED)
 
 # Vendored
 add_subdirectory(vendor/glm)

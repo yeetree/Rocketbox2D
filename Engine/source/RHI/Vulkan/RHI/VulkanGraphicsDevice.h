@@ -5,6 +5,7 @@
 
 #include "RHI/Vulkan/IVulkanGraphicsBridge.h"
 #include "RHI/Vulkan/VulkanContext.h"
+#include "RHI/Vulkan/RHI/VulkanCommandBuffer.h"
 
 namespace Engine
 {
@@ -18,6 +19,9 @@ namespace Engine
 
         Scope<IVulkanGraphicsBridge> m_Bridge;
         Scope<VulkanContext> m_Context;
+
+        // Temporary
+        std::vector<std::vector<Scope<VulkanCommandBuffer>>> m_AllocatedCommandBuffers;
 
     public:
         VulkanGraphicsDevice(Scope<IVulkanGraphicsBridge> bridge);

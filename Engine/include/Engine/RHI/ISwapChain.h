@@ -13,7 +13,7 @@
 
 namespace Engine
 {
-    enum class PresentMode
+    enum class ENGINE_EXPORT PresentMode
     {
         Immediate, // No vsync
         VSync, // Double buffered vsync
@@ -21,8 +21,8 @@ namespace Engine
     };
 
     // Decribes how a surface should be created
-    struct SwapChainDesc {
-        Ref<IWindow> window;
+    struct ENGINE_EXPORT SwapChainDesc {
+        IWindow* window;
         PresentMode presentation;
         TextureFormat format;
     };

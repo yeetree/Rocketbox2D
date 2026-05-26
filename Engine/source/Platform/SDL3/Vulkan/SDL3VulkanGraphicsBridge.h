@@ -19,7 +19,7 @@ namespace Engine
         SDL3VulkanGraphicsBridge() : IVulkanGraphicsBridge(Platform::SDL) {};
         ~SDL3VulkanGraphicsBridge() override = default;
 
-        VkSurfaceKHR CreateSurface(VkInstance instance, VkPhysicalDevice pd, uint32_t presentQueueIndex, Ref<IWindow> window) override;
+        VkSurfaceKHR CreateSurface(VkInstance instance, VkPhysicalDevice pd, uint32_t presentQueueIndex, IWindow* window) override;
         // void DestroySurface(VkInstance instance, VkSurfaceKHR surface) override;
         // please kindy see source/RHI/Vulkan/IVulkanGraphicsBridge.h
 

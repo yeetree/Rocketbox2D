@@ -20,7 +20,7 @@ namespace Engine
 
         // Creates a surface from an IWindow.
         // Recieves current presentQueueIndex to make sure that this surface is okay for this presention queue
-        virtual VkSurfaceKHR CreateSurface(VkInstance instance, VkPhysicalDevice pd, uint32_t presentQueueIndex, Ref<IWindow> window) = 0;
+        virtual VkSurfaceKHR CreateSurface(VkInstance instance, VkPhysicalDevice pd, uint32_t presentQueueIndex, IWindow* window) = 0;
         
         // virtual void DestroySurface(VkInstance instance, VkSurfaceKHR surface) = 0;
         // Not needed. When wrapped into a vk::raii::SurfaceKHR with an instance,

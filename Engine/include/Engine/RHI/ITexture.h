@@ -8,16 +8,16 @@
 namespace Engine {
 
     // Texture pixel format
-    enum class TextureFormat { RGBA8 };
+    enum class ENGINE_EXPORT TextureFormat { RGBA8 };
 
     // Texture usage
-    enum TextureUsage {
+    enum ENGINE_EXPORT TextureUsage {
         Sampled         = 1,
         RenderTarget    = 1 << 1
     };
 
     // Decribes how a texture should be created
-    struct TextureDesc {
+    struct ENGINE_EXPORT TextureDesc {
         uint32_t width = 0;
         uint32_t height = 0;
         // uint32_t mips = 1;

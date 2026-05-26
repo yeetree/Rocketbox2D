@@ -10,13 +10,13 @@
 namespace Engine
 {
 
-    VkSurfaceKHR SDL3VulkanGraphicsBridge::CreateSurface(VkInstance instance, VkPhysicalDevice pd, uint32_t presentQueueIndex, Ref<IWindow> window)
+    VkSurfaceKHR SDL3VulkanGraphicsBridge::CreateSurface(VkInstance instance, VkPhysicalDevice pd, uint32_t presentQueueIndex, IWindow* window)
     {
         ENGINE_CORE_ASSERT(window != nullptr, "SDL3 + Vulkan: CreateSurface(): window is nullptr!");
         ENGINE_CORE_ASSERT(window->GetPlatform() == Platform::SDL, "SDL3 + Vulkan: CreateSurface(): window is not for SDL3!");
         ENGINE_CORE_ASSERT(window->GetAPI() == GraphicsAPI::Vulkan, "SDL3 + Vulkan: CreateSurface(): window is not for Vulkan!");
 
-        SDL3Window* sdlWindow = static_cast<SDL3Window*>(window.get());
+        SDL3Window* sdlWindow = static_cast<SDL3Window*>(window);
 
         VkSurfaceKHR surface;
 

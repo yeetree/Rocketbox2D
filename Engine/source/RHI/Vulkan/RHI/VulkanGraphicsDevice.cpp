@@ -19,6 +19,8 @@ namespace Engine
         for(int i = 0; i < k_MaxFramesInFlight; i++)
         {
             m_Fences.emplace_back(m_Context->GetDevice(), fenceInfo);
+
+            m_AllocatedCommandBuffers.emplace_back();
         }
     };
 
@@ -32,6 +34,7 @@ namespace Engine
     {
         m_Context->GetDevice().waitForFences(*m_Fences[m_FrameIndex], VK_TRUE, UINT64_MAX);
         m_Context->GetDevice().resetFences(*m_Fences[m_FrameIndex]);
+        m_AllocatedCommandBuffers[m_FrameIndex].clear();
     }
 
     void VulkanGraphicsDevice::EndFrame()
@@ -54,8 +57,9 @@ namespace Engine
 
         vsc->AcquireNextImage(m_FrameIndex);
 
-        VulkanCommandBuffer* cmd = new VulkanCommandBuffer(m_Context.get()); // TODO: Vulkan: small memory leak just for testing
-        return cmd;
+        Scope<VulkanCommandBuffer> cmd = CreateScope<VulkanCommandBuffer>(m_Context.get());
+        m_AllocatedCommandBuffers[m_FrameIndex].push_back(std::move(cmd)); // TODO: Vulkan: More sophisticated command buffer allocation
+        return m_AllocatedCommandBuffers[m_FrameIndex].back().get();
     }
 
     void VulkanGraphicsDevice::EndSwapChainPass(Ref<ISwapChain> swapchain, ICommandBuffer* cmd)
@@ -76,7 +80,7 @@ namespace Engine
         VulkanCommandBuffer* vcmd = static_cast<VulkanCommandBuffer*>(cmd);
 
         vk::raii::Semaphore& presentComplete = vsc->GetPresentCompleteSemaphore(m_FrameIndex);
-        vk::raii::Semaphore& renderFinished = vsc->GetRenderFinishedSemaphore(m_FrameIndex);
+        vk::raii::Semaphore& renderFinished = vsc->GetRenderFinishedSemaphore();
 
         vk::PipelineStageFlags waitDestinationStageMask( vk::PipelineStageFlagBits::eColorAttachmentOutput );
         vk::SubmitInfo submitInfo;

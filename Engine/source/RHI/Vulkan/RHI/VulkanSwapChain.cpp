@@ -84,6 +84,8 @@ namespace Engine
             .usage = TextureUsage::RenderTarget
         };
 
+        vk::SemaphoreCreateInfo semaphoreCreateInfo{};
+
         for(auto &image : m_SwapChainImages)
         {
             m_SwapChainTextures.push_back(
@@ -91,16 +93,18 @@ namespace Engine
                     CreateScope<VulkanTexture>(m_Context, image, m_SwapChainSurfaceFormat.format, texDesc)
                 )
             );
-        }
 
-        vk::SemaphoreCreateInfo semaphoreCreateInfo{};
+             m_RenderFinishedSemaphores.emplace_back(m_Context->GetDevice(), semaphoreCreateInfo);
+        }
 
         // Create semaphores
         for(int i = 0; i < k_MaxFramesInFlight; i++)
         {
             m_PresentCompleteSemaphores.emplace_back(m_Context->GetDevice(), semaphoreCreateInfo);
-            m_RenderFinishedSemaphores.emplace_back(m_Context->GetDevice(), semaphoreCreateInfo);
+           
         }
+
+        m_RebuildSwapchain = false;
     }
 
     void VulkanSwapChain::Resize(uint32_t width, uint32_t height)
@@ -124,6 +128,11 @@ namespace Engine
 
     void VulkanSwapChain::AcquireNextImage(uint32_t frameIdx)
     {
+        if(m_RebuildSwapchain)
+        {
+            BuildSwapChain();
+        }
+
         m_AcquiredImageIndex = m_SwapChain.acquireNextImage(
             UINT64_MAX,
             m_PresentCompleteSemaphores[frameIdx],
@@ -135,7 +144,7 @@ namespace Engine
     {
         vk::PresentInfoKHR presentInfo{};
         presentInfo.waitSemaphoreCount = 1;
-        presentInfo.pWaitSemaphores = &*(m_RenderFinishedSemaphores[frameIdx]);
+        presentInfo.pWaitSemaphores = &*(m_RenderFinishedSemaphores[m_AcquiredImageIndex]);
         presentInfo.swapchainCount = 1;
         presentInfo.pSwapchains = &*m_SwapChain;
         presentInfo.pImageIndices = &m_AcquiredImageIndex;
