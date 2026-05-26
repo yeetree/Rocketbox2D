@@ -8,13 +8,13 @@
 
 namespace Engine
 {
-    VulkanCommandBuffer::VulkanCommandBuffer(VulkanContext* context)
+    VulkanCommandBuffer::VulkanCommandBuffer(VulkanContext* context, vk::CommandPool pool)
     {
         ENGINE_CORE_ASSERT(context != nullptr, "Vulkan: context is nullptr!");
 
         // Create command buffer
         vk::CommandBufferAllocateInfo allocInfo(
-            context->GetCommandPool(),
+            pool,
             vk::CommandBufferLevel::ePrimary,
             1
         );

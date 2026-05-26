@@ -29,7 +29,6 @@ namespace Engine
         void PickPhysicalDevice();
         void CreateLogicalDevice(IVulkanGraphicsBridge* bridge);
         void CreateAllocator();
-        void CreateCommandPool();
 
     public:
         VulkanContext(IVulkanGraphicsBridge* bridge);
@@ -38,7 +37,6 @@ namespace Engine
         vk::raii::Instance& GetInstance() { return m_Instance; }
         vk::raii::PhysicalDevice& GetPhysicalDevice() { return m_PhysicalDevice; }
         vk::raii::Device& GetDevice() { return m_Device; }
-        vk::raii::CommandPool& GetCommandPool() { return m_CommandPool; }
         VmaAllocator& GetAllocator() { return m_Allocator; }
         VulkanQueue& GetGraphicsQueue() { return m_GraphicsQueue; }
     };

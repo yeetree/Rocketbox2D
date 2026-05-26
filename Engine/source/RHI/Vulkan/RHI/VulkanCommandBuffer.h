@@ -18,7 +18,7 @@ namespace Engine
         vk::raii::CommandBuffer m_CommandBuffer = nullptr;    
 
     public:
-        VulkanCommandBuffer(VulkanContext* context);
+        VulkanCommandBuffer(VulkanContext* context, vk::CommandPool pool);
         ~VulkanCommandBuffer() = default;
 
         void Begin() override;

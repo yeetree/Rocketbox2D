@@ -3,9 +3,11 @@
 
 #include "Engine/RHI/IGraphicsDevice.h"
 
+#include "RHI/Vulkan/RHI/VulkanCommandBuffer.h"
+
 #include "RHI/Vulkan/IVulkanGraphicsBridge.h"
 #include "RHI/Vulkan/VulkanContext.h"
-#include "RHI/Vulkan/RHI/VulkanCommandBuffer.h"
+#include "RHI/Vulkan/VulkanFrame.h"
 
 namespace Engine
 {
@@ -15,13 +17,10 @@ namespace Engine
         
         // Frame pacing
         uint32_t m_FrameIndex;
-        std::vector<vk::raii::Fence> m_Fences;
+        std::vector<Scope<VulkanFrame>> m_Frames;
 
         Scope<IVulkanGraphicsBridge> m_Bridge;
         Scope<VulkanContext> m_Context;
-
-        // Temporary
-        std::vector<std::vector<Scope<VulkanCommandBuffer>>> m_AllocatedCommandBuffers;
 
     public:
         VulkanGraphicsDevice(Scope<IVulkanGraphicsBridge> bridge);

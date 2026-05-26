@@ -46,7 +46,6 @@ namespace Engine
         PickPhysicalDevice();
         CreateLogicalDevice(bridge);
         VULKAN_HPP_DEFAULT_DISPATCHER.init(*m_Device);
-        CreateCommandPool();
     }
 
     VulkanContext::~VulkanContext()
@@ -332,16 +331,4 @@ namespace Engine
         
         vmaCreateAllocator(&allocatorCreateInfo, &m_Allocator);
     }
-
-    void VulkanContext::CreateCommandPool()
-    {
-        LOG_CORE_INFO("Vulkan: Creating command pool...");
-
-        vk::CommandPoolCreateInfo poolInfo(
-            vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
-            m_GraphicsQueue.familyIndex
-        );
-
-        m_CommandPool = vk::raii::CommandPool(m_Device, poolInfo);
-    };
 } // namespace Engine

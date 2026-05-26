@@ -15,14 +15,11 @@ namespace Engine
     {
         m_Context = CreateScope<VulkanContext>(m_Bridge.get());
 
-        vk::FenceCreateInfo fenceInfo;
-        fenceInfo.flags = vk::FenceCreateFlagBits::eSignaled;
-
+        // Create one frame per frame in flight
         for(int i = 0; i < k_MaxFramesInFlight; i++)
         {
-            m_Fences.emplace_back(m_Context->GetDevice(), fenceInfo);
-
-            m_AllocatedCommandBuffers.emplace_back();
+            Scope<VulkanFrame> frame = CreateScope<VulkanFrame>(m_Context.get());
+            m_Frames.push_back(std::move(frame));
         }
     };
 
@@ -45,15 +42,15 @@ namespace Engine
     // Frame pacing
     void VulkanGraphicsDevice::BeginFrame()
     {
-        m_Context->GetDevice().waitForFences(*m_Fences[m_FrameIndex], VK_TRUE, UINT64_MAX);
-        m_Context->GetDevice().resetFences(*m_Fences[m_FrameIndex]);
-        m_AllocatedCommandBuffers[m_FrameIndex].clear();
+        m_Context->GetDevice().waitForFences(*m_Frames[m_FrameIndex]->GetFence(), VK_TRUE, UINT64_MAX);
+        m_Context->GetDevice().resetFences(*m_Frames[m_FrameIndex]->GetFence());
+        m_Frames[m_FrameIndex]->Reset();
     }
 
     void VulkanGraphicsDevice::EndFrame()
     {
         vk::SubmitInfo finalSubmit{};
-        m_Context->GetGraphicsQueue().queue.submit(finalSubmit, m_Fences[m_FrameIndex]);
+        m_Context->GetGraphicsQueue().queue.submit(finalSubmit, m_Frames[m_FrameIndex]->GetFence());
         m_FrameIndex = (m_FrameIndex + 1) % k_MaxFramesInFlight;
     }
 
@@ -70,9 +67,7 @@ namespace Engine
 
         vsc->AcquireNextImage(m_FrameIndex);
 
-        Scope<VulkanCommandBuffer> cmd = CreateScope<VulkanCommandBuffer>(m_Context.get());
-        m_AllocatedCommandBuffers[m_FrameIndex].push_back(std::move(cmd)); // TODO: Vulkan: More sophisticated command buffer allocation
-        return m_AllocatedCommandBuffers[m_FrameIndex].back().get();
+        return m_Frames[m_FrameIndex]->GetCommandBuffer(m_Context.get());
     }
 
     void VulkanGraphicsDevice::EndSwapChainPass(Ref<ISwapChain> swapchain, ICommandBuffer* cmd)
@@ -113,7 +108,7 @@ namespace Engine
     void VulkanGraphicsDevice::OnDestroy()
     {
         m_Context->GetDevice().waitIdle();
-        m_Fences.clear();
+        m_Frames.clear();
     }
 
 } // namespace Engine

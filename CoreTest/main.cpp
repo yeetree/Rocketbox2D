@@ -9,10 +9,7 @@ using namespace Engine;
 
 class EngineTestApp : public Application {
 public:
-    Ref<IWindow> win2;
-
     Ref<ISwapChain> sc;
-    Ref<ISwapChain> sc2;
 
     Ref<IGraphicsDevice> gd;
     Ref<IShader> shader;
@@ -28,13 +25,6 @@ public:
 
         gd = GetServiceLocator()->Get<IGraphicsDevice>();
         Ref<IWindow> win = GetServiceLocator()->Get<IWindow>();
-        win2 = GetServiceLocator()->Get<IPlatform>()->CreateWindow({
-            .title = "Test2",
-            .width = 300,
-            .height = 300,
-            .api = GraphicsAPI::Vulkan,
-            .resizable = true
-        });
         fs = GetServiceLocator()->Get<FileSystem>();
 
         SwapChainDesc scdesc{
@@ -44,10 +34,6 @@ public:
         };
 
         sc = gd->CreateSwapChain(scdesc);
-
-        scdesc.window = win2.get();
-
-        sc2 = gd->CreateSwapChain(scdesc);
 
         ShaderDesc shdesc{
             .modules = {
@@ -106,7 +92,6 @@ public:
     void OnRender() override {
         gd->BeginFrame();
 
-        // Window1
         ICommandBuffer* cmd = gd->BeginSwapChainPass(sc);
         cmd->Begin();
         
@@ -118,19 +103,6 @@ public:
         cmd->EndRendering();
         cmd->End();
         gd->EndSwapChainPass(sc, cmd);
-
-        // Window2
-        cmd = gd->BeginSwapChainPass(sc2);
-        cmd->Begin();
-        
-        cmd->BeginRendering(sc2->GetCurrentBackBuffer(), Vec4(0.25f, 0.0f, 0.0f, 1.0f));
-
-        cmd->BindPipeline(pipe.get());
-        cmd->Draw(3);
-
-        cmd->EndRendering();
-        cmd->End();
-        gd->EndSwapChainPass(sc2, cmd);
 
         gd->EndFrame();
     }
