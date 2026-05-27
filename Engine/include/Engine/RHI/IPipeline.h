@@ -10,6 +10,12 @@
 
 namespace Engine
 {
+    struct ENGINE_EXPORT UniformBinding
+    {
+        uint32_t binding;
+        ShaderStage stage;
+    };
+
     enum class ENGINE_EXPORT PrimitiveTopology
     {
         PointList,
@@ -24,6 +30,9 @@ namespace Engine
 
         // Vertex attributes
         VertexLayout vertexLayout;
+
+        // Uniforms
+        std::vector<UniformBinding> uniformBindings;
 
         // Topology
         PrimitiveTopology topology = PrimitiveTopology::TriangleList;

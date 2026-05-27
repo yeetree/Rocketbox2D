@@ -31,6 +31,15 @@ namespace Engine
             vk::BufferUsageFlagBits::eIndexBuffer,
             16
         );
+        m_UniformDynamicBuffer = CreateScope<VulkanDynamicBuffer>(
+            context,
+            k_DynamicMegaBufferSize,
+            vk::BufferUsageFlagBits::eUniformBuffer,
+            props.limits.minUniformBufferOffsetAlignment
+        );
+
+        // Descriptor set allocator
+        m_DescriptorSetAllocator = CreateScope<VulkanDescriptorSetAllocator>(context);
     }
 
     void VulkanFrame::Reset()
@@ -38,6 +47,8 @@ namespace Engine
         m_CommandBufferPool->Reset();
         m_VertexDynamicBuffer->Reset();
         m_IndexDynamicBuffer->Reset();
+        m_UniformDynamicBuffer->Reset();
+        m_DescriptorSetAllocator->Reset();
     }
 
     VulkanDynamicBuffer* VulkanFrame::GetDynamicBuffer(BufferType type)
@@ -46,6 +57,7 @@ namespace Engine
         {
             case BufferType::Vertex: return m_VertexDynamicBuffer.get(); break;
             case BufferType::Index: return m_IndexDynamicBuffer.get(); break;
+            case BufferType::Uniform: return m_UniformDynamicBuffer.get(); break;
         }
         return nullptr;
     }

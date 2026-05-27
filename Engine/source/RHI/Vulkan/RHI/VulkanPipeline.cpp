@@ -109,13 +109,15 @@ namespace Engine
         viewportState.scissorCount = 1;
         viewportState.pScissors = nullptr;
 
+        // TODO: Vulkan: Rasterizer options in PipelineDesc
+        
         // Rasterizer
         vk::PipelineRasterizationStateCreateInfo rasterizer;
         rasterizer.depthClampEnable = vk::False;
         rasterizer.rasterizerDiscardEnable = vk::False;
         rasterizer.polygonMode = vk::PolygonMode::eFill;
-        rasterizer.cullMode = vk::CullModeFlagBits::eNone;
-        rasterizer.frontFace = vk::FrontFace::eClockwise;
+        rasterizer.cullMode = vk::CullModeFlagBits::eBack;
+        rasterizer.frontFace = vk::FrontFace::eCounterClockwise;
         rasterizer.depthBiasEnable = vk::False;
         rasterizer.lineWidth = 1.0f;
 
@@ -148,9 +150,28 @@ namespace Engine
         colorBlending.attachmentCount = 1;
         colorBlending.pAttachments = &colorBlendAttachment;
 
-        // Pipeline Layout
+        // Uniform bindings
+        std::vector<vk::DescriptorSetLayoutBinding> layoutBindings;
+        for(auto const& ub : desc.uniformBindings)
+        {
+            vk::DescriptorSetLayoutBinding binding;
+            binding.binding = ub.binding;
+            binding.descriptorType = vk::DescriptorType::eUniformBufferDynamic;
+            binding.descriptorCount = 1;
+            binding.stageFlags = GetShaderStage(ub.stage);
+            layoutBindings.push_back(binding);
+        }
+
+        vk::DescriptorSetLayoutCreateInfo layoutInfo;
+        layoutInfo.bindingCount = static_cast<uint32_t>(layoutBindings.size());
+        layoutInfo.pBindings = layoutBindings.data();
+
+        m_DescriptorSetLayout = vk::raii::DescriptorSetLayout(context->GetDevice(), layoutInfo);
+
+        // Pipeline layout
         vk::PipelineLayoutCreateInfo pipelineLayoutInfo;
-        pipelineLayoutInfo.setLayoutCount = 0;
+        pipelineLayoutInfo.setLayoutCount         = 1;
+        pipelineLayoutInfo.pSetLayouts            = &(*m_DescriptorSetLayout);
         pipelineLayoutInfo.pushConstantRangeCount = 0;
 
         m_Layout = vk::raii::PipelineLayout(context->GetDevice(), pipelineLayoutInfo);

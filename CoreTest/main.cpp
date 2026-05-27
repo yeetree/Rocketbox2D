@@ -13,6 +13,13 @@ struct Vertex
     Vec3 inColor;
 };
 
+struct UniformBufferObject
+{
+    Mat4 model;
+    Mat4 view;
+    Mat4 proj;
+};
+
 const std::vector<Vertex> vertices = {
     {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
     {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
@@ -29,12 +36,16 @@ public:
     Ref<ISwapChain> sc;
 
     Ref<IGraphicsDevice> gd;
+    Ref<IWindow> win;
     Ref<IShader> shader;
     Ref<IPipeline> pipe;
     Ref<FileSystem> fs;
 
     Ref<IBuffer> vb;
     Ref<IBuffer> ib;
+    Ref<IBuffer> ub;
+
+    UniformBufferObject ubo;
 
     void OnStart() override {
         Ref<Input> in = GetServiceLocator()->Get<Input>();
@@ -44,7 +55,7 @@ public:
         in->MapAction("mailbox", KeyCode::E);
 
         gd = GetServiceLocator()->Get<IGraphicsDevice>();
-        Ref<IWindow> win = GetServiceLocator()->Get<IWindow>();
+        win = GetServiceLocator()->Get<IWindow>();
         fs = GetServiceLocator()->Get<FileSystem>();
 
         SwapChainDesc scdesc{
@@ -75,6 +86,9 @@ public:
                 { VertexElementType::Vec2, "inPosition" },
                 { VertexElementType::Vec3, "inColor" }
             },
+            .uniformBindings = {
+                { 0, ShaderStage::Vertex }
+            },
             .topology = PrimitiveTopology::TriangleList,
             .blending = false
         };
@@ -96,6 +110,14 @@ public:
         };
 
         ib = gd->CreateBuffer(ibdesc);
+
+        BufferDesc ubdesc{
+            .size = sizeof(UniformBufferObject),
+            .type = BufferType::Uniform,
+            .usage = BufferUsage::Dynamic
+        };
+
+        ub = gd->CreateBuffer(ubdesc);
 
         // Upload init data
         ICommandBuffer* init = gd->BeginSingleTimeCommands();
@@ -135,12 +157,21 @@ public:
         {
             gd->SetSwapChainPresentation(sc.get(), PresentMode::Mailbox);
         }
+
+        static float time = 0;
+        time += dt;
+        ubo.model = glm::rotate(Mat4(1.0f), time * glm::radians(90.0f), Vec3(0.0f, 0.0f, 1.0f));
+        ubo.view = lookAt(Vec3(2.0f, 2.0f, 2.0f), Vec3(0.0f, 0.0f, 0.0f), Vec3(0.0f, 0.0f, 1.0f));
+        ubo.proj = glm::perspective(glm::radians(45.0f), static_cast<float>(win->GetWidth()) / static_cast<float>(win->GetHeight()), 0.1f, 10.0f);
+        ubo.proj[1][1] *= -1; // TODO: Fix projection
     }
 
     void OnRender() override {
         ENGINE_CORE_ASSERT(gd != nullptr, "GD null!");
 
         gd->BeginFrame();
+
+        gd->SetBufferData(ub.get(), (void*)&ubo, sizeof(UniformBufferObject));
 
         ICommandBuffer* cmd = gd->BeginSwapChainPass(sc.get());
         cmd->Begin();
@@ -150,6 +181,7 @@ public:
         cmd->BindPipeline(pipe.get());
         cmd->BindVertexBuffer(vb.get());
         cmd->BindIndexBuffer(ib.get());
+        cmd->BindUniformBuffer(ub.get(), pipe.get(), 0);
         cmd->DrawIndexed(indices.size());
 
         cmd->EndRendering(sc->GetCurrentBackBuffer());

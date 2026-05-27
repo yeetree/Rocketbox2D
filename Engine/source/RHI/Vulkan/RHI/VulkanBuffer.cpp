@@ -13,6 +13,7 @@ namespace Engine
         {
             case BufferType::Vertex: flags = vk::BufferUsageFlagBits::eVertexBuffer; break;
             case BufferType::Index: flags = vk::BufferUsageFlagBits::eIndexBuffer; break;
+            case BufferType::Uniform: flags = vk::BufferUsageFlagBits::eUniformBuffer; break;
         }
         return flags;
     }

@@ -8,6 +8,7 @@
 #include "RHI/Vulkan/VulkanContext.h"
 #include "RHI/Vulkan/VulkanDynamicBuffer.h"
 #include "RHI/Vulkan/VulkanCommandBufferPool.h"
+#include "RHI/Vulkan/VulkanDescriptorSetAllocator.h"
 
 #include <cstdint>
 
@@ -29,6 +30,10 @@ namespace Engine
         // Dynamic buffers
         Scope<VulkanDynamicBuffer> m_VertexDynamicBuffer;
         Scope<VulkanDynamicBuffer> m_IndexDynamicBuffer;
+        Scope<VulkanDynamicBuffer> m_UniformDynamicBuffer;
+
+        // Descriptor set allocator
+        Scope<VulkanDescriptorSetAllocator> m_DescriptorSetAllocator = nullptr;
 
     public:
         VulkanFrame(VulkanContext* context);
@@ -36,12 +41,11 @@ namespace Engine
         // Begin new frame
         void Reset();
 
+        // Getters
         VulkanCommandBufferPool* GetCommandBufferPool() { return m_CommandBufferPool.get(); };
-
         VulkanDynamicBuffer* GetDynamicBuffer(BufferType type);
-
-        // Returns fence
         vk::raii::Fence& GetFence() { return m_Fence; }
+        VulkanDescriptorSetAllocator* GetDescriptorSetAllocator() { return m_DescriptorSetAllocator.get(); }
 
     };
 } // namespace Engine

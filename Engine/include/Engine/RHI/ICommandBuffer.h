@@ -30,6 +30,7 @@ namespace Engine
         virtual void BindPipeline(IPipeline* pipeline) = 0;
         virtual void BindVertexBuffer(IBuffer* buffer) = 0;
         virtual void BindIndexBuffer(IBuffer* buffer) = 0;
+        virtual void BindUniformBuffer(IBuffer* buffer, IPipeline* pipeline, uint32_t binding) = 0;
         virtual void Draw(uint32_t vertexCount, uint32_t instanceCount = 1, uint32_t firstVertex = 0, uint32_t firstInstance = 0) = 0;
         virtual void DrawIndexed(uint32_t indexCount, uint32_t instanceCount = 1, uint32_t firstIndex = 0, int32_t indexOffset = 0, uint32_t firstInstance = 0) = 0;
    

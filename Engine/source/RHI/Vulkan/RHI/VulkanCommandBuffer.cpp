@@ -209,6 +209,58 @@ namespace Engine
         m_CommandBuffer.bindIndexBuffer(vkbuf, offset, vk::IndexType::eUint16);
     }
 
+    void VulkanCommandBuffer::BindUniformBuffer(IBuffer* buffer, IPipeline* pipeline, uint32_t binding)
+    {
+        if(m_FrameIndex == -1 || m_Frame == nullptr)
+        {
+            LOG_CORE_ERROR("Vulkan: VulkanCommandBuffer: BindUniformBuffer(): cannot bind uniform buffer without frame info!");
+            return;
+        }
+
+        if(buffer == nullptr)
+        {
+            LOG_CORE_ERROR("Vulkan: VulkanCommandBuffer: BindUniformBuffer(): buffer is nullptr!");
+            return;
+        }
+
+        if(pipeline == nullptr)
+        {
+            LOG_CORE_ERROR("Vulkan: VulkanCommandBuffer: BindUniformBuffer(): pipeline is nullptr!");
+            return;
+        }
+
+        VulkanBuffer* vb = static_cast<VulkanBuffer*>(buffer);
+        VulkanPipeline* vp = static_cast<VulkanPipeline*>(pipeline);
+
+        // Get set
+        vk::DescriptorSet set = m_Frame->GetDescriptorSetAllocator()->GetOrAllocate(vp);
+
+        // Write it
+        vk::DescriptorBufferInfo bufferInfo;
+        bufferInfo.buffer = m_Frame->GetDynamicBuffer(vb->GetType())->GetBuffer();
+        bufferInfo.offset = 0; // Base
+        bufferInfo.range  = vb->GetSize();
+
+        vk::WriteDescriptorSet write;
+        write.dstSet = set;
+        write.dstBinding = binding;
+        write.descriptorCount = 1;
+        write.descriptorType = vk::DescriptorType::eUniformBufferDynamic;
+        write.pBufferInfo = &bufferInfo;
+
+        m_CommandBuffer.getDevice().updateDescriptorSets(write, {});
+
+        uint32_t offset = static_cast<uint32_t>(vb->GetOffset(m_FrameIndex));
+
+        // Bind
+        m_CommandBuffer.bindDescriptorSets(
+            vk::PipelineBindPoint::eGraphics,
+            vp->GetPipelineLayout(),
+            0, { set },
+            { offset } 
+        );
+    }
+
     void VulkanCommandBuffer::Draw(uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance)
     {
         m_CommandBuffer.draw(vertexCount, instanceCount, firstVertex, firstInstance);

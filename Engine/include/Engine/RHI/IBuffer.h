@@ -14,7 +14,8 @@ namespace Engine
     enum class ENGINE_EXPORT BufferType
     {
         Vertex,
-        Index
+        Index,
+        Uniform
     };
 
     enum class ENGINE_EXPORT BufferUsage

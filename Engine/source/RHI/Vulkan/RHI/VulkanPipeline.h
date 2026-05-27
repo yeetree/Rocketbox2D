@@ -14,6 +14,7 @@ namespace Engine
     private:
 
         // Vulkan
+        vk::raii::DescriptorSetLayout m_DescriptorSetLayout = nullptr;
         vk::raii::PipelineLayout m_Layout = nullptr;
         vk::raii::Pipeline m_Pipeline = nullptr;
 
@@ -26,6 +27,8 @@ namespace Engine
         VulkanPipeline(VulkanContext* context, const PipelineDesc& desc);
         ~VulkanPipeline() override = default;
 
+        // Vulkan
+        vk::raii::DescriptorSetLayout& GetDescriptorSetLayout() { return m_DescriptorSetLayout; }
         vk::raii::PipelineLayout& GetPipelineLayout() { return m_Layout; }
         vk::raii::Pipeline& GetPipeline() { return m_Pipeline; }
     };

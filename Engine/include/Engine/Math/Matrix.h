@@ -2,6 +2,7 @@
 #define ENGINE_MATH_MATRIX
 
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 namespace Engine {
 
