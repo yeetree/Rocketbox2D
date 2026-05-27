@@ -1,4 +1,7 @@
 #include "RHI/Vulkan/VulkanFrame.h"
+#include "RHI/Vulkan/VulkanConstants.h"
+#include "RHI/Vulkan/RHI/VulkanCommandBuffer.h"
+#include "Engine/Core/Assert.h"
 
 namespace Engine
 {
@@ -9,32 +12,44 @@ namespace Engine
         fenceInfo.flags = vk::FenceCreateFlagBits::eSignaled;
         m_Fence = vk::raii::Fence(context->GetDevice(), fenceInfo);
 
-        // Create command pool
-        vk::CommandPoolCreateInfo poolInfo(
-            vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
-            context->GetGraphicsQueue().familyIndex
+        // Command buffer pool
+        m_CommandBufferPool = CreateScope<VulkanCommandBufferPool>(context);
+
+        // Create dynamic buffers
+
+        auto const& props = context->GetPhysicalDevice().getProperties();
+
+        m_VertexDynamicBuffer = CreateScope<VulkanDynamicBuffer>(
+            context,
+            k_DynamicMegaBufferSize,
+            vk::BufferUsageFlagBits::eVertexBuffer,
+            16
         );
-        m_CommandPool = vk::raii::CommandPool(context->GetDevice(), poolInfo);
+        m_IndexDynamicBuffer = CreateScope<VulkanDynamicBuffer>(
+            context,
+            k_DynamicMegaBufferSize,
+            vk::BufferUsageFlagBits::eIndexBuffer,
+            16
+        );
     }
 
     void VulkanFrame::Reset()
     {
-        m_UsedCommandBuffers = 0;
+        m_CommandBufferPool->Reset();
+        m_VertexDynamicBuffer->Reset();
+        m_IndexDynamicBuffer->Reset();
     }
 
-    VulkanCommandBuffer* VulkanFrame::GetCommandBuffer(VulkanContext* context)
+    VulkanDynamicBuffer* VulkanFrame::GetDynamicBuffer(BufferType type)
     {
-        // If we need a new command buffer, create a new one and add it to our list
-        if (m_UsedCommandBuffers >= m_CommandBuffers.size())
+        switch(type)
         {
-            Scope<VulkanCommandBuffer> vcmd = CreateScope<VulkanCommandBuffer>(context, *m_CommandPool);
-            m_CommandBuffers.push_back(std::move(vcmd));
+            case BufferType::Vertex: return m_VertexDynamicBuffer.get(); break;
+            case BufferType::Index: return m_IndexDynamicBuffer.get(); break;
         }
-
-        // Return command buffer
-        VulkanCommandBuffer* cmd = m_CommandBuffers[m_UsedCommandBuffers].get();
-        m_UsedCommandBuffers++;
-        return cmd;
+        return nullptr;
     }
+
+    
 
 } // namespace Engine

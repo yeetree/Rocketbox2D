@@ -6,11 +6,11 @@
 namespace Engine
 {
     VulkanSwapChain::VulkanSwapChain(VulkanContext* context, IVulkanGraphicsBridge* bridge, const SwapChainDesc& desc)
-        : m_Context(context), m_Format(desc.format), m_Presentation(desc.presentation), m_RebuildSwapchain(true)
+        : m_Format(desc.format), m_Presentation(desc.presentation), m_RebuildSwapchain(true)
     {
         LOG_CORE_INFO("Vulkan: Creating swapchain...");
 
-        ENGINE_CORE_ASSERT(m_Context != nullptr, "Vulkan: VulkanSwapChain(): context is nullptr!");
+        ENGINE_CORE_ASSERT(context != nullptr, "Vulkan: VulkanSwapChain(): context is nullptr!");
         ENGINE_CORE_ASSERT(bridge != nullptr, "Vulkan: VulkanSwapChain(): bridge is nullptr!");
         ENGINE_CORE_ASSERT(desc.window != nullptr, "Vulkan: VulkanSwapChain(): window is nullptr!");
 
@@ -19,22 +19,22 @@ namespace Engine
 
         // Create swapchain
         VkSurfaceKHR surf = bridge->CreateSurface(
-            *m_Context->GetInstance(),
-            *m_Context->GetPhysicalDevice(),
-            m_Context->GetGraphicsQueue().familyIndex,
+            *context->GetInstance(),
+            *context->GetPhysicalDevice(),
+            context->GetGraphicsQueue().familyIndex,
             desc.window
         );
 
-        m_Surface = vk::raii::SurfaceKHR(m_Context->GetInstance(), surf, nullptr);
+        m_Surface = vk::raii::SurfaceKHR(context->GetInstance(), surf, nullptr);
 
-        BuildSwapChain();
+        BuildSwapChain(context);
     }
 
-    void VulkanSwapChain::BuildSwapChain()
+    void VulkanSwapChain::BuildSwapChain(VulkanContext* context)
     {
         LOG_CORE_INFO("Vulkan: Building swapchain...");
 
-        m_Context->GetDevice().waitIdle();
+        context->GetDevice().waitIdle();
 
         // Clear
         m_RenderFinishedSemaphores.clear();
@@ -43,16 +43,16 @@ namespace Engine
         m_SwapChainImages.clear();
 
         // Build SwapChain
-        vk::SurfaceCapabilitiesKHR surfaceCapabilities = m_Context->GetPhysicalDevice().getSurfaceCapabilitiesKHR( *m_Surface );
+        vk::SurfaceCapabilitiesKHR surfaceCapabilities = context->GetPhysicalDevice().getSurfaceCapabilitiesKHR( *m_Surface );
         
         m_SwapChainExtent = GetExtent(m_Width, m_Height, surfaceCapabilities);
         
         uint32_t minImageCount = GetMinImageCount(surfaceCapabilities);
 
-        std::vector<vk::SurfaceFormatKHR> availableFormats = m_Context->GetPhysicalDevice().getSurfaceFormatsKHR(*m_Surface);
+        std::vector<vk::SurfaceFormatKHR> availableFormats = context->GetPhysicalDevice().getSurfaceFormatsKHR(*m_Surface);
         m_SwapChainSurfaceFormat = GetSurfaceFormat(availableFormats, m_Format);
 
-        std::vector<vk::PresentModeKHR> availableModes = m_Context->GetPhysicalDevice().getSurfacePresentModesKHR(*m_Surface);
+        std::vector<vk::PresentModeKHR> availableModes = context->GetPhysicalDevice().getSurfacePresentModesKHR(*m_Surface);
         m_SwapChainPresentMode = GetPresentMode(availableModes, m_Presentation);
 
         vk::SwapchainCreateInfoKHR swapChainCreateInfo(
@@ -73,7 +73,7 @@ namespace Engine
             *m_SwapChain
         );
         
-        m_SwapChain = vk::raii::SwapchainKHR(m_Context->GetDevice(), swapChainCreateInfo);
+        m_SwapChain = vk::raii::SwapchainKHR(context->GetDevice(), swapChainCreateInfo);
         m_SwapChainImages = m_SwapChain.getImages(); 
 
         // Get textures
@@ -90,17 +90,17 @@ namespace Engine
         {
             m_SwapChainTextures.push_back(
                 std::move(
-                    CreateScope<VulkanTexture>(m_Context, image, m_SwapChainSurfaceFormat.format, texDesc)
+                    CreateScope<VulkanTexture>(context, image, m_SwapChainSurfaceFormat.format, texDesc)
                 )
             );
 
-             m_RenderFinishedSemaphores.emplace_back(m_Context->GetDevice(), semaphoreCreateInfo);
+             m_RenderFinishedSemaphores.emplace_back(context->GetDevice(), semaphoreCreateInfo);
         }
 
         // Create semaphores
         for(int i = 0; i < k_MaxFramesInFlight; i++)
         {
-            m_PresentCompleteSemaphores.emplace_back(m_Context->GetDevice(), semaphoreCreateInfo);
+            m_PresentCompleteSemaphores.emplace_back(context->GetDevice(), semaphoreCreateInfo);
            
         }
 
@@ -126,11 +126,11 @@ namespace Engine
         }
     }
 
-    void VulkanSwapChain::AcquireNextImage(uint32_t frameIdx)
+    void VulkanSwapChain::AcquireNextImage(VulkanContext* context, uint32_t frameIdx)
     {
         if(m_RebuildSwapchain)
         {
-            BuildSwapChain();
+            BuildSwapChain(context);
         }
 
         m_AcquiredImageIndex = m_SwapChain.acquireNextImage(
@@ -140,7 +140,7 @@ namespace Engine
         ).value;
     }
 
-    void VulkanSwapChain::Present(uint32_t frameIdx)
+    void VulkanSwapChain::Present(VulkanContext* context, uint32_t frameIdx)
     {
         vk::PresentInfoKHR presentInfo{};
         presentInfo.waitSemaphoreCount = 1;
@@ -151,7 +151,7 @@ namespace Engine
 
         try
         {
-            m_Context->GetGraphicsQueue().queue.presentKHR(presentInfo);
+            context->GetGraphicsQueue().queue.presentKHR(presentInfo);
         }
         catch (const vk::OutOfDateKHRError&)
         {

@@ -10,6 +10,9 @@
 
 namespace Engine
 {
+    // Forward
+    class VulkanGraphicsDevice;
+
     class ENGINE_EXPORT VulkanSwapChain : public ISwapChain {
     private:
         // Config
@@ -19,7 +22,6 @@ namespace Engine
 
         // State
         bool m_RebuildSwapchain = false;
-        VulkanContext* m_Context;
 
         // Vulkan
         vk::raii::SurfaceKHR m_Surface = nullptr;
@@ -41,15 +43,11 @@ namespace Engine
         vk::Extent2D GetExtent(uint32_t width, uint32_t height, const vk::SurfaceCapabilitiesKHR& capabilities);
         uint32_t GetMinImageCount(const vk::SurfaceCapabilitiesKHR& capabilities);
 
-        void BuildSwapChain();
+        void BuildSwapChain(VulkanContext* context);
 
     public:
         VulkanSwapChain(VulkanContext* context, IVulkanGraphicsBridge* bridge, const SwapChainDesc& desc);
         ~VulkanSwapChain() = default;
-
-        // SwapChain config
-        void Resize(uint32_t width, uint32_t height) override; // Called on window resize events
-        void SetPresentation(PresentMode presentation) override;
 
         ITexture* GetCurrentBackBuffer()
         {
@@ -57,8 +55,13 @@ namespace Engine
         };
 
         // Vulkan
-        void AcquireNextImage(uint32_t frameIdx);
-        void Present(uint32_t frameIdx);
+
+        // SwapChain config
+        void Resize(uint32_t width, uint32_t height); // Called on window resize events
+        void SetPresentation(PresentMode presentation);
+
+        void AcquireNextImage(VulkanContext* context, uint32_t frameIdx);
+        void Present(VulkanContext* context, uint32_t frameIdx);
 
         vk::raii::Semaphore& GetPresentCompleteSemaphore(uint32_t frameIdx)
         {

@@ -1,6 +1,7 @@
 #include "RHI/Vulkan/RHI/VulkanCommandBuffer.h"
 #include "RHI/Vulkan/RHI/VulkanTexture.h"
 #include "RHI/Vulkan/RHI/VulkanPipeline.h"
+#include "RHI/Vulkan/RHI/VulkanBuffer.h"
 
 #include "Engine/Core/Assert.h"
 
@@ -20,6 +21,8 @@ namespace Engine
         );
 
         m_CommandBuffer = std::move(vk::raii::CommandBuffers(context->GetDevice(), allocInfo).front());
+    
+        m_Allocator = context->GetAllocator();
     }
 
 
@@ -31,6 +34,10 @@ namespace Engine
     void VulkanCommandBuffer::End()
     {
         m_CommandBuffer.end();
+
+        // Clean info
+        m_FrameIndex = -1;
+        m_Frame = nullptr;
     }
 
     // Render target
@@ -50,12 +57,12 @@ namespace Engine
         }
 
         // Get vulkan texture
-        m_CurrentRenderTarget = static_cast<VulkanTexture*>(renderTarget);
+        VulkanTexture* vt = static_cast<VulkanTexture*>(renderTarget);
 
         // Transition image layout for color attatchment
         VulkanCommon::TransitionImageLayout(
             m_CommandBuffer,
-            m_CurrentRenderTarget->GetImage(),
+            vt->GetImage(),
             vk::ImageLayout::eUndefined,
             vk::ImageLayout::eColorAttachmentOptimal,
             {},
@@ -66,7 +73,7 @@ namespace Engine
 
         vk::ClearValue clr = vk::ClearColorValue(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
         vk::RenderingAttachmentInfo attachmentInfo(
-            m_CurrentRenderTarget->GetImageView(),
+            vt->GetImageView(),
             vk::ImageLayout::eColorAttachmentOptimal,
             vk::ResolveModeFlagBits::eNone,
             {},
@@ -80,7 +87,7 @@ namespace Engine
             {},
             {
                 {0, 0},
-                {m_CurrentRenderTarget->GetWidth(), m_CurrentRenderTarget->GetHeight()}
+                {vt->GetWidth(), vt->GetHeight()}
             },
             1,
             0,
@@ -89,17 +96,33 @@ namespace Engine
 
         m_CommandBuffer.beginRendering(renderingInfo);
 
-        m_CommandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, static_cast<float>(m_CurrentRenderTarget->GetWidth()), static_cast<float>(m_CurrentRenderTarget->GetHeight()), 0.0f, 1.0f));
-        m_CommandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D(m_CurrentRenderTarget->GetWidth(), m_CurrentRenderTarget->GetHeight())));
+        m_CommandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, static_cast<float>(vt->GetWidth()), static_cast<float>(vt->GetHeight()), 0.0f, 1.0f));
+        m_CommandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D(vt->GetWidth(), vt->GetHeight())));
     }
 
-    void VulkanCommandBuffer::EndRendering()
+    void VulkanCommandBuffer::EndRendering(ITexture* renderTarget)
     {
+        // Verify render target
+        if(renderTarget == nullptr)
+        {
+            LOG_CORE_ERROR("Vulkan: VulkanCommandBuffer: EndRendering(): renderTarget is nullptr!");
+            return;
+        }
+
+        if(renderTarget->GetUsage() & TextureUsage::RenderTarget == 0)
+        {
+            LOG_CORE_ERROR("Vulkan: VulkanCommandBuffer: EndRendering(): renderTarget is not RenderTarget!");
+            return;
+        }
+
+        // Get vulkan texture
+        VulkanTexture* vt = static_cast<VulkanTexture*>(renderTarget);
+
         m_CommandBuffer.endRendering();
 
         VulkanCommon::TransitionImageLayout(
             m_CommandBuffer,
-            m_CurrentRenderTarget->GetImage(),
+            vt->GetImage(),
             vk::ImageLayout::eColorAttachmentOptimal,
             vk::ImageLayout::ePresentSrcKHR,
             vk::AccessFlagBits2::eColorAttachmentWrite,
@@ -107,8 +130,6 @@ namespace Engine
             vk::PipelineStageFlagBits2::eColorAttachmentOutput,
             vk::PipelineStageFlagBits2::eBottomOfPipe
         );
-
-        m_CurrentRenderTarget = nullptr;
     }
 
     void VulkanCommandBuffer::BindPipeline(IPipeline* pipeline)
@@ -124,10 +145,100 @@ namespace Engine
         m_CommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, vpipe->GetPipeline());
     }
 
+    void VulkanCommandBuffer::BindVertexBuffer(IBuffer* buffer) 
+    {
+        if(buffer == nullptr)
+        {
+            LOG_CORE_ERROR("Vulkan: VulkanCommandBuffer: BindVertexBuffer(): buffer is nullptr!");
+            return;
+        }
+
+        VulkanBuffer* vb = static_cast<VulkanBuffer*>(buffer);
+
+        vk::Buffer vkbuf;
+
+        switch(vb->GetUsage())
+        {
+            case BufferUsage::Static: vkbuf = vb->GetStaticBuffer(); break;
+            case BufferUsage::Dynamic:
+            {
+                if(m_FrameIndex == -1 || m_Frame == nullptr)
+                {
+                    LOG_CORE_ERROR("Vulkan: VulkanCommandBuffer: BindVertexBuffer(): cannot bind dynamic buffer without frame info!");
+                    return;
+                }
+                vkbuf = m_Frame->GetDynamicBuffer(vb->GetType())->GetBuffer();
+            }
+        }
+
+        size_t offset = vb->GetOffset(m_FrameIndex);
+
+        m_CommandBuffer.bindVertexBuffers(0, {vkbuf}, {offset});
+    }
+
     void VulkanCommandBuffer::Draw(uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance)
     {
         m_CommandBuffer.draw(vertexCount, instanceCount, firstVertex, firstInstance);
     }
 
+    void VulkanCommandBuffer::SetBufferData(IBuffer* buffer, void* data, size_t size, size_t offset)
+    {
+        if(buffer == nullptr)
+        {
+            LOG_CORE_ERROR("Vulkan: VulkanCommandBuffer: SetBufferData(): buffer is nullptr!");
+            return;
+        }
+
+        VulkanBuffer* vb = static_cast<VulkanBuffer*>(buffer);
+        
+        if(vb->GetUsage() != BufferUsage::Static)
+        {
+            LOG_CORE_ERROR("Vulkan: VulkanCommandBuffer: SetBufferData(): buffer is not static!");
+            return;
+        }
+
+        // Create staging buffer
+        VkBufferCreateInfo bufferInfo{ VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+        bufferInfo.size = size;
+        bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+
+        VmaAllocationCreateInfo allocInfo{};
+        allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
+        allocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT;
+
+        VmaAllocationInfo resultInfo;
+        VkBuffer stagingBuffer;
+        VmaAllocation stagingAllocation;
+        
+        vmaCreateBuffer(m_Allocator, &bufferInfo, &allocInfo, &stagingBuffer, &stagingAllocation, &resultInfo);
+
+        // Copy data
+        std::memcpy(resultInfo.pMappedData, data, size);
+
+        // Copy
+        vk::BufferCopy copyRegion{};
+        copyRegion.srcOffset = 0;
+        copyRegion.dstOffset = offset;
+        copyRegion.size = size;
+
+        m_CommandBuffer.copyBuffer(stagingBuffer, vb->GetStaticBuffer(), { copyRegion });
+
+        m_StagingBufferAllocations.emplace_back(stagingBuffer, stagingAllocation);
+    }
+
+    void VulkanCommandBuffer::SetFrameInfo(uint32_t frameIdx, VulkanFrame* frame)
+    {
+        m_FrameIndex = frameIdx;
+        m_Frame = frame;
+    }
+
+    void VulkanCommandBuffer::FreeStagingBufferAllocations()
+    {
+        for (auto& staging : m_StagingBufferAllocations)
+        {
+            vmaDestroyBuffer(m_Allocator, staging.buffer, staging.allocation);
+        }
+        m_StagingBufferAllocations.clear();
+    }
 
 } // namespace Engine

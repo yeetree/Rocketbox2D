@@ -72,7 +72,12 @@ namespace Engine
         // Attrib desc
         const std::vector<VertexElement>& elements = desc.vertexLayout.GetElements();
         for(int i = 0; i < elements.size(); i++) {
-            attributeDescriptions.emplace_back(i, 0, GetVertexElementFormat(elements[i].GetType()), elements[i].GetOffset());
+            vk::VertexInputAttributeDescription vdesc;
+            vdesc.location = i;
+            vdesc.binding = 0;
+            vdesc.format = GetVertexElementFormat(elements[i].GetType());
+            vdesc.offset = elements[i].GetOffset();
+            attributeDescriptions.push_back(vdesc);
         }
 
         vk::PipelineVertexInputStateCreateInfo vertexInputInfo{};
@@ -109,7 +114,7 @@ namespace Engine
         rasterizer.depthClampEnable = vk::False;
         rasterizer.rasterizerDiscardEnable = vk::False;
         rasterizer.polygonMode = vk::PolygonMode::eFill;
-        rasterizer.cullMode = vk::CullModeFlagBits::eBack;
+        rasterizer.cullMode = vk::CullModeFlagBits::eNone;
         rasterizer.frontFace = vk::FrontFace::eClockwise;
         rasterizer.depthBiasEnable = vk::False;
         rasterizer.lineWidth = 1.0f;

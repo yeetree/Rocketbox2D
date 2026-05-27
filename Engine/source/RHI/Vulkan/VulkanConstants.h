@@ -27,7 +27,10 @@ constexpr const std::array<const char*, 4> k_DeviceExtensions = {
     vk::KHRDynamicRenderingExtensionName
 };
 
+// TODO: Vulkan: Move these into a GraphicsDeviceDesc
+
 constexpr const int k_MaxFramesInFlight = 3;
+constexpr const int k_DynamicMegaBufferSize = 16 * 1024 * 1024;
 constexpr const int k_MaxUniformBuffersPerFrame = 1000;
 constexpr const int k_MaxSamplersPerFrame = 1000;
 constexpr const int k_MaxDescriptorSetsPerFrame = 1000;

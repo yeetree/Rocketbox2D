@@ -33,10 +33,6 @@ namespace Engine
     public:
         virtual ~ISwapChain() = default;
 
-        // SwapChain config
-        virtual void Resize(uint32_t width, uint32_t height) = 0; // Called on window resize events
-        virtual void SetPresentation(PresentMode presentation) = 0;
-
         virtual ITexture* GetCurrentBackBuffer() = 0;
     };
 } // namespace Engine

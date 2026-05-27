@@ -22,6 +22,7 @@ namespace Engine
     }
 
     VertexLayout::VertexLayout(std::initializer_list<VertexElement> elements)
+        : m_Elements(elements)
     {
         uint32_t currentOffset = 0;
         m_Stride = 0;

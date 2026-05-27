@@ -7,6 +7,7 @@
 
 #include "Engine/RHI/ITexture.h"
 #include "Engine/RHI/IPipeline.h"
+#include "Engine/RHI/IBuffer.h"
 
 #include "Engine/Math/Vector.h"
 
@@ -23,11 +24,15 @@ namespace Engine
 
         // Render target
         virtual void BeginRendering(ITexture* renderTarget, Vec4 clearColor) = 0;
-        virtual void EndRendering() = 0;
+        virtual void EndRendering(ITexture* renderTarget) = 0;
 
         // Graphics
         virtual void BindPipeline(IPipeline* pipeline) = 0;
+        virtual void BindVertexBuffer(IBuffer* buffer) = 0;
         virtual void Draw(uint32_t vertexCount, uint32_t instanceCount = 1, uint32_t firstVertex = 0, uint32_t firstInstance = 0) = 0;
+   
+        // Data
+        virtual void SetBufferData(IBuffer* buffer, void* data, size_t size, size_t offset) = 0;
     };
 }
 

@@ -46,6 +46,7 @@ namespace Engine
         PickPhysicalDevice();
         CreateLogicalDevice(bridge);
         VULKAN_HPP_DEFAULT_DISPATCHER.init(*m_Device);
+        CreateAllocator();
     }
 
     VulkanContext::~VulkanContext()

@@ -3,9 +3,21 @@
 #include <cmath>
 
 #include "Engine/Events/WindowEvent.h"
+#include "Engine/Core/Assert.h"
 
 using namespace Engine;
 
+struct Vertex
+{
+    Vec2 inPosition;
+    Vec3 inColor;
+};
+
+const std::vector<Vertex> vertices = {
+    {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+    {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+    {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+};
 
 class EngineTestApp : public Application {
 public:
@@ -15,6 +27,8 @@ public:
     Ref<IShader> shader;
     Ref<IPipeline> pipe;
     Ref<FileSystem> fs;
+
+    Ref<IBuffer> buf;
 
     void OnStart() override {
         Ref<Input> in = GetServiceLocator()->Get<Input>();
@@ -51,12 +65,30 @@ public:
 
         PipelineDesc pdesc {
             .shader = shader.get(),
-            .vertexLayout = {},
+            .vertexLayout = {
+                { VertexElementType::Vec2, "inPosition" },
+                { VertexElementType::Vec3, "inColor" }
+            },
             .topology = PrimitiveTopology::TriangleList,
             .blending = false
         };
 
         pipe = gd->CreatePipeline(pdesc);
+
+        BufferDesc bdesc{
+            .size = vertices.size() * sizeof(Vertex),
+            .type = BufferType::Vertex,
+            .usage = BufferUsage::Static
+        };
+
+        buf = gd->CreateBuffer(bdesc);
+
+        // Upload init data
+        ICommandBuffer* init = gd->BeginSingleTimeCommands();
+        init->Begin();
+        init->SetBufferData(buf.get(), (void*)vertices.data(), buf->GetSize(), 0);
+        init->End();
+        gd->EndSingleTimeCommands(init);
     }
 
     void OnEvent(StringName type, const Event& event) override {
@@ -65,7 +97,7 @@ public:
             if(sc)
             {
                 const WindowResizedEvent& wr = static_cast<const WindowResizedEvent&>(event);
-                sc->Resize(wr.GetSizeX(), wr.GetSizeY());
+                gd->ResizeSwapChain(sc.get(), wr.GetSizeX(), wr.GetSizeY());
             }
         }
     }
@@ -78,32 +110,35 @@ public:
         }
         if(in->IsActionPressed("immediate"))
         {
-            sc->SetPresentation(PresentMode::Immediate);
+            gd->SetSwapChainPresentation(sc.get(), PresentMode::Immediate);
         }
         if(in->IsActionPressed("vsync"))
         {
-            sc->SetPresentation(PresentMode::VSync);
+            gd->SetSwapChainPresentation(sc.get(), PresentMode::VSync);
         }
         if(in->IsActionPressed("mailbox"))
         {
-            sc->SetPresentation(PresentMode::Mailbox);
+            gd->SetSwapChainPresentation(sc.get(), PresentMode::Mailbox);
         }
     }
 
     void OnRender() override {
+        ENGINE_CORE_ASSERT(gd != nullptr, "GD null!");
+
         gd->BeginFrame();
 
-        ICommandBuffer* cmd = gd->BeginSwapChainPass(sc);
+        ICommandBuffer* cmd = gd->BeginSwapChainPass(sc.get());
         cmd->Begin();
         
         cmd->BeginRendering(sc->GetCurrentBackBuffer(), Vec4(0.0f, 0.0f, 0.25f, 1.0f));
 
         cmd->BindPipeline(pipe.get());
+        cmd->BindVertexBuffer(buf.get());
         cmd->Draw(3);
 
-        cmd->EndRendering();
+        cmd->EndRendering(sc->GetCurrentBackBuffer());
         cmd->End();
-        gd->EndSwapChainPass(sc, cmd);
+        gd->EndSwapChainPass(sc.get(), cmd);
 
         gd->EndFrame();
     }
