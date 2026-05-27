@@ -5,6 +5,7 @@
 
 #include "RHI/Vulkan/VulkanContext.h"
 #include "RHI/Vulkan/VulkanFrame.h"
+#include "RHI/Vulkan/RHI/VulkanBuffer.h"
 #include "RHI/Vulkan/RHI/VulkanTexture.h"
 
 #include <vulkan/vulkan_raii.hpp>
@@ -32,6 +33,9 @@ namespace Engine
         uint32_t m_FrameIndex = -1;
         VulkanFrame* m_Frame = nullptr;
 
+        // Helpers
+        vk::Buffer GetVulkanBuffer(VulkanBuffer* buffer);
+
     public:
         VulkanCommandBuffer(VulkanContext* context, vk::CommandPool pool);
         ~VulkanCommandBuffer() = default;
@@ -46,7 +50,9 @@ namespace Engine
         // Graphics
         void BindPipeline(IPipeline* pipeline) override;
         void BindVertexBuffer(IBuffer* buffer) override;
+        void BindIndexBuffer(IBuffer* buffer) override;
         void Draw(uint32_t vertexCount, uint32_t instanceCount = 1, uint32_t firstVertex = 0, uint32_t firstInstance = 0) override;
+        void DrawIndexed(uint32_t indexCount, uint32_t instanceCount = 1, uint32_t firstIndex = 0, int32_t indexOffset = 0, uint32_t firstInstance = 0) override;
 
         // Data
         void SetBufferData(IBuffer* buffer, void* data, size_t size, size_t offset) override;
@@ -55,6 +61,7 @@ namespace Engine
         void SetFrameInfo(uint32_t frameIdx, VulkanFrame* frame);
         void FreeStagingBufferAllocations();
         vk::raii::CommandBuffer& GetCommandBuffer() { return m_CommandBuffer; }
+        
     };
 } // namespace Engine
 

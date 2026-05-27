@@ -29,7 +29,9 @@ namespace Engine
         // Graphics
         virtual void BindPipeline(IPipeline* pipeline) = 0;
         virtual void BindVertexBuffer(IBuffer* buffer) = 0;
+        virtual void BindIndexBuffer(IBuffer* buffer) = 0;
         virtual void Draw(uint32_t vertexCount, uint32_t instanceCount = 1, uint32_t firstVertex = 0, uint32_t firstInstance = 0) = 0;
+        virtual void DrawIndexed(uint32_t indexCount, uint32_t instanceCount = 1, uint32_t firstIndex = 0, int32_t indexOffset = 0, uint32_t firstInstance = 0) = 0;
    
         // Data
         virtual void SetBufferData(IBuffer* buffer, void* data, size_t size, size_t offset) = 0;

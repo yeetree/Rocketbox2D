@@ -25,6 +25,27 @@ namespace Engine
         m_Allocator = context->GetAllocator();
     }
 
+    vk::Buffer VulkanCommandBuffer::GetVulkanBuffer(VulkanBuffer* buffer)
+    {
+        vk::Buffer vkbuf;
+
+        switch(buffer->GetUsage())
+        {
+            case BufferUsage::Static: vkbuf = buffer->GetStaticBuffer(); break;
+            case BufferUsage::Dynamic:
+            {
+                if(m_FrameIndex == -1 || m_Frame == nullptr)
+                {
+                    LOG_CORE_ERROR("Vulkan: VulkanCommandBuffer: GetVulkanBuffer(): cannot bind dynamic buffer without frame info!");
+                    return nullptr;
+                }
+                vkbuf = m_Frame->GetDynamicBuffer(buffer->GetType())->GetBuffer();
+            }
+        }
+        
+        return vkbuf;
+    }
+
 
     void VulkanCommandBuffer::Begin()
     {
@@ -155,20 +176,10 @@ namespace Engine
 
         VulkanBuffer* vb = static_cast<VulkanBuffer*>(buffer);
 
-        vk::Buffer vkbuf;
-
-        switch(vb->GetUsage())
+        vk::Buffer vkbuf = GetVulkanBuffer(vb);
+        if(vkbuf == nullptr)
         {
-            case BufferUsage::Static: vkbuf = vb->GetStaticBuffer(); break;
-            case BufferUsage::Dynamic:
-            {
-                if(m_FrameIndex == -1 || m_Frame == nullptr)
-                {
-                    LOG_CORE_ERROR("Vulkan: VulkanCommandBuffer: BindVertexBuffer(): cannot bind dynamic buffer without frame info!");
-                    return;
-                }
-                vkbuf = m_Frame->GetDynamicBuffer(vb->GetType())->GetBuffer();
-            }
+            return;
         }
 
         size_t offset = vb->GetOffset(m_FrameIndex);
@@ -176,9 +187,36 @@ namespace Engine
         m_CommandBuffer.bindVertexBuffers(0, {vkbuf}, {offset});
     }
 
+    void VulkanCommandBuffer::BindIndexBuffer(IBuffer* buffer)
+    {
+        if(buffer == nullptr)
+        {
+            LOG_CORE_ERROR("Vulkan: VulkanCommandBuffer: BindVertexBuffer(): buffer is nullptr!");
+            return;
+        }
+
+        VulkanBuffer* vb = static_cast<VulkanBuffer*>(buffer);
+
+        vk::Buffer vkbuf = GetVulkanBuffer(vb);
+        if(vkbuf == nullptr)
+        {
+            return;
+        }
+
+        size_t offset = vb->GetOffset(m_FrameIndex);
+
+        // TODO: Vulkan: Change index size
+        m_CommandBuffer.bindIndexBuffer(vkbuf, offset, vk::IndexType::eUint16);
+    }
+
     void VulkanCommandBuffer::Draw(uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance)
     {
         m_CommandBuffer.draw(vertexCount, instanceCount, firstVertex, firstInstance);
+    }
+
+    void VulkanCommandBuffer::DrawIndexed(uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex, int32_t indexOffset, uint32_t firstInstance)
+    {
+        m_CommandBuffer.drawIndexed(indexCount, instanceCount, firstIndex, indexOffset, firstInstance);
     }
 
     void VulkanCommandBuffer::SetBufferData(IBuffer* buffer, void* data, size_t size, size_t offset)

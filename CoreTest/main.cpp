@@ -14,9 +14,14 @@ struct Vertex
 };
 
 const std::vector<Vertex> vertices = {
-    {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-    {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-    {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+    {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+    {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+    {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+    {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
+};
+
+const std::vector<uint16_t> indices = {
+    0, 1, 2, 2, 3, 0
 };
 
 class EngineTestApp : public Application {
@@ -28,7 +33,8 @@ public:
     Ref<IPipeline> pipe;
     Ref<FileSystem> fs;
 
-    Ref<IBuffer> buf;
+    Ref<IBuffer> vb;
+    Ref<IBuffer> ib;
 
     void OnStart() override {
         Ref<Input> in = GetServiceLocator()->Get<Input>();
@@ -75,18 +81,27 @@ public:
 
         pipe = gd->CreatePipeline(pdesc);
 
-        BufferDesc bdesc{
+        BufferDesc vbdesc{
             .size = vertices.size() * sizeof(Vertex),
             .type = BufferType::Vertex,
             .usage = BufferUsage::Static
         };
 
-        buf = gd->CreateBuffer(bdesc);
+        vb = gd->CreateBuffer(vbdesc);
+
+        BufferDesc ibdesc{
+            .size = indices.size() * sizeof(uint16_t),
+            .type = BufferType::Index,
+            .usage = BufferUsage::Static
+        };
+
+        ib = gd->CreateBuffer(ibdesc);
 
         // Upload init data
         ICommandBuffer* init = gd->BeginSingleTimeCommands();
         init->Begin();
-        init->SetBufferData(buf.get(), (void*)vertices.data(), buf->GetSize(), 0);
+        init->SetBufferData(vb.get(), (void*)vertices.data(), vb->GetSize(), 0);
+        init->SetBufferData(ib.get(), (void*)indices.data(), ib->GetSize(), 0);
         init->End();
         gd->EndSingleTimeCommands(init);
     }
@@ -133,8 +148,9 @@ public:
         cmd->BeginRendering(sc->GetCurrentBackBuffer(), Vec4(0.0f, 0.0f, 0.25f, 1.0f));
 
         cmd->BindPipeline(pipe.get());
-        cmd->BindVertexBuffer(buf.get());
-        cmd->Draw(3);
+        cmd->BindVertexBuffer(vb.get());
+        cmd->BindIndexBuffer(ib.get());
+        cmd->DrawIndexed(indices.size());
 
         cmd->EndRendering(sc->GetCurrentBackBuffer());
         cmd->End();
