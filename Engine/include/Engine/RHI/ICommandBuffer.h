@@ -36,6 +36,7 @@ namespace Engine
    
         // Data
         virtual void SetBufferData(IBuffer* buffer, void* data, size_t size, size_t offset) = 0;
+        virtual void SetTextureData(ITexture* texture, void* data) = 0;
     };
 }
 

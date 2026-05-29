@@ -186,7 +186,7 @@ namespace Engine
         
         for(auto const& physicalDevice : physicalDevices)
         {
-            LOG_CORE_INFO("Vulkan: Trying: {0}", std::string(physicalDevice.getProperties().deviceName));
+            LOG_CORE_INFO("Vulkan: Trying: {0}", physicalDevice.getProperties().deviceName.data());
             // Version
             bool version = physicalDevice.getProperties().apiVersion >= vk::ApiVersion12;
             if(!version)
@@ -234,7 +234,7 @@ namespace Engine
                 continue;
             }
 
-            LOG_CORE_INFO("Vulkan: Selected: {0}", std::string(physicalDevice.getProperties().deviceName));
+            LOG_CORE_INFO("Vulkan: Selected: {0}", physicalDevice.getProperties().deviceName.data());
             m_PhysicalDevice = physicalDevice;
             break;
         }

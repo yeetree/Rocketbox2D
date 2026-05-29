@@ -15,15 +15,17 @@ namespace Engine
         // Vulkan
         VulkanContext* m_Context;
         vk::Image m_Image = nullptr; // Either created in constructor or swapchain
+        VmaAllocation m_Allocation;
         vk::Format m_ImageFormat; // Retrieved from desc.format or swapchain
-        vk::ImageView m_ImageView = nullptr; // Created in CreateImageView 
-        
+        vk::raii::ImageView m_ImageView = nullptr; // Created in CreateImageView 
+        vk::raii::Sampler m_Sampler = nullptr; // Created in CreateSampler if sampled
 
         // State
         bool m_OwnImage; // Whether or not we created m_Image and can destroy it
 
         // Private
         void CreateImageView();
+        void CreateSampler();
 
     public:
         // For VulkanGraphicsDevice
@@ -35,7 +37,8 @@ namespace Engine
         ~VulkanTexture();
 
         vk::Image& GetImage() { return m_Image; }
-        vk::ImageView& GetImageView() { return m_ImageView; }
+        vk::raii::ImageView& GetImageView() { return m_ImageView; }
+        vk::raii::Sampler& GetSampler() { return m_Sampler; }
     };
 } // namespace Engine
 

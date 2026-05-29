@@ -33,6 +33,8 @@ namespace Engine
         uint32_t m_FrameIndex = -1;
         VulkanFrame* m_Frame = nullptr;
 
+        VulkanContext* m_Context;
+
         // Helpers
         vk::Buffer GetVulkanBuffer(VulkanBuffer* buffer);
 
@@ -57,6 +59,7 @@ namespace Engine
 
         // Data
         void SetBufferData(IBuffer* buffer, void* data, size_t size, size_t offset) override;
+        void SetTextureData(ITexture* texture, void* data) override;
 
         // Vulkan
         void SetFrameInfo(uint32_t frameIdx, VulkanFrame* frame);

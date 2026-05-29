@@ -10,6 +10,7 @@
 namespace Engine
 {
     VulkanCommandBuffer::VulkanCommandBuffer(VulkanContext* context, vk::CommandPool pool)
+        : m_Context(context)
     {
         ENGINE_CORE_ASSERT(context != nullptr, "Vulkan: context is nullptr!");
 
@@ -314,6 +315,72 @@ namespace Engine
         m_CommandBuffer.copyBuffer(stagingBuffer, vb->GetStaticBuffer(), { copyRegion });
 
         m_StagingBufferAllocations.emplace_back(stagingBuffer, stagingAllocation);
+    }
+
+    void VulkanCommandBuffer::SetTextureData(ITexture* texture, void* data)
+    {
+        if(texture == nullptr)
+        {
+            LOG_CORE_ERROR("Vulkan: VulkanCommandBuffer: SetTextureData(): texture is nullptr!");
+            return;
+        }
+
+        VulkanTexture* vt = static_cast<VulkanTexture*>(texture);
+
+        // Create the staging buffer
+        BufferDesc stagingDesc;
+        stagingDesc.size = vt->GetWidth() * vt->GetHeight() * 4; // RGBA8
+        stagingDesc.type = BufferType::Vertex;  // Generic memory type
+        stagingDesc.usage == BufferUsage::Static;
+        VulkanBuffer stagingBuffer(m_Context, stagingDesc);
+
+        // Upload data
+        SetBufferData(&stagingBuffer, data, stagingBuffer.GetSize(), 0);
+
+        // Copy
+
+        // undefined -> transferdstoptimal
+        VulkanCommon::TransitionImageLayout(
+            m_CommandBuffer,
+            vt->GetImage(), 
+            vk::ImageLayout::eUndefined, 
+            vk::ImageLayout::eTransferDstOptimal,
+            vk::AccessFlagBits2::eNone,                   // src access
+            vk::AccessFlagBits2::eTransferWrite,          // dst access
+            vk::PipelineStageFlagBits2::eTopOfPipe,       // src stage
+            vk::PipelineStageFlagBits2::eTransfer         // dst stage
+        );
+
+        // copy buffer to image
+        vk::BufferImageCopy region{};
+        region.bufferOffset = 0;
+        region.bufferRowLength = 0;
+        region.bufferImageHeight = 0;
+        region.imageSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
+        region.imageSubresource.mipLevel = 0;
+        region.imageSubresource.baseArrayLayer = 0;
+        region.imageSubresource.layerCount = 1;
+        region.imageOffset = vk::Offset3D{0, 0, 0};
+        region.imageExtent = vk::Extent3D{ vt->GetWidth(), vt->GetHeight(), 1 };
+
+        m_CommandBuffer.copyBufferToImage(
+            static_cast<vk::Buffer>(stagingBuffer.GetStaticBuffer()),
+            vt->GetImage(),
+            vk::ImageLayout::eTransferDstOptimal,
+            region
+        );
+
+        // transferdstoptimal -> shaderread
+        VulkanCommon::TransitionImageLayout(
+            m_CommandBuffer,
+            vt->GetImage(), 
+            vk::ImageLayout::eTransferDstOptimal, 
+            vk::ImageLayout::eShaderReadOnlyOptimal,
+            vk::AccessFlagBits2::eTransferWrite,          // src access
+            vk::AccessFlagBits2::eShaderRead,             // dst access
+            vk::PipelineStageFlagBits2::eTransfer,        // src stage
+            vk::PipelineStageFlagBits2::eFragmentShader   // dst stage
+        );
     }
 
     void VulkanCommandBuffer::SetFrameInfo(uint32_t frameIdx, VulkanFrame* frame)
