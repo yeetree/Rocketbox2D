@@ -24,6 +24,7 @@ namespace Engine::RHI::Vulkan
         {
             // Get data and bind
             VulkanPipelineData& data = m_GraphicsDevice.GetPipelineData(pipeline);
+            m_BoundPipelineHandle = pipeline;
             m_CommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, data.pipeline);
         }
 
@@ -88,9 +89,65 @@ namespace Engine::RHI::Vulkan
 
         void VulkanCommandBuffer::BindUniformBuffer(BufferHandle buffer, uint32_t binding)
         {
+            ENGINE_CORE_ASSERT(m_BoundPipelineHandle.IsValid(), "VulkanCommandBuffer: BindUniformBuffer(): no bound pipeline!");
             
+            // Get data
+            VulkanPipelineData& pdata = m_GraphicsDevice.GetPipelineData(m_BoundPipelineHandle);
+            VulkanBufferData& bdata = m_GraphicsDevice.GetBufferData(buffer);
 
+            ENGINE_CORE_ASSERT(bdata.desc.type == BufferType::Uniform, "VulkanCommandBuffer: BindUniformBuffer(): buffer is not a uniform buffer!");
 
+            // Get buffer
+            vk::Buffer vkBuffer = nullptr;
+            uint32_t dynamicOffset = 0;
+
+            switch(bdata.desc.usage)
+            {
+                case BufferUsage::Static:
+                {
+                    vkBuffer = bdata.buffer;
+                    break;
+                }
+                
+                case BufferUsage::Dynamic:
+                {
+                    vkBuffer = m_GraphicsDevice.GetCurrentFrame()->GetUniformDynamicBufferAllocator().GetBuffer();
+                    dynamicOffset = bdata.dynamicOffsets[m_GraphicsDevice.GetFrameIndex()];
+                    break;
+                }
+            }
+
+            // Get descriptor set
+            VulkanDescriptorSetAllocator& alloc = m_GraphicsDevice.GetCurrentFrame()->GetDescriptorSetAllocator();
+            vk::DescriptorSet set = alloc.GetOrAllocate(m_BoundPipelineHandle.id, *pdata.descriptorSetLayout);
+
+            // Check if descriptor set needs written
+            if (alloc.NeedsWrite(m_BoundPipelineHandle.id, binding, buffer.id))
+            {
+                vk::DescriptorBufferInfo bufferInfo;
+                bufferInfo.buffer = vkBuffer;
+                bufferInfo.offset = 0;
+                bufferInfo.range  = bdata.desc.size;
+
+                vk::WriteDescriptorSet write;
+                write.dstSet          = set;
+                write.dstBinding      = binding;
+                write.descriptorCount = 1;
+                write.descriptorType  = vk::DescriptorType::eUniformBufferDynamic;
+                write.pBufferInfo     = &bufferInfo;
+
+                m_GraphicsDevice.GetContext().GetDevice().updateDescriptorSets(write, {});
+
+                alloc.MarkWritten(m_BoundPipelineHandle.id, binding, buffer.id);
+            }
+
+            // Bind descriptor sets
+            m_CommandBuffer.bindDescriptorSets(
+                vk::PipelineBindPoint::eGraphics,
+                *pdata.pipelineLayout,
+                0, {set},
+                {dynamicOffset}
+            );
         }
 
         void VulkanCommandBuffer::Draw(uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance)
@@ -257,6 +314,7 @@ namespace Engine::RHI::Vulkan
         void VulkanCommandBuffer::Reset()
         {
             m_CurrentRenderTarget = nullptr;
+            m_BoundPipelineHandle = PipelineHandle{.id = 0};
         
             // Clear staging buffer allocations
             for(StagingBufferAllocation& alloc : m_StagingBufferAllocations)

@@ -45,6 +45,7 @@ public:
 
     BufferHandle vb;
     BufferHandle ib;
+    BufferHandle ub;
 
     UniformBufferObject ubo;
 
@@ -87,12 +88,14 @@ public:
                 {VertexElementType::Vec2, "inPosition"},
                 {VertexElementType::Vec3, "inColor"}
             },
-            .uniformBindings = {},
+            .uniformBindings = {
+                {0, ShaderStage::Vertex}
+            },
             .colorAttachmentFormats = { PixelFormat::RGBA8 },
             .topology = PrimitiveTopology::TriangleList,
             .polygonMode = PolygonMode::Fill,
             .cullMode = CullMode::Back,
-            .frontFace = FrontFace::Clockwise,
+            .frontFace = FrontFace::CounterClockwise,
             .blending = false
         };
 
@@ -115,8 +118,6 @@ public:
 
         ib = gd->CreateBuffer(ibdesc);
 
-        /*
-
         BufferDesc ubdesc{
             .size = sizeof(UniformBufferObject),
             .type = BufferType::Uniform,
@@ -124,7 +125,6 @@ public:
         };
 
         ub = gd->CreateBuffer(ubdesc);
-        */
 
         // Upload init data
         ICommandBuffer* init = gd->BeginImmediate();
@@ -179,9 +179,12 @@ public:
         ICommandBuffer* cmd = gd->BeginPass(sc, Vec4(0.0f, 0.0f, 0.25f, 1.0f));
         if(cmd)
         {
+            cmd->UploadBuffer(ub, (void*)&ubo, sizeof(UniformBufferObject), 0);
+
             cmd->BindPipeline(pipeline);
             cmd->BindVertexBuffer(vb);
             cmd->BindIndexBuffer(ib);
+            cmd->BindUniformBuffer(ub, 0);
             cmd->DrawIndexed(6);
 
             gd->EndPass(cmd);

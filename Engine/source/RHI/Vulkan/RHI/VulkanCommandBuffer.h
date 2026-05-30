@@ -24,7 +24,8 @@ namespace Engine::RHI::Vulkan
         vk::raii::CommandBuffer m_CommandBuffer = nullptr;
 
         // State
-        VulkanTextureData* m_CurrentRenderTarget = nullptr;
+        VulkanTextureData*  m_CurrentRenderTarget = nullptr;
+        PipelineHandle      m_BoundPipelineHandle;
 
         // Staging buffer
         struct StagingBufferAllocation {

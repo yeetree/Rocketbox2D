@@ -3,6 +3,10 @@
 
 #include "engine_export.h"
 
+#include "RHI/Vulkan/VulkanConstants.h"
+
+#include <unordered_map>
+
 #include <vulkan/vulkan_raii.hpp>
 
 namespace Engine::RHI::Vulkan
@@ -16,14 +20,25 @@ namespace Engine::RHI::Vulkan
         VulkanContext& m_Context;
         vk::raii::DescriptorPool m_DescriptorPool = nullptr;
 
+        struct DescriptorSetEntry {
+            vk::raii::DescriptorSet             set          = nullptr;
+            std::array<uint32_t, k_MaxBindings> boundBuffers = {}; // IDs of buffers bound
+        };
+        std::unordered_map<uint32_t, DescriptorSetEntry> m_Sets; // Keyed by pipeline ID
+
     public:
         VulkanDescriptorSetAllocator(VulkanContext& context);
 
-        // Returns existing or allocates new set for this pipeline
-        // TODO: Vulkan: Rewrite VulkanDescriptorSetAllocator;
-        // vk::DescriptorSet GetOrAllocate(VulkanPipeline* pipeline);
+        // Returns existing or allocates new descriptor set for this pipeline layout
+        vk::DescriptorSet GetOrAllocate(uint32_t pipelineId, vk::DescriptorSetLayout layout);
 
-        void Reset();    
+        // Returns true if the buffer bound to this slot has changed since last write
+        bool NeedsWrite(uint32_t pipelineId, uint32_t binding, uint32_t bufferId) const;
+
+        // Records that this buffer is now bound to this slot
+        void MarkWritten(uint32_t pipelineId, uint32_t binding, uint32_t bufferId);
+
+        void Reset();
     };
 } // namespace Engine
 
