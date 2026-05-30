@@ -7,10 +7,10 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
 
-namespace Engine
+namespace Engine::RHI::Vulkan::SDL3
 {
 
-    VkSurfaceKHR SDL3VulkanGraphicsBridge::CreateSurface(VkInstance instance, VkPhysicalDevice pd, uint32_t presentQueueIndex, IWindow* window)
+    vk::SurfaceKHR SDL3VulkanGraphicsBridge::CreateSurface(vk::Instance instance, vk::PhysicalDevice pd, uint32_t presentQueueIndex, Engine::IWindow* window)
     {
         ENGINE_CORE_ASSERT(window != nullptr, "SDL3 + Vulkan: CreateSurface(): window is nullptr!");
         ENGINE_CORE_ASSERT(window->GetPlatform() == Platform::SDL, "SDL3 + Vulkan: CreateSurface(): window is not for SDL3!");
@@ -60,7 +60,7 @@ namespace Engine
         return std::vector<const char*>(SDLExtensions, SDLExtensions + SDLExtensionCount);
     }
 
-    VkSurfaceKHR* SDL3VulkanGraphicsBridge::CreateDummySurface(VkInstance instance)
+    vk::SurfaceKHR* SDL3VulkanGraphicsBridge::CreateDummySurface(vk::Instance instance)
     {
         // Create dummy window
         m_DummyWindow = SDL_CreateWindow(
@@ -75,14 +75,16 @@ namespace Engine
         }
 
         // Create dummy surface
-        if (!SDL_Vulkan_CreateSurface(m_DummyWindow, instance, NULL, &m_DummySurface)) {
+        VkSurfaceKHR surface = nullptr;
+        if (!SDL_Vulkan_CreateSurface(m_DummyWindow, instance, NULL, &surface)) {
             throw std::runtime_error(std::format("SDL3 + Vulkan: CreateDummySurface(): Could not create a dummy surface: Error: {0}", SDL_GetError()));
         }
 
+        m_DummySurface = surface;
         return &m_DummySurface;
     }
 
-    void SDL3VulkanGraphicsBridge::DestroyDummySurface(VkInstance instance)
+    void SDL3VulkanGraphicsBridge::DestroyDummySurface(vk::Instance instance)
     {
         // Destroy
         if(m_DummySurface)

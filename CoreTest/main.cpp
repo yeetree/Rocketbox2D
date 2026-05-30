@@ -6,6 +6,7 @@
 #include "Engine/Core/Assert.h"
 
 using namespace Engine;
+using namespace Engine::RHI;
 
 struct Vertex
 {
@@ -33,17 +34,11 @@ const std::vector<uint16_t> indices = {
 
 class EngineTestApp : public Application {
 public:
-    Ref<ISwapChain> sc;
-
-    Ref<IGraphicsDevice> gd;
     Ref<IWindow> win;
-    Ref<IShader> shader;
-    Ref<IPipeline> pipe;
+    Ref<IGraphicsDevice> gd;
     Ref<FileSystem> fs;
 
-    Ref<IBuffer> vb;
-    Ref<IBuffer> ib;
-    Ref<IBuffer> ub;
+    SwapChainHandle sc;
 
     UniformBufferObject ubo;
 
@@ -61,11 +56,12 @@ public:
         SwapChainDesc scdesc{
             .window = win.get(),
             .presentation = PresentMode::VSync,
-            .format = TextureFormat::RGBA8
+            .format = PixelFormat::RGBA8
         };
 
         sc = gd->CreateSwapChain(scdesc);
 
+        /*
         ShaderDesc shdesc{
             .modules = {
                 ShaderModule{
@@ -125,16 +121,16 @@ public:
         init->SetBufferData(vb.get(), (void*)vertices.data(), vb->GetSize(), 0);
         init->SetBufferData(ib.get(), (void*)indices.data(), ib->GetSize(), 0);
         init->End();
-        gd->EndSingleTimeCommands(init);
+        gd->EndSingleTimeCommands(init);*/
     }
 
     void OnEvent(StringName type, const Event& event) override {
         if(type == Hash32("WindowResized"))
         {
-            if(sc)
+            if(sc.IsValid())
             {
                 const WindowResizedEvent& wr = static_cast<const WindowResizedEvent&>(event);
-                gd->ResizeSwapChain(sc.get(), wr.GetSizeX(), wr.GetSizeY());
+                gd->ResizeSwapChain(sc, wr.GetSizeX(), wr.GetSizeY());
             }
         }
     }
@@ -147,15 +143,15 @@ public:
         }
         if(in->IsActionPressed("immediate"))
         {
-            gd->SetSwapChainPresentation(sc.get(), PresentMode::Immediate);
+            gd->SetSwapChainPresentMode(sc, PresentMode::Immediate);
         }
         if(in->IsActionPressed("vsync"))
         {
-            gd->SetSwapChainPresentation(sc.get(), PresentMode::VSync);
+            gd->SetSwapChainPresentMode(sc, PresentMode::VSync);
         }
         if(in->IsActionPressed("mailbox"))
         {
-            gd->SetSwapChainPresentation(sc.get(), PresentMode::Mailbox);
+            gd->SetSwapChainPresentMode(sc, PresentMode::Mailbox);
         }
 
         static float time = 0;
@@ -171,24 +167,33 @@ public:
 
         gd->BeginFrame();
 
-        gd->SetBufferData(ub.get(), (void*)&ubo, sizeof(UniformBufferObject));
+        ICommandBuffer* cmd = gd->BeginPass(sc, Vec4(0.0f, 0.0f, 0.25f, 1.0f));
+        if(cmd)
+        {
+            
 
-        ICommandBuffer* cmd = gd->BeginSwapChainPass(sc.get());
-        cmd->Begin();
+            gd->EndPass(cmd);
+        }
         
-        cmd->BeginRendering(sc->GetCurrentBackBuffer(), Vec4(0.0f, 0.0f, 0.25f, 1.0f));
-
-        cmd->BindPipeline(pipe.get());
-        cmd->BindVertexBuffer(vb.get());
-        cmd->BindIndexBuffer(ib.get());
-        cmd->BindUniformBuffer(ub.get(), pipe.get(), 0);
-        cmd->DrawIndexed(indices.size());
-
-        cmd->EndRendering(sc->GetCurrentBackBuffer());
-        cmd->End();
-        gd->EndSwapChainPass(sc.get(), cmd);
 
         gd->EndFrame();
+
+        //gd->SetBufferData(ub.get(), (void*)&ubo, sizeof(UniformBufferObject));
+
+        //ICommandBuffer* cmd = gd->BeginSwapChainPass(sc.get());
+        //cmd->Begin();
+        
+        //cmd->BeginRendering(sc->GetCurrentBackBuffer(), Vec4(0.0f, 0.0f, 0.25f, 1.0f));
+
+        //cmd->BindPipeline(pipe.get());
+        //cmd->BindVertexBuffer(vb.get());
+        //cmd->BindIndexBuffer(ib.get());
+        //cmd->BindUniformBuffer(ub.get(), pipe.get(), 0);
+        //cmd->DrawIndexed(indices.size());
+
+        //cmd->EndRendering(sc->GetCurrentBackBuffer());
+        //cmd->End();
+        //gd->EndSwapChainPass(sc.get(), cmd);
     }
 
     void OnDestroy() override {

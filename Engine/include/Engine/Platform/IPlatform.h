@@ -7,8 +7,6 @@
 
 #include "Engine/Core/Base.h"
 
-#include "Engine/RHI/GraphicsAPI.h"
-
 #include <string>
 
 namespace Engine

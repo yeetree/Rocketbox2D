@@ -3,14 +3,16 @@
 
 #include "engine_export.h"
 
-#include "RHI/Vulkan/IVulkanGraphicsBridge.h"
 #include "RHI/Vulkan/VulkanQueue.h"
 
 #include <vulkan/vulkan_raii.hpp>
 #include <vk_mem_alloc.h>
 
-namespace Engine
+namespace Engine::RHI::Vulkan
 {
+    // Forward
+    class IVulkanGraphicsBridge;
+
     class ENGINE_EXPORT VulkanContext
     {
     private:
@@ -18,10 +20,10 @@ namespace Engine
         vk::raii::Instance m_Instance = nullptr;
         vk::raii::DebugUtilsMessengerEXT m_DebugMessenger = nullptr;
         vk::raii::PhysicalDevice m_PhysicalDevice = nullptr;
+        vk::PhysicalDeviceProperties m_PhysicalDeviceProperties;
         vk::raii::Device m_Device = nullptr;
-        // TODO: Vulkan: Put command pool somewhere better
-        vk::raii::CommandPool m_CommandPool = nullptr;
         VmaAllocator m_Allocator;
+        // TODO: Vulkan: Separate graphics and presentation queues
         VulkanQueue m_GraphicsQueue;
 
         void CreateInstance(IVulkanGraphicsBridge* bridge);
@@ -34,13 +36,14 @@ namespace Engine
         VulkanContext(IVulkanGraphicsBridge* bridge);
         ~VulkanContext();
 
-        vk::raii::Instance& GetInstance() { return m_Instance; }
-        vk::raii::PhysicalDevice& GetPhysicalDevice() { return m_PhysicalDevice; }
-        vk::raii::Device& GetDevice() { return m_Device; }
-        VmaAllocator& GetAllocator() { return m_Allocator; }
-        VulkanQueue& GetGraphicsQueue() { return m_GraphicsQueue; }
+        vk::raii::Instance&           GetInstance() { return m_Instance; }
+        vk::raii::PhysicalDevice&     GetPhysicalDevice() { return m_PhysicalDevice; }
+        vk::PhysicalDeviceProperties& GetPhysicalDeviceProperties() { return m_PhysicalDeviceProperties; }
+        vk::raii::Device&             GetDevice() { return m_Device; }
+        VmaAllocator&                 GetAllocator() { return m_Allocator; }
+        VulkanQueue&                  GetGraphicsQueue() { return m_GraphicsQueue; }
     };
-} // namespace Engine
+} // namespace Engine::RHI::Vulkan
 
 
 #endif // RHI_VULKAN_VULKANCONTEXT

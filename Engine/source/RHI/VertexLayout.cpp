@@ -1,6 +1,6 @@
 #include "Engine/RHI/VertexLayout.h"
 
-namespace Engine
+namespace Engine::RHI
 {
     uint32_t VertexElement::GetSizeOfType(VertexElementType type)
     {
@@ -32,4 +32,4 @@ namespace Engine
             m_Stride += element.m_Size;
         }
     }
-} // namespace Engine
+} // namespace Engine::RHI

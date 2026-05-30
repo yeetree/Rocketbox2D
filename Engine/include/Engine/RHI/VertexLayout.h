@@ -7,7 +7,7 @@
 #include <string>
 #include <cstdint>
 
-namespace Engine {
+namespace Engine::RHI {
     // Type of vertex element
     enum class ENGINE_EXPORT VertexElementType { Int, Float, Vec2, Vec3, Vec4 };
 
@@ -46,6 +46,6 @@ namespace Engine {
         uint32_t GetStride() const { return m_Stride; }
         const std::vector<VertexElement>& GetElements() const { return m_Elements; }
     };
-}
+} // namespace Engine::RHI
 
 #endif // ENGINE_RHI_VERTEXLAYOUT

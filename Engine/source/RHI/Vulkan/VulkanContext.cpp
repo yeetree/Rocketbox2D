@@ -3,6 +3,7 @@
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
 #include "RHI/Vulkan/VulkanContext.h"
 #include "RHI/Vulkan/VulkanConstants.h"
+#include "RHI/Vulkan/IVulkanGraphicsBridge.h"
 
 #include "Engine/Core/Assert.h"
 #include "Engine/Core/Log.h"
@@ -35,7 +36,7 @@ static VKAPI_ATTR vk::Bool32 VKAPI_CALL DebugCallback(
     return vk::False;
 }
 
-namespace Engine
+namespace Engine::RHI::Vulkan
 {
     VulkanContext::VulkanContext(IVulkanGraphicsBridge* bridge)
     {
@@ -186,9 +187,11 @@ namespace Engine
         
         for(auto const& physicalDevice : physicalDevices)
         {
-            LOG_CORE_INFO("Vulkan: Trying: {0}", physicalDevice.getProperties().deviceName.data());
+            vk::PhysicalDeviceProperties props = physicalDevice.getProperties();
+
+            LOG_CORE_INFO("Vulkan: Trying: {0}", props.deviceName.data());
             // Version
-            bool version = physicalDevice.getProperties().apiVersion >= vk::ApiVersion12;
+            bool version = props.apiVersion >= vk::ApiVersion12;
             if(!version)
             {
                 LOG_CORE_WARN("Vulkan: - Skipped: Minimum Vulkan version not supported.");
@@ -234,8 +237,9 @@ namespace Engine
                 continue;
             }
 
-            LOG_CORE_INFO("Vulkan: Selected: {0}", physicalDevice.getProperties().deviceName.data());
+            LOG_CORE_INFO("Vulkan: Selected: {0}", props.deviceName.data());
             m_PhysicalDevice = physicalDevice;
+            m_PhysicalDeviceProperties = props;
             break;
         }
 
@@ -252,7 +256,7 @@ namespace Engine
         // TODO: Vulkan: Make feature selection less trash
 
         // Create dummy surface
-        VkSurfaceKHR* surf = bridge->CreateDummySurface(*m_Instance);
+        vk::SurfaceKHR* surf = bridge->CreateDummySurface(*m_Instance);
         if (surf == nullptr)
         {
             throw std::runtime_error("Vulkan: Dummy surface is invalid!");

@@ -1,31 +1,38 @@
 #ifndef RHI_VULKAN_RHI_VULKANGRAPHICSDEVICE
 #define RHI_VULKAN_RHI_VULKANGRAPHICSDEVICE
 
+#include "engine_export.h"
+
+#include "Engine/Core/Base.h"
+
 #include "Engine/RHI/IGraphicsDevice.h"
 
-#include "RHI/Vulkan/RHI/VulkanCommandBuffer.h"
-#include "RHI/Vulkan/RHI/VulkanSwapChain.h"
-
-#include "RHI/Vulkan/IVulkanGraphicsBridge.h"
 #include "RHI/Vulkan/VulkanContext.h"
-#include "RHI/Vulkan/VulkanFrame.h"
-#include "RHI/Vulkan/VulkanCommandBufferPool.h"
+#include "RHI/Vulkan/VulkanResourceData.h"
+#include "RHI/Vulkan/VulkanCommandBufferAllocator.h"
 
-namespace Engine
+#include <vector>
+#include <array>
+#include <unordered_map>
+
+#include <vulkan/vulkan_raii.hpp>
+
+namespace Engine::RHI::Vulkan
 {
-    class ENGINE_EXPORT VulkanGraphicsDevice : public IGraphicsDevice
+    // Forward
+    class IVulkanGraphicsBridge;
+    class VulkanFrame;
+
+    class ENGINE_EXPORT VulkanGraphicsDevice: public IGraphicsDevice
     {
     private:
-        // Vulkan helper classes
+        // Context
         Scope<IVulkanGraphicsBridge> m_Bridge;
-        Scope<VulkanContext> m_Context;
+        VulkanContext m_Context;
 
-        // Single-time command pool
-        vk::raii::CommandPool m_SingleCommandPool = nullptr;
-
-        // Frame info
+        // Frame pacing
         std::vector<Scope<VulkanFrame>> m_Frames;
-        uint32_t m_FrameIndex = 0;
+        uint32_t m_FrameIndex;
 
         // Global frame submission info
         std::vector<vk::SubmitInfo> m_FrameSubmits;
@@ -33,39 +40,80 @@ namespace Engine
         std::vector<vk::Semaphore> m_FrameWaitSemaphores;
         std::vector<vk::Semaphore> m_FrameSignalSemaphores;
         std::vector<vk::PipelineStageFlags> m_FrameStageFlags;
-        std::vector<VulkanSwapChain*> m_FrameSwapChainPresentations;
+        std::vector<SwapChainHandle> m_FrameSwapChainPresentations;
+
+        // Immediate command buffers
+        VulkanCommandBufferAllocator m_ImmediateAllocator;
+
+        // Resources
+        std::unordered_map<uint32_t, VulkanBufferData> m_Buffers;
+        std::unordered_map<uint32_t, VulkanTextureData> m_Textures;
+        std::unordered_map<uint32_t, VulkanShaderData> m_Shaders;
+        std::unordered_map<uint32_t, VulkanPipelineData> m_Pipelines;
+        std::unordered_map<uint32_t, VulkanSwapChainData> m_SwapChains;
+
+        // Resource ID
+        uint32_t m_NextID = 1;
+        uint32_t AllocateID() { return m_NextID++; }
+
+        // Swapchain
+        void RebuildSwapchain(VulkanSwapChainData& swapChainData);
+
+        // Textures
+        void CreateImageView(VulkanTextureData& textureData);
 
     public:
         VulkanGraphicsDevice(Scope<IVulkanGraphicsBridge> bridge);
-        ~VulkanGraphicsDevice() = default;
+        ~VulkanGraphicsDevice() override;
 
-        Scope<ISwapChain> CreateSwapChain(const SwapChainDesc& desc) override;
-        Scope<IShader> CreateShader(const ShaderDesc& desc) override;
-        Scope<IPipeline> CreatePipeline(const PipelineDesc& desc) override;
-        Scope<IBuffer> CreateBuffer(const BufferDesc& desc) override;
+        // Resource creation
+        BufferHandle    CreateBuffer(const BufferDesc& desc) override;
+        TextureHandle   CreateTexture(const TextureDesc& desc) override;
+        ShaderHandle    CreateShader(const ShaderDesc& desc) override;
+        PipelineHandle  CreatePipeline(const PipelineDesc& desc) override;
+        SwapChainHandle CreateSwapChain(const SwapChainDesc& desc) override;
+
+        // Resource destruction
+        void DestroyBuffer(BufferHandle& buffer) override;
+        void DestroyTexture(TextureHandle& texture) override;
+        void DestroyShader(ShaderHandle& shader) override;
+        void DestroyPipeline(PipelineHandle& pipeline) override;
+        void DestroySwapChain(SwapChainHandle& swapchain) override;
 
         // Frame pacing
         void BeginFrame() override;
         void EndFrame() override;
 
-        // Single time commands
-        ICommandBuffer* BeginSingleTimeCommands() override;
-        void EndSingleTimeCommands(ICommandBuffer* cmd) override; // Blocks until completion
+        // Render passes
+        // ICommandBuffer* BeginPass(TextureHandle renderTarget, Vec4 clearColor) override;
+        ICommandBuffer* BeginPass(SwapChainHandle renderTarget, Vec4 clearColor) override;
+        void EndPass(ICommandBuffer* cmd) override;
 
-        // Swapchain passees
-        ICommandBuffer* BeginSwapChainPass(ISwapChain* swapchain) override;
-        void EndSwapChainPass(ISwapChain* swapchain, ICommandBuffer* cmd) override;
+        // Immediate command buffer
+        ICommandBuffer* BeginImmediate() override;
+        void EndImmediate(ICommandBuffer* cmd) override; // Blocks until GPU is finished with work
 
-        // Swapchain config
-        void ResizeSwapChain(ISwapChain* swapchain, uint32_t width, uint32_t height) override; // Called on window resize events
-        void SetSwapChainPresentation(ISwapChain* swapchain, PresentMode presentation) override;
+        // Swapchain configuration
+        void ResizeSwapChain(SwapChainHandle swapchain, uint32_t width, uint32_t height) override;  // Called on window resize events
+        void SetSwapChainPresentMode(SwapChainHandle swapchain, PresentMode mode) override;
 
-        // Dynamic buffers
-        void SetBufferData(IBuffer* buffer, void* data, size_t size) override;
+        // Destroy
+        void OnDestroy() override; // Called when application attempts to exit gracefully
 
-        void OnDestroy() override;
+        // Public getters for VulkanClasses. These assert that the handle is valid. This will not return if the handle is invalid.
+        VulkanContext& GetContext()      { return m_Context; }
+        VulkanFrame*   GetCurrentFrame() { return m_Frames[m_FrameIndex].get(); }
+        uint32_t       GetFrameIndex()   { return m_FrameIndex; }
+
+        // Resources
+        VulkanBufferData&    GetBufferData(BufferHandle buffer);
+        VulkanTextureData&   GetTextureData(TextureHandle texture);
+        VulkanShaderData&    GetShaderData(ShaderHandle shader);
+        VulkanPipelineData&  GetPipelineData(PipelineHandle pipeline);
+        VulkanSwapChainData& GetSwapChainData(SwapChainHandle swapchain);
     };
-} // namespace Engine
+
+} // namespace Engine::RHI::Vulkan
 
 
 #endif // RHI_VULKAN_RHI_VULKANGRAPHICSDEVICE

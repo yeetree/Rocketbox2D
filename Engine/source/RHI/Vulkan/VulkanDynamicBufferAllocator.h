@@ -1,5 +1,5 @@
-#ifndef RHI_VULKAN_VULKANDYNAMICBUFFER
-#define RHI_VULKAN_VULKANDYNAMICBUFFER
+#ifndef RHI_VULKAN_VULKANDYNAMICBUFFERALLOCATOR
+#define RHI_VULKAN_VULKANDYNAMICBUFFERALLOCATOR
 
 #include "engine_export.h"
 
@@ -8,12 +8,15 @@
 #include <vulkan/vulkan_raii.hpp>
 #include <vk_mem_alloc.h>
 
-namespace Engine
+namespace Engine::RHI::Vulkan
 {
-    class ENGINE_EXPORT VulkanDynamicBuffer
+    // Forward
+    class VulkanContext;
+
+    class ENGINE_EXPORT VulkanDynamicBufferAllocator
     {
     private:
-        VulkanContext* m_Context = nullptr;
+        VulkanContext& m_Context;
 
         VmaAllocation m_Allocation = nullptr;
         vk::Buffer m_Buffer = nullptr;
@@ -23,8 +26,8 @@ namespace Engine
         size_t m_Alignment = 0;
 
     public:
-        VulkanDynamicBuffer(VulkanContext* context, size_t totalSize, vk::BufferUsageFlags usage, size_t alignment);
-        ~VulkanDynamicBuffer();
+        VulkanDynamicBufferAllocator(VulkanContext& context, size_t totalSize, vk::BufferUsageFlags usage, size_t alignment);
+        ~VulkanDynamicBufferAllocator();
 
         size_t AllocateAndCopy(void* data, size_t size);
 
@@ -32,7 +35,7 @@ namespace Engine
 
         void Reset();
     };
-} // namespace Engine
+} // namespace Engine::RHI::Vulkan
 
 
-#endif // RHI_VULKAN_VULKANDYNAMICBUFFER
+#endif // RHI_VULKAN_VULKANDYNAMICBUFFERALLOCATOR

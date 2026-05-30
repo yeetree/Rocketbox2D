@@ -22,6 +22,8 @@
 #include "Engine/Input/InputAxis.h"
 #include "Engine/Input/Input.h"
 
+#include "Engine/RHI/RHI.h"
+
 /*
 #include "Engine/Renderer/RHI/IBuffer.h"
 #include "Engine/Renderer/RHI/IGraphicsDevice.h"

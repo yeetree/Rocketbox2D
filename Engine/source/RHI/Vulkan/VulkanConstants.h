@@ -29,9 +29,12 @@ constexpr const std::array<const char*, 4> k_DeviceExtensions = {
 
 // TODO: Vulkan: Move these into a GraphicsDeviceDesc
 
-constexpr const int k_MaxFramesInFlight = 3;
+constexpr const uint32_t k_MaxFramesInFlight = 3;
 
-constexpr const int k_DynamicMegaBufferSize = 1 * 1024 * 1024; // 1 MiB
+constexpr const uint32_t k_VertexDynamicBufferSizePerFrame = 1 * 1024 * 1024; // 1 MiB
+constexpr const uint32_t k_IndexDynamicBufferSizePerFrame = 1 * 1024 * 1024; // 1 MiB
+constexpr const uint32_t k_UniformDynamicBufferSizePerFrame = 1 * 1024 * 1024; // 1 MiB
+
 
 constexpr const int k_MaxDescriptorSetsPerFrame = 64;
 constexpr const int k_MaxUniformBuffersPerFrame = 64;

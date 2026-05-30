@@ -1,9 +1,10 @@
 #include "RHI/Vulkan/VulkanDescriptorSetAllocator.h"
+#include "RHI/Vulkan/VulkanContext.h"
 #include "RHI/Vulkan/VulkanConstants.h"
 
-namespace Engine
+namespace Engine::RHI::Vulkan
 {
-    VulkanDescriptorSetAllocator::VulkanDescriptorSetAllocator(VulkanContext* context)
+    VulkanDescriptorSetAllocator::VulkanDescriptorSetAllocator(VulkanContext& context)
         : m_Context(context)
     {
         // Descriptor pool
@@ -17,9 +18,10 @@ namespace Engine
         poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
         poolInfo.pPoolSizes = poolSizes.data();
 
-        m_DescriptorPool = vk::raii::DescriptorPool(context->GetDevice(), poolInfo);
+        m_DescriptorPool = vk::raii::DescriptorPool(m_Context.GetDevice(), poolInfo);
     }
 
+    /*
     vk::DescriptorSet VulkanDescriptorSetAllocator::GetOrAllocate(VulkanPipeline* pipeline)
     {
         uint32_t id = pipeline->GetID();
@@ -38,10 +40,10 @@ namespace Engine
         auto sets = m_Context->GetDevice().allocateDescriptorSets(allocInfo);
         auto result = m_Sets.emplace(id, std::move(sets.front()));
         return result.first->second;
-    }
+    }*/
 
     void VulkanDescriptorSetAllocator::Reset()
     {
-        m_Sets.clear();
+        //m_Sets.clear();
     }
-} // namespace Engine
+} // namespace Engine::RHI::Vulkan

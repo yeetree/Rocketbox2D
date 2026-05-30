@@ -1,9 +1,9 @@
-#include "RHI/Vulkan/VulkanDynamicBuffer.h"
+#include "RHI/Vulkan/VulkanDynamicBufferAllocator.h"
 #include "Engine/Core/Assert.h"
 
-namespace Engine
+namespace Engine::RHI::Vulkan
 {
-    VulkanDynamicBuffer::VulkanDynamicBuffer(VulkanContext* context, size_t totalSize, vk::BufferUsageFlags usage, size_t alignment)
+    VulkanDynamicBufferAllocator::VulkanDynamicBufferAllocator(VulkanContext& context, size_t totalSize, vk::BufferUsageFlags usage, size_t alignment)
         : m_Context(context), m_TotalSize(totalSize), m_Alignment(alignment)
     {
         if(m_TotalSize > 0)
@@ -20,18 +20,18 @@ namespace Engine
 
             VmaAllocationInfo resultInfo;
             VkBuffer buffer;
-            vmaCreateBuffer(m_Context->GetAllocator(), bufferInfo, &allocInfo, &buffer, &m_Allocation, &resultInfo);
+            vmaCreateBuffer(m_Context.GetAllocator(), bufferInfo, &allocInfo, &buffer, &m_Allocation, &resultInfo);
 
             m_Buffer = buffer;
             m_MappedData = resultInfo.pMappedData;
         }
     }
 
-    VulkanDynamicBuffer::~VulkanDynamicBuffer()
+    VulkanDynamicBufferAllocator::~VulkanDynamicBufferAllocator()
     {
         if (m_Buffer)
         {
-            vmaDestroyBuffer(m_Context->GetAllocator(), m_Buffer, m_Allocation);
+            vmaDestroyBuffer(m_Context.GetAllocator(), m_Buffer, m_Allocation);
             
             m_Buffer = nullptr;
             m_Allocation = nullptr;
@@ -40,7 +40,7 @@ namespace Engine
     }
 
     // Allocates space in mega buffer and returns start offset
-    size_t VulkanDynamicBuffer::AllocateAndCopy(void* data, size_t size)
+    size_t VulkanDynamicBufferAllocator::AllocateAndCopy(void* data, size_t size)
     {
         // Align the current offset
         size_t alignedOffset = (m_CurrentOffset + m_Alignment - 1) & ~(m_Alignment - 1);
@@ -57,7 +57,7 @@ namespace Engine
         return alignedOffset;
     }
 
-    void VulkanDynamicBuffer::Reset()
+    void VulkanDynamicBufferAllocator::Reset()
     {
         m_CurrentOffset = 0;
     }

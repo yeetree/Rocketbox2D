@@ -3,11 +3,8 @@
 
 #include "engine_export.h"
 
-#include "Engine/RHI/IBuffer.h"
-
-#include "RHI/Vulkan/VulkanContext.h"
-#include "RHI/Vulkan/VulkanDynamicBuffer.h"
-#include "RHI/Vulkan/VulkanCommandBufferPool.h"
+#include "RHI/Vulkan/VulkanCommandBufferAllocator.h"
+#include "RHI/Vulkan/VulkanDynamicBufferAllocator.h"
 #include "RHI/Vulkan/VulkanDescriptorSetAllocator.h"
 
 #include <cstdint>
@@ -15,7 +12,7 @@
 #include <vulkan/vulkan_raii.hpp>
 #include <vk_mem_alloc.h>
 
-namespace Engine
+namespace Engine::RHI::Vulkan
 {
     // VulkanFrame manages synchronization and command buffer acquisition in frames in flight.
     class ENGINE_EXPORT VulkanFrame
@@ -25,27 +22,29 @@ namespace Engine
         vk::raii::Fence m_Fence = nullptr;
 
         // Comand buffer allocation
-        Scope<VulkanCommandBufferPool> m_CommandBufferPool;
+        VulkanCommandBufferAllocator m_CommandBufferAllocator;
 
         // Dynamic buffers
-        Scope<VulkanDynamicBuffer> m_VertexDynamicBuffer;
-        Scope<VulkanDynamicBuffer> m_IndexDynamicBuffer;
-        Scope<VulkanDynamicBuffer> m_UniformDynamicBuffer;
+        VulkanDynamicBufferAllocator m_VertexDynamicBufferAllocator;
+        VulkanDynamicBufferAllocator m_IndexDynamicBufferAllocator;
+        VulkanDynamicBufferAllocator m_UniformDynamicBufferAllocator;
 
         // Descriptor set allocator
-        Scope<VulkanDescriptorSetAllocator> m_DescriptorSetAllocator = nullptr;
+        VulkanDescriptorSetAllocator m_DescriptorSetAllocator;
 
     public:
-        VulkanFrame(VulkanContext* context);
+        VulkanFrame(VulkanContext& context);
 
         // Begin new frame
         void Reset();
 
         // Getters
-        VulkanCommandBufferPool* GetCommandBufferPool() { return m_CommandBufferPool.get(); };
-        VulkanDynamicBuffer* GetDynamicBuffer(BufferType type);
         vk::raii::Fence& GetFence() { return m_Fence; }
-        VulkanDescriptorSetAllocator* GetDescriptorSetAllocator() { return m_DescriptorSetAllocator.get(); }
+        VulkanCommandBufferAllocator& GetCommandBufferAllocator() { return m_CommandBufferAllocator; };
+        VulkanDynamicBufferAllocator& GetVertexDynamicBufferAllocator() { return m_VertexDynamicBufferAllocator; }
+        VulkanDynamicBufferAllocator& GetIndexDynamicBufferAllocator() { return m_IndexDynamicBufferAllocator; }
+        VulkanDynamicBufferAllocator& GetUniformDynamicBufferAllocator() { return m_UniformDynamicBufferAllocator; }
+        VulkanDescriptorSetAllocator& GetDescriptorSetAllocator() { return m_DescriptorSetAllocator; }
 
     };
 } // namespace Engine

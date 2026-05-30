@@ -12,7 +12,7 @@ namespace Engine
             flags |= SDL_WINDOW_RESIZABLE;
         
         switch(props.api) {
-            case GraphicsAPI::Vulkan: flags |= SDL_WINDOW_VULKAN; break;
+            case RHI::GraphicsAPI::Vulkan: flags |= SDL_WINDOW_VULKAN; break;
         }
 
         m_Window = SDL_CreateWindow(props.title.c_str(), m_Width, m_Height, flags);

@@ -6,7 +6,7 @@
 #include "Engine/Core/Base.h"
 
 #include "Engine/Platform/Platform.h"
-#include "Engine/RHI/GraphicsAPI.h"
+#include "Engine/RHI/RHI.h"
 
 #include <string>
 
@@ -15,7 +15,7 @@ namespace Engine
     struct WindowProperties {
         std::string title;
         unsigned int width, height;
-        GraphicsAPI api;
+        RHI::GraphicsAPI api;
         bool resizable;
     };
 
@@ -24,10 +24,10 @@ namespace Engine
     {
     private:
         Platform m_Platform;
-        GraphicsAPI m_API;
+        RHI::GraphicsAPI m_API;
 
     protected:
-        IWindow(Platform platform, GraphicsAPI api) : m_Platform(platform), m_API(api) {}
+        IWindow(Platform platform, RHI::GraphicsAPI api) : m_Platform(platform), m_API(api) {}
 
     public:
         virtual ~IWindow() = default;
@@ -35,7 +35,7 @@ namespace Engine
         virtual unsigned int GetWidth() = 0;
         virtual unsigned int GetHeight() = 0;
 
-        GraphicsAPI GetAPI() const { return m_API; }
+        RHI::GraphicsAPI GetAPI() const { return m_API; }
         Platform GetPlatform() const { return m_Platform; }
     };
 } // namespace Engine

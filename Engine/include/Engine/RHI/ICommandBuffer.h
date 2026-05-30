@@ -3,40 +3,28 @@
 
 #include "engine_export.h"
 
-#include "Engine/Core/Base.h"
-
-#include "Engine/RHI/ITexture.h"
-#include "Engine/RHI/IPipeline.h"
-#include "Engine/RHI/IBuffer.h"
+#include "Engine/RHI/RHI.h"
 
 #include "Engine/Math/Vector.h"
 
-namespace Engine
+namespace Engine::RHI
 {
     class ENGINE_EXPORT ICommandBuffer
     {
     public:
         virtual ~ICommandBuffer() = default;
 
-        // Command buffer
-        virtual void Begin() = 0;
-        virtual void End() = 0;
-
-        // Render target
-        virtual void BeginRendering(ITexture* renderTarget, Vec4 clearColor) = 0;
-        virtual void EndRendering(ITexture* renderTarget) = 0;
-
         // Graphics
-        virtual void BindPipeline(IPipeline* pipeline) = 0;
-        virtual void BindVertexBuffer(IBuffer* buffer) = 0;
-        virtual void BindIndexBuffer(IBuffer* buffer) = 0;
-        virtual void BindUniformBuffer(IBuffer* buffer, IPipeline* pipeline, uint32_t binding) = 0;
+        virtual void BindPipeline(PipelineHandle pipeline) = 0;
+        virtual void BindVertexBuffer(BufferHandle buffer) = 0;
+        virtual void BindIndexBuffer(BufferHandle buffer) = 0;
+        virtual void BindUniformBuffer(BufferHandle buffer, uint32_t binding) = 0;
         virtual void Draw(uint32_t vertexCount, uint32_t instanceCount = 1, uint32_t firstVertex = 0, uint32_t firstInstance = 0) = 0;
         virtual void DrawIndexed(uint32_t indexCount, uint32_t instanceCount = 1, uint32_t firstIndex = 0, int32_t indexOffset = 0, uint32_t firstInstance = 0) = 0;
    
         // Data
-        virtual void SetBufferData(IBuffer* buffer, void* data, size_t size, size_t offset) = 0;
-        virtual void SetTextureData(ITexture* texture, void* data) = 0;
+        virtual void UploadBuffer(BufferHandle buffer, void* data, size_t size, size_t offset) = 0;
+        virtual void UploadTexture(TextureHandle texture, void* data) = 0;
     };
 }
 

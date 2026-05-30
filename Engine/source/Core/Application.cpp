@@ -58,8 +58,8 @@ namespace Engine {
 
         // Create graphics device
         LOG_CORE_INFO("Initializing graphics device...");
-        m_GraphicsDevice = IGraphicsDevice::Create(m_Window->GetAPI());
-        m_Locator->RegisterInstance<IGraphicsDevice>(m_GraphicsDevice);
+        m_GraphicsDevice = RHI::IGraphicsDevice::Create(m_Window->GetAPI());
+        m_Locator->RegisterInstance<RHI::IGraphicsDevice>(m_GraphicsDevice);
 
         // Create Renderer2D
         //LOG_CORE_INFO("Initializing renderer...");

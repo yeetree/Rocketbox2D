@@ -3,28 +3,25 @@
 
 #include "engine_export.h"
 
-#include "RHI/Vulkan/VulkanContext.h"
-#include "RHI/Vulkan/RHI/VulkanPipeline.h"
-
-#include <unordered_map>
-#include <cstdint>
-
 #include <vulkan/vulkan_raii.hpp>
 
-namespace Engine
+namespace Engine::RHI::Vulkan
 {
-    class VulkanDescriptorSetAllocator
+    // Forward
+    class VulkanContext;
+
+    class ENGINE_EXPORT VulkanDescriptorSetAllocator
     {
     private:
-        VulkanContext* m_Context = nullptr;
+        VulkanContext& m_Context;
         vk::raii::DescriptorPool m_DescriptorPool = nullptr;
-        std::unordered_map<uint32_t, vk::raii::DescriptorSet> m_Sets; // indexed by pipeline ID
 
     public:
-        VulkanDescriptorSetAllocator(VulkanContext* context);
+        VulkanDescriptorSetAllocator(VulkanContext& context);
 
         // Returns existing or allocates new set for this pipeline
-        vk::DescriptorSet GetOrAllocate(VulkanPipeline* pipeline);
+        // TODO: Vulkan: Rewrite VulkanDescriptorSetAllocator;
+        // vk::DescriptorSet GetOrAllocate(VulkanPipeline* pipeline);
 
         void Reset();    
     };

@@ -6,7 +6,7 @@
 #include "Engine/Core/Base.h"
 
 #include "Engine/Platform/Platform.h"
-#include "Engine/RHI/GraphicsAPI.h"
+#include "Engine/RHI/RHI.h"
 
 namespace Engine
 {
@@ -15,16 +15,16 @@ namespace Engine
     {
     private:
         Platform m_Platform;
-        GraphicsAPI m_API;
+        RHI::GraphicsAPI m_API;
 
     protected:
-        IGraphicsBridge(Platform platform, GraphicsAPI api) : m_Platform(platform), m_API(api) {}
+        IGraphicsBridge(Platform platform, RHI::GraphicsAPI api) : m_Platform(platform), m_API(api) {}
 
     public:
         virtual ~IGraphicsBridge() = default;
 
         Platform GetPlatform() const { return m_Platform; }
-        GraphicsAPI GetAPI() const { return m_API; }
+        RHI::GraphicsAPI GetAPI() const { return m_API; }
     };
 } // namespace Engine
 

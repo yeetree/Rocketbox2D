@@ -54,7 +54,7 @@ namespace Engine {
         
         Ref<FileSystem> m_FileSystem;
         Ref<IPlatform> m_Platform;
-        Ref<IGraphicsDevice> m_GraphicsDevice;
+        Ref<RHI::IGraphicsDevice> m_GraphicsDevice;
         Ref<IWindow> m_Window;
         Ref<ResourceManager> m_ResourceManager;
         Ref<EventManager> m_EventManager;
