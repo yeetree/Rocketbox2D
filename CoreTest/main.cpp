@@ -110,7 +110,7 @@ public:
             .polygonMode = PolygonMode::Fill,
             .cullMode = CullMode::Back,
             .frontFace = FrontFace::CounterClockwise,
-            .blending = false,
+            .blending = true,
             .depthTest = true,
             .depthWrite = true,
             .depthFormat = PixelFormat::Depth32
@@ -198,7 +198,6 @@ public:
         if(in->IsActionPressed("printFPS"))
         {
             LOG_INFO("FPS: {0}", 1 / dt);
-            LOG_INFO("{0}, {1}", win->GetWidth(), win->GetHeight());
         }
         if(in->IsActionPressed("immediate"))
         {
