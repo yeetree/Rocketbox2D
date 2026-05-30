@@ -23,6 +23,8 @@
 #include "Engine/Input/Input.h"
 
 #include "Engine/RHI/RHI.h"
+#include "Engine/RHI/IGraphicsDevice.h"
+#include "Engine/RHI/ICommandBuffer.h"
 
 /*
 #include "Engine/Renderer/RHI/IBuffer.h"

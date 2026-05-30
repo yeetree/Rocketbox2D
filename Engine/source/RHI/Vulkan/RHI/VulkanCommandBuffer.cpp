@@ -1,6 +1,7 @@
 #include "RHI/Vulkan/RHI/VulkanCommandBuffer.h"
 #include "RHI/Vulkan/RHI/VulkanGraphicsDevice.h"
 #include "RHI/Vulkan/VulkanCommon.h"
+#include "RHI/Vulkan/VulkanResourceData.h"
 #include "Engine/Core/Assert.h"
 
 namespace Engine::RHI::Vulkan
@@ -20,7 +21,9 @@ namespace Engine::RHI::Vulkan
         // Graphics
         void VulkanCommandBuffer::BindPipeline(PipelineHandle pipeline)
         {
-
+            // Get data and bind
+            VulkanPipelineData& data = m_GraphicsDevice.GetPipelineData(pipeline);
+            m_CommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, data.pipeline);
         }
 
         void VulkanCommandBuffer::BindVertexBuffer(BufferHandle buffer)
@@ -40,12 +43,12 @@ namespace Engine::RHI::Vulkan
 
         void VulkanCommandBuffer::Draw(uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance)
         {
-
+            m_CommandBuffer.draw(vertexCount, instanceCount, firstVertex, firstInstance);
         }
 
         void VulkanCommandBuffer::DrawIndexed(uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex, int32_t indexOffset, uint32_t firstInstance)
         {
-
+            m_CommandBuffer.drawIndexed(indexCount, instanceCount, firstIndex, indexOffset, firstInstance);
         }
 
    

@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 // ============================================================================
 // Forward declarations
@@ -31,6 +32,10 @@ namespace Engine::RHI
     enum class PresentMode       { Immediate, VSync, Mailbox };
     enum class ShaderStage       { Vertex, Fragment };
     enum class PrimitiveTopology { PointList, LineList, TriangleList };
+    enum class PolygonMode       { Fill, Line, Point };
+    enum class CullMode          { None, Back, Front };
+    enum class FrontFace         { Clockwise, CounterClockwise };
+
     // ========================================================================
     // Flags
     // ========================================================================
@@ -78,14 +83,13 @@ namespace Engine::RHI
         TextureUsage  usage  = TextureUsage::Sampled;
     };
 
-    struct ShaderStageDesc {
-        ShaderStage           stage;
+    struct ShaderModule {
         std::vector<uint32_t> spirv;
-        std::string           entryPoint = "main";
+        std::unordered_map<ShaderStage, std::string> entryPoints;
     };
 
     struct ShaderDesc {
-        std::vector<ShaderStageDesc> stages;
+        std::vector<ShaderModule> modules;
     };
 
     struct PipelineDesc {
@@ -93,8 +97,11 @@ namespace Engine::RHI
         VertexLayout                vertexLayout;
         std::vector<UniformBinding> uniformBindings;
         std::vector<PixelFormat>    colorAttachmentFormats;
-        PrimitiveTopology           topology = PrimitiveTopology::TriangleList;
-        bool                        blending = false;
+        PrimitiveTopology           topology    = PrimitiveTopology::TriangleList;
+        PolygonMode                 polygonMode = PolygonMode::Fill;
+        CullMode                    cullMode    = CullMode::Back;
+        FrontFace                   frontFace   = FrontFace::Clockwise;
+        bool                        blending    = false;
     };
 
     struct SwapChainDesc {

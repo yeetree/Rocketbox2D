@@ -1,30 +1,22 @@
-struct VSInput {
-    float2 inPosition;
-    float3 inColor;
-};
+static float2 positions[3] = float2[](
+    float2(0.0, -0.5),
+    float2(0.5, 0.5),
+    float2(-0.5, 0.5)
+);
 
-struct UniformBuffer {
-    float4x4 model;
-    float4x4 view;
-    float4x4 proj;
-};
-ConstantBuffer<UniformBuffer> ubo;
-
-struct VSOutput
-{
-    float4 pos : SV_Position;
-    float3 color;
+struct VertexOutput {
+    float4 sv_position : SV_Position;
 };
 
 [shader("vertex")]
-VSOutput vertMain(VSInput input) {
-    VSOutput output;
-    output.pos = mul(ubo.proj, mul(ubo.view, mul(ubo.model, float4(input.inPosition, 0.0, 1.0))));
-    output.color = input.inColor;
+VertexOutput vertMain(uint vid : SV_VertexID) {
+    VertexOutput output;
+    output.sv_position = float4(positions[vid], 0.0, 1.0);
     return output;
 }
 
 [shader("fragment")]
-float4 fragMain(VSOutput vertIn) : SV_TARGET {
-    return float4(vertIn.color, 1.0);
+float4 fragMain() : SV_Target
+{
+    return float4(1.0, 0.0, 0.0, 1.0);
 }

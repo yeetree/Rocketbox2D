@@ -109,4 +109,83 @@ namespace Engine::RHI::Vulkan::VulkanCommon
         return minImageCount;
     }
 
+    [[nodiscard]] vk::raii::ShaderModule CreateShaderModule(vk::raii::Device& device, const std::vector<uint32_t>& code) {
+        vk::ShaderModuleCreateInfo createInfo;
+        createInfo.codeSize = code.size() * sizeof(uint32_t);
+        createInfo.pCode = code.data();
+        return vk::raii::ShaderModule{ device, createInfo };
+    }
+
+    vk::ShaderStageFlagBits GetShaderStage(ShaderStage stage)
+    {
+        vk::ShaderStageFlagBits ss;
+        switch(stage)
+        {
+            case ShaderStage::Vertex: ss = vk::ShaderStageFlagBits::eVertex; break;
+            case ShaderStage::Fragment: ss = vk::ShaderStageFlagBits::eFragment; break;
+        }
+        return ss;
+    }
+
+    vk::PrimitiveTopology GetPrimitiveTopology(PrimitiveTopology topology)
+    {
+        vk::PrimitiveTopology t;
+        switch(topology)
+        {
+            case PrimitiveTopology::LineList: t = vk::PrimitiveTopology::eLineList; break;
+            case PrimitiveTopology::PointList: t = vk::PrimitiveTopology::ePointList; break;
+            case PrimitiveTopology::TriangleList: t = vk::PrimitiveTopology::eTriangleList; break;
+        }
+        return t;
+    }
+
+    vk::PolygonMode GetPolygonMode(PolygonMode mode)
+    {
+        vk::PolygonMode m;
+        switch(mode)
+        {
+            case PolygonMode::Fill: m = vk::PolygonMode::eFill; break;
+            case PolygonMode::Line: m = vk::PolygonMode::eLine; break;
+            case PolygonMode::Point: m = vk::PolygonMode::ePoint; break;
+        }
+        return m;
+    }
+
+    vk::CullModeFlags GetCullMode(CullMode mode)
+    {
+        vk::CullModeFlags f;
+        switch(mode)
+        {
+            case CullMode::None: f = vk::CullModeFlagBits::eNone; break;
+            case CullMode::Back: f = vk::CullModeFlagBits::eBack; break;
+            case CullMode::Front: f = vk::CullModeFlagBits::eFront; break;
+        }
+        return f;
+    }
+
+    vk::FrontFace GetFrontFace(FrontFace frontFace)
+    {
+        vk::FrontFace f;
+        switch(frontFace)
+        {
+            case FrontFace::Clockwise: f = vk::FrontFace::eClockwise; break;
+            case FrontFace::CounterClockwise: f = vk::FrontFace::eCounterClockwise; break;
+        }
+        return f;
+    }
+
+    vk::Format GetVertexElementFormat(VertexElementType type)
+    {
+        vk::Format e;
+        switch(type)
+        {
+            case VertexElementType::Int: e = vk::Format::eR32Sint; break;
+            case VertexElementType::Float: e = vk::Format::eR32Sfloat; break;
+            case VertexElementType::Vec2: e = vk::Format::eR32G32Sfloat; break;
+            case VertexElementType::Vec3: e = vk::Format::eR32G32B32Sfloat; break;
+            case VertexElementType::Vec4: e = vk::Format::eR32G32B32A32Sfloat; break;
+        }
+        return e;
+    }
+
 } // namespace Engine::RHI::Vulkan::VulkanCommon

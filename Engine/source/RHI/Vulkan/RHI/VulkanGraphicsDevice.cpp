@@ -38,12 +38,189 @@ namespace Engine::RHI::Vulkan
 
     ShaderHandle VulkanGraphicsDevice::CreateShader(const ShaderDesc& desc)
     {
-        return { .id = 0 };
+        // Get data
+        uint32_t id = AllocateID();
+        VulkanShaderData& data = m_Shaders[id]; 
+
+        // Loop through all shader modules
+        for (const ShaderModule& mod : desc.modules) {
+            // Add module and get index
+            size_t moduleIndex = data.modules.size();
+            data.modules.emplace_back(std::move(
+                VulkanCommon::CreateShaderModule(m_Context.GetDevice(), mod.spirv)
+            ));
+            
+            // Loop through stages and map stage to module index
+            for(auto const &[stage, entryPoint] : mod.entryPoints) {
+                data.stages[stage] = { moduleIndex, entryPoint };
+            }
+        }
+
+        return ShaderHandle{ .id = id };
     }
 
     PipelineHandle VulkanGraphicsDevice::CreatePipeline(const PipelineDesc& desc)
     {
-        return { .id = 0 };
+        // Get data
+        uint32_t id = AllocateID();
+        VulkanPipelineData& data = m_Pipelines[id]; 
+
+        // Get shader data
+        VulkanShaderData& shaderData = GetShaderData(desc.shader);
+
+        // Get shader stage create infos
+        std::vector<vk::PipelineShaderStageCreateInfo> shaderStageInfos;
+        for(auto const& [stage, info] : shaderData.stages)
+        {
+            vk::PipelineShaderStageCreateInfo stageInfo;
+            stageInfo.stage = VulkanCommon::GetShaderStage(stage);
+            stageInfo.module = shaderData.modules[info.moduleIndex];
+            stageInfo.pName = info.entryPoint.c_str();
+            stageInfo.pSpecializationInfo = nullptr;
+            shaderStageInfos.push_back(stageInfo);
+        }
+
+        // Vertex attributes
+
+        // Get vertex input attribute description
+        std::vector<vk::VertexInputAttributeDescription> attributeDescriptions{};
+        vk::VertexInputBindingDescription bindingDescription = { 0, desc.vertexLayout.GetStride(), vk::VertexInputRate::eVertex };
+        const std::vector<VertexElement>& elements = desc.vertexLayout.GetElements();
+        for(int i = 0; i < elements.size(); i++) {
+            vk::VertexInputAttributeDescription vdesc;
+            vdesc.location = i;
+            vdesc.binding = 0;
+            vdesc.format = VulkanCommon::GetVertexElementFormat(elements[i].GetType());
+            vdesc.offset = elements[i].GetOffset();
+            attributeDescriptions.push_back(vdesc);
+        }
+
+        // Get vertex input info
+        vk::PipelineVertexInputStateCreateInfo vertexInputInfo{};
+        vertexInputInfo.vertexBindingDescriptionCount = 1;
+        vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+        vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+        vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+
+        // Topology
+        vk::PipelineInputAssemblyStateCreateInfo inputAssembly(
+            {},
+            VulkanCommon::GetPrimitiveTopology(desc.topology),
+            vk::False
+        );
+
+        // Viewport & Scissor dynamic states
+        std::vector dynamicStates = {
+            vk::DynamicState::eViewport,
+		    vk::DynamicState::eScissor
+        };
+		vk::PipelineDynamicStateCreateInfo dynamicState{};
+        dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+        dynamicState.pDynamicStates = dynamicStates.data();
+
+        // Blank VP and Scissor state
+        vk::PipelineViewportStateCreateInfo viewportState{};
+        viewportState.viewportCount = 1;
+        viewportState.pViewports = nullptr;
+        viewportState.scissorCount = 1;
+        viewportState.pScissors = nullptr;
+        
+        // Rasterizer
+        vk::PipelineRasterizationStateCreateInfo rasterizer;
+        rasterizer.depthClampEnable = vk::False;
+        rasterizer.rasterizerDiscardEnable = vk::False;
+        rasterizer.polygonMode = VulkanCommon::GetPolygonMode(desc.polygonMode);
+        rasterizer.cullMode = VulkanCommon::GetCullMode(desc.cullMode);
+        rasterizer.frontFace = VulkanCommon::GetFrontFace(desc.frontFace);
+        rasterizer.depthBiasEnable = vk::False;
+        rasterizer.lineWidth = 1.0f;
+
+        // Multisampling
+        vk::PipelineMultisampleStateCreateInfo multisampling;
+        multisampling.rasterizationSamples = vk::SampleCountFlagBits::e1;
+        multisampling.sampleShadingEnable = vk::False;
+        
+        // Blending
+        vk::PipelineColorBlendAttachmentState colorBlendAttachment;
+        colorBlendAttachment.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+        if(desc.blending)
+        {
+            colorBlendAttachment.blendEnable = vk::True;
+            colorBlendAttachment.srcColorBlendFactor = vk::BlendFactor::eSrcAlpha;
+            colorBlendAttachment.dstColorBlendFactor = vk::BlendFactor::eOneMinusSrcAlpha;
+            colorBlendAttachment.colorBlendOp = vk::BlendOp::eAdd;
+            colorBlendAttachment.srcAlphaBlendFactor = vk::BlendFactor::eOne;
+            colorBlendAttachment.dstAlphaBlendFactor = vk::BlendFactor::eZero;
+            colorBlendAttachment.alphaBlendOp = vk::BlendOp::eAdd;
+        }
+        else
+        {
+            colorBlendAttachment.blendEnable = vk::False;
+        }
+
+        vk::PipelineColorBlendStateCreateInfo colorBlending;
+        colorBlending.logicOpEnable = vk::False;
+        colorBlending.logicOp = vk::LogicOp::eCopy;
+        colorBlending.attachmentCount = 1;
+        colorBlending.pAttachments = &colorBlendAttachment;
+
+        // Uniform bindings
+        std::vector<vk::DescriptorSetLayoutBinding> layoutBindings;
+        for(auto const& ub : desc.uniformBindings)
+        {
+            vk::DescriptorSetLayoutBinding binding;
+            binding.binding = ub.binding;
+            binding.descriptorType = vk::DescriptorType::eUniformBufferDynamic;
+            binding.descriptorCount = 1;
+            binding.stageFlags = VulkanCommon::GetShaderStage(ub.stage);
+            layoutBindings.push_back(binding);
+        }
+
+        // Descriptor set layout
+        vk::DescriptorSetLayoutCreateInfo layoutInfo;
+        layoutInfo.bindingCount = static_cast<uint32_t>(layoutBindings.size());
+        layoutInfo.pBindings = layoutBindings.data();
+        data.descriptorSetLayout = vk::raii::DescriptorSetLayout(m_Context.GetDevice(), layoutInfo);
+
+        // Pipeline layout
+        vk::PipelineLayoutCreateInfo pipelineLayoutInfo;
+        pipelineLayoutInfo.setLayoutCount         = 1;
+        pipelineLayoutInfo.pSetLayouts            = &(*data.descriptorSetLayout);
+        pipelineLayoutInfo.pushConstantRangeCount = 0;
+        data.pipelineLayout = vk::raii::PipelineLayout(m_Context.GetDevice(), pipelineLayoutInfo);
+        
+        vk::GraphicsPipelineCreateInfo gfxPipeInfo;
+        gfxPipeInfo.stageCount          = shaderStageInfos.size();
+        gfxPipeInfo.pStages             = shaderStageInfos.data();
+        gfxPipeInfo.pVertexInputState   = &vertexInputInfo;
+        gfxPipeInfo.pInputAssemblyState = &inputAssembly;
+        gfxPipeInfo.pViewportState      = &viewportState;
+        gfxPipeInfo.pRasterizationState = &rasterizer;
+        gfxPipeInfo.pMultisampleState   = &multisampling;
+        gfxPipeInfo.pColorBlendState    = &colorBlending;
+        gfxPipeInfo.pDynamicState       = &dynamicState;
+        gfxPipeInfo.layout              = data.pipelineLayout;
+        gfxPipeInfo.renderPass          = nullptr;
+
+        // Get color attachment formats
+        std::vector<vk::Format> colorAttachmentFormats;
+        for(const PixelFormat& format : desc.colorAttachmentFormats)
+        {
+            colorAttachmentFormats.push_back(VulkanCommon::GetSurfaceFormat(format).format);
+        }
+
+        vk::PipelineRenderingCreateInfo pipeRenderInfo;
+        pipeRenderInfo.colorAttachmentCount = colorAttachmentFormats.size();
+        pipeRenderInfo.pColorAttachmentFormats = colorAttachmentFormats.data();
+
+        vk::StructureChain<vk::GraphicsPipelineCreateInfo, vk::PipelineRenderingCreateInfo> pipelineCreateInfoChain(
+            gfxPipeInfo,
+            pipeRenderInfo
+        );
+
+        data.pipeline = vk::raii::Pipeline(m_Context.GetDevice(), nullptr, pipelineCreateInfoChain.get<vk::GraphicsPipelineCreateInfo>());
+
+        return PipelineHandle{ .id = id };
     }
 
     SwapChainHandle VulkanGraphicsDevice::CreateSwapChain(const SwapChainDesc& desc)

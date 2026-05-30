@@ -38,7 +38,7 @@ namespace Engine::RHI::Vulkan
     struct VulkanShaderData {
         std::vector<vk::raii::ShaderModule> modules;
         struct StageInfo {
-            uint32_t    moduleIndex;
+            size_t moduleIndex;
             std::string entryPoint;
         };
         std::unordered_map<ShaderStage, StageInfo> stages;

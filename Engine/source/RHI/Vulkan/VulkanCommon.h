@@ -35,6 +35,17 @@ namespace Engine::RHI::Vulkan::VulkanCommon
     ENGINE_EXPORT vk::Extent2D GetSurfaceExtent(const vk::SurfaceCapabilitiesKHR& capabilities, uint32_t width, uint32_t height);
 
     ENGINE_EXPORT uint32_t GetSurfaceMinImageCount(const vk::SurfaceCapabilitiesKHR& capabilities);
+
+    ENGINE_EXPORT [[nodiscard]] vk::raii::ShaderModule CreateShaderModule(vk::raii::Device& device, const std::vector<uint32_t>& code);
+
+    ENGINE_EXPORT vk::ShaderStageFlagBits GetShaderStage(ShaderStage stage);
+
+    ENGINE_EXPORT vk::PrimitiveTopology GetPrimitiveTopology(PrimitiveTopology topology);
+    ENGINE_EXPORT vk::PolygonMode GetPolygonMode(PolygonMode mode);
+    ENGINE_EXPORT vk::CullModeFlags GetCullMode(CullMode mode);
+    ENGINE_EXPORT vk::FrontFace GetFrontFace(FrontFace frontFace);
+    ENGINE_EXPORT vk::Format GetVertexElementFormat(VertexElementType type);
+
 } // namespace Engine::RHI::Vulkan::VulkanCommon
 
 

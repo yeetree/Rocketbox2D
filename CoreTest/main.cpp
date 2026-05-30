@@ -40,6 +40,9 @@ public:
 
     SwapChainHandle sc;
 
+    ShaderHandle shader;
+    PipelineHandle pipeline;
+
     UniformBufferObject ubo;
 
     void OnStart() override {
@@ -61,11 +64,10 @@ public:
 
         sc = gd->CreateSwapChain(scdesc);
 
-        /*
         ShaderDesc shdesc{
             .modules = {
                 ShaderModule{
-                    .byteCode = fs->ReadSPV(fs->GetAbsolutePath("./Assets/Shaders/shader.spv")),
+                    .spirv = fs->ReadSPV(fs->GetAbsolutePath("./Assets/Shaders/shader.spv")),
                     .entryPoints = {
                         {ShaderStage::Vertex, "vertMain"},
                         {ShaderStage::Fragment, "fragMain"}
@@ -77,20 +79,20 @@ public:
         shader = gd->CreateShader(shdesc);
 
         PipelineDesc pdesc {
-            .shader = shader.get(),
-            .vertexLayout = {
-                { VertexElementType::Vec2, "inPosition" },
-                { VertexElementType::Vec3, "inColor" }
-            },
-            .uniformBindings = {
-                { 0, ShaderStage::Vertex }
-            },
+            .shader = shader,
+            .vertexLayout = {},
+            .uniformBindings = {},
+            .colorAttachmentFormats = { PixelFormat::RGBA8 },
             .topology = PrimitiveTopology::TriangleList,
+            .polygonMode = PolygonMode::Fill,
+            .cullMode = CullMode::Back,
+            .frontFace = FrontFace::Clockwise,
             .blending = false
         };
 
-        pipe = gd->CreatePipeline(pdesc);
+        pipeline = gd->CreatePipeline(pdesc);
 
+        /*
         BufferDesc vbdesc{
             .size = vertices.size() * sizeof(Vertex),
             .type = BufferType::Vertex,
@@ -170,7 +172,8 @@ public:
         ICommandBuffer* cmd = gd->BeginPass(sc, Vec4(0.0f, 0.0f, 0.25f, 1.0f));
         if(cmd)
         {
-            
+            cmd->BindPipeline(pipeline);
+            cmd->Draw(3);
 
             gd->EndPass(cmd);
         }
