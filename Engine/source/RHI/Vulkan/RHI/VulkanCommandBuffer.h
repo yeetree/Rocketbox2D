@@ -35,7 +35,7 @@ namespace Engine::RHI::Vulkan
         std::vector<StagingBufferAllocation> m_StagingBufferAllocations;
 
         // Begin/End* for Vulkan classes
-        void BeginRendering(VulkanTextureData* renderTarget, Vec4 clearColor);
+        void BeginRendering(VulkanTextureData* renderTarget, Vec4 clearColor, VulkanTextureData* depthBuffer);
         void EndRendering();
         void BeginImmediate();
         void EndImmediate();

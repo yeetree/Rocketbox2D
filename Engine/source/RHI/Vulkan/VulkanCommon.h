@@ -19,9 +19,11 @@ namespace Engine::RHI::Vulkan::VulkanCommon
         vk::AccessFlags2         srcAccess,
         vk::AccessFlags2         dstAccess,
         vk::PipelineStageFlags2  srcStage,
-        vk::PipelineStageFlags2  dstStage
+        vk::PipelineStageFlags2  dstStage,
+        vk::ImageAspectFlags     aspect
     );
 
+    ENGINE_EXPORT vk::Format GetPixelFormat(PixelFormat format);
     ENGINE_EXPORT vk::SurfaceFormatKHR GetSurfaceFormat(PixelFormat format);
     ENGINE_EXPORT size_t GetPixelSize(PixelFormat format);
 
@@ -50,6 +52,7 @@ namespace Engine::RHI::Vulkan::VulkanCommon
     ENGINE_EXPORT vk::DescriptorType GetUniformDescriptorType(UniformType type);
 
     ENGINE_EXPORT vk::BufferUsageFlags GetBufferUsageFlags(BufferType type);
+    ENGINE_EXPORT vk::ImageUsageFlags GetImageUsageFlags(TextureUsageFlags usage);
 
 } // namespace Engine::RHI::Vulkan::VulkanCommon
 

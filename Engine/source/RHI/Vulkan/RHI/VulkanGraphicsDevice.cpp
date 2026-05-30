@@ -41,16 +41,69 @@ namespace Engine::RHI::Vulkan
         // Destroy all buffers and textures because they are non-raii
         for(auto const& [id, data] : m_Buffers)
         {
-            BufferHandle handle = {.id = id};
-            DestroyBuffer(handle);
+            ImmediateDestroy(QueuedDestruction::Type::Buffer, id);
         }
 
         for(auto const& [id, data] : m_Textures)
         {
-            TextureHandle handle = {.id = id};
-            DestroyTexture(handle);
+            ImmediateDestroy(QueuedDestruction::Type::Texture, id);
         }
     };
+
+    // Deletion queue
+    void VulkanGraphicsDevice::EnqueueDeletion(QueuedDestruction::Type type, uint32_t id)
+    {
+        m_DeletionQueue.push_back({type, id, k_MaxFramesInFlight});
+    }
+
+    // Destroy
+    void VulkanGraphicsDevice::ImmediateDestroy(QueuedDestruction::Type type, uint32_t id)
+    {
+        switch (type)
+        {
+            case QueuedDestruction::Type::Buffer:
+            {
+                auto it = m_Buffers.find(id);
+                if (it == m_Buffers.end()) return;
+                VulkanBufferData& data = it->second;
+                if (data.desc.usage == BufferUsage::Static && data.buffer)
+                    vmaDestroyBuffer(m_Context.GetAllocator(), data.buffer, data.allocation);
+                m_Buffers.erase(it);
+                break;
+            }
+            case QueuedDestruction::Type::Texture:
+            {
+                auto it = m_Textures.find(id);
+                if (it == m_Textures.end()) return;
+                VulkanTextureData& data = it->second;
+                if (data.ownsImage && data.image && data.allocation)
+                    vmaDestroyImage(m_Context.GetAllocator(), data.image, data.allocation);
+                m_Textures.erase(it);
+                break;
+            }
+            case QueuedDestruction::Type::Shader:
+            {
+                auto it = m_Shaders.find(id);
+                if (it == m_Shaders.end()) return;
+                m_Shaders.erase(it);
+                break;
+            }
+            case QueuedDestruction::Type::Pipeline:
+            {
+                auto it = m_Pipelines.find(id);
+                if (it == m_Pipelines.end()) return;
+                m_Pipelines.erase(it);
+                break;
+            }
+            case QueuedDestruction::Type::SwapChain:
+            {
+                auto it = m_SwapChains.find(id);
+                if (it == m_SwapChains.end()) return;
+                m_SwapChains.erase(it);
+                break;
+            }
+        }
+    }
 
     // Resource creation
     BufferHandle VulkanGraphicsDevice::CreateBuffer(const BufferDesc& desc)
@@ -98,10 +151,10 @@ namespace Engine::RHI::Vulkan
         imageInfo.extent.depth = 1;
         imageInfo.mipLevels = 1;
         imageInfo.arrayLayers = 1;
-        imageInfo.format = static_cast<VkFormat>(VulkanCommon::GetSurfaceFormat(data.desc.format).format);
+        imageInfo.format = static_cast<VkFormat>(VulkanCommon::GetPixelFormat(data.desc.format));
         imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
         imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        imageInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+        imageInfo.usage = static_cast<VkImageUsageFlags>(VulkanCommon::GetImageUsageFlags(data.desc.usage));
         imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 
         VmaAllocationCreateInfo allocInfo = {};
@@ -119,7 +172,7 @@ namespace Engine::RHI::Vulkan
         );
 
         data.image = image;
-        data.format = VulkanCommon::GetSurfaceFormat(data.desc.format).format;
+        data.format = VulkanCommon::GetPixelFormat(data.desc.format);
         data.ownsImage = true;
 
         CreateImageView(data);
@@ -260,6 +313,12 @@ namespace Engine::RHI::Vulkan
         colorBlending.attachmentCount = 1;
         colorBlending.pAttachments = &colorBlendAttachment;
 
+        // Depth testing
+        vk::PipelineDepthStencilStateCreateInfo depthStencil;
+        depthStencil.depthTestEnable  = desc.depthTest ? vk::True : vk::False;
+        depthStencil.depthWriteEnable = desc.depthWrite ? vk::True : vk::False;
+        depthStencil.depthCompareOp   = vk::CompareOp::eLess;
+
         // Uniform bindings
         std::vector<vk::DescriptorSetLayoutBinding> layoutBindings;
         for(auto const& ub : desc.uniformBindings)
@@ -294,6 +353,7 @@ namespace Engine::RHI::Vulkan
         gfxPipeInfo.pRasterizationState = &rasterizer;
         gfxPipeInfo.pMultisampleState   = &multisampling;
         gfxPipeInfo.pColorBlendState    = &colorBlending;
+        gfxPipeInfo.pDepthStencilState  = &depthStencil;
         gfxPipeInfo.pDynamicState       = &dynamicState;
         gfxPipeInfo.layout              = data.pipelineLayout;
         gfxPipeInfo.renderPass          = nullptr;
@@ -302,12 +362,18 @@ namespace Engine::RHI::Vulkan
         std::vector<vk::Format> colorAttachmentFormats;
         for(const PixelFormat& format : desc.colorAttachmentFormats)
         {
-            colorAttachmentFormats.push_back(VulkanCommon::GetSurfaceFormat(format).format);
+            colorAttachmentFormats.push_back(VulkanCommon::GetPixelFormat(format));
         }
 
+        // Get depth format
+        vk::Format depthFmt = desc.depthTest 
+            ? VulkanCommon::GetPixelFormat(desc.depthFormat) 
+            : vk::Format::eUndefined;
+
         vk::PipelineRenderingCreateInfo pipeRenderInfo;
-        pipeRenderInfo.colorAttachmentCount = colorAttachmentFormats.size();
+        pipeRenderInfo.colorAttachmentCount    = colorAttachmentFormats.size();
         pipeRenderInfo.pColorAttachmentFormats = colorAttachmentFormats.data();
+        pipeRenderInfo.depthAttachmentFormat   = depthFmt;
 
         vk::StructureChain<vk::GraphicsPipelineCreateInfo, vk::PipelineRenderingCreateInfo> pipelineCreateInfoChain(
             gfxPipeInfo,
@@ -350,44 +416,46 @@ namespace Engine::RHI::Vulkan
     // Resource destruction
     void VulkanGraphicsDevice::DestroyBuffer(BufferHandle& buffer)
     {
-        VulkanBufferData& data = GetBufferData(buffer);
-        if(data.desc.usage == BufferUsage::Static)
+        if(buffer.IsValid())
         {
-            vmaDestroyBuffer(m_Context.GetAllocator(), data.buffer, data.allocation);
+            EnqueueDeletion(QueuedDestruction::Type::Buffer, buffer.id);
         }
-        m_Buffers.erase(buffer.id);
         buffer.id = 0;
     }
 
     void VulkanGraphicsDevice::DestroyTexture(TextureHandle& texture)
     {
-        VulkanTextureData& data = GetTextureData(texture);
-        if(data.ownsImage && data.image && data.allocation)
+        if(texture.IsValid())
         {
-            vmaDestroyImage(m_Context.GetAllocator(), data.image, data.allocation);
+            EnqueueDeletion(QueuedDestruction::Type::Texture, texture.id);
         }
-        m_Textures.erase(texture.id);
         texture.id = 0;
     }
 
     void VulkanGraphicsDevice::DestroyShader(ShaderHandle& shader)
     {
-        VulkanShaderData& data = GetShaderData(shader);
-        m_Shaders.erase(shader.id);
+        if(shader.IsValid())
+        {
+            EnqueueDeletion(QueuedDestruction::Type::Shader, shader.id);
+        }
         shader.id = 0;
     }
 
     void VulkanGraphicsDevice::DestroyPipeline(PipelineHandle& pipeline)
     {
-        VulkanPipelineData& data = GetPipelineData(pipeline);
-        m_Pipelines.erase(pipeline.id);
+        if(pipeline.IsValid())
+        {
+            EnqueueDeletion(QueuedDestruction::Type::Pipeline, pipeline.id);
+        }
         pipeline.id = 0;
     }
 
     void VulkanGraphicsDevice::DestroySwapChain(SwapChainHandle& swapchain)
     {
-        VulkanSwapChainData& data = GetSwapChainData(swapchain);
-        m_SwapChains.erase(swapchain.id);
+        if(swapchain.IsValid())
+        {
+            EnqueueDeletion(QueuedDestruction::Type::SwapChain, swapchain.id);
+        }
         swapchain.id = 0;
     }
 
@@ -406,6 +474,21 @@ namespace Engine::RHI::Vulkan
         m_FrameSignalSemaphores.clear();
         m_FrameStageFlags.clear();
         m_FrameSwapChainPresentations.clear();
+
+        // Deletion queue
+        for (auto it = m_DeletionQueue.begin(); it != m_DeletionQueue.end(); )
+        {
+            it->framesRemaining--;
+            if (it->framesRemaining == 0)
+            {
+                ImmediateDestroy(it->type, it->id);
+                it = m_DeletionQueue.erase(it);
+            }
+            else
+            {
+                ++it;
+            }
+        }
     }
 
     void VulkanGraphicsDevice::EndFrame()
@@ -448,7 +531,7 @@ namespace Engine::RHI::Vulkan
     
     //}
 
-    ICommandBuffer* VulkanGraphicsDevice::BeginPass(SwapChainHandle renderTarget, Vec4 clearColor)
+    ICommandBuffer* VulkanGraphicsDevice::BeginPass(SwapChainHandle renderTarget, Vec4 clearColor, TextureHandle depthBuffer)
     {
         // Get swapchain
         VulkanSwapChainData& sc = GetSwapChainData(renderTarget);
@@ -472,9 +555,15 @@ namespace Engine::RHI::Vulkan
             nullptr
         ).value;
 
+        VulkanTextureData* depthBufferData = nullptr;
+        if(depthBuffer.IsValid())
+        {
+            depthBufferData = &GetTextureData(depthBuffer);
+        }
+
         // Get command buffer and begin rendering
         VulkanCommandBuffer* cmd = m_Frames[m_FrameIndex]->GetCommandBufferAllocator().GetOrAllocate(*this);
-        cmd->BeginRendering(&sc.textures[sc.acquiredImageIndex], clearColor);
+        cmd->BeginRendering(&sc.textures[sc.acquiredImageIndex], clearColor, depthBufferData);
         m_FrameSwapChainPresentations.push_back(renderTarget);
 
         return cmd;
@@ -686,13 +775,17 @@ namespace Engine::RHI::Vulkan
 
     void VulkanGraphicsDevice::CreateImageView(VulkanTextureData& textureData)
     {
+        vk::ImageAspectFlags aspect = textureData.desc.usage.Has(TextureUsage::DepthStencil)
+            ? vk::ImageAspectFlagBits::eDepth
+            : vk::ImageAspectFlagBits::eColor;
+
         vk::ImageViewCreateInfo imageViewCreateInfo(
             {},
             textureData.image,
             vk::ImageViewType::e2D,
             textureData.format,
             {},
-            {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1}
+            { aspect, 0, 1, 0, 1 }
         );
 
         textureData.imageView = vk::raii::ImageView(m_Context.GetDevice(), imageViewCreateInfo);

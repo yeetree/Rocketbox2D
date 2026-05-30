@@ -48,12 +48,28 @@ namespace Engine::RHI::Vulkan
         Scope<VulkanCommandBuffer> m_ImmediateCommandBuffer = nullptr;
         vk::raii::Fence            m_ImmediateFence         = nullptr;
 
+        // TODO: Vulkan: VulkanResourceManager: Wrap resource creation, destruction, & destruction queue
         // Resources
         std::unordered_map<uint32_t, VulkanBufferData> m_Buffers;
         std::unordered_map<uint32_t, VulkanTextureData> m_Textures;
         std::unordered_map<uint32_t, VulkanShaderData> m_Shaders;
         std::unordered_map<uint32_t, VulkanPipelineData> m_Pipelines;
         std::unordered_map<uint32_t, VulkanSwapChainData> m_SwapChains;
+
+        // Deletion queue
+        struct QueuedDestruction {
+            enum class Type { Buffer, Texture, Shader, Pipeline, SwapChain };
+            Type     type;
+            uint32_t id;
+            uint32_t framesRemaining;
+        };
+
+        std::vector<QueuedDestruction> m_DeletionQueue;
+
+        void EnqueueDeletion(QueuedDestruction::Type type, uint32_t id);
+
+        // Destroy
+        void ImmediateDestroy(QueuedDestruction::Type type, uint32_t id);
 
         // Resource ID
         uint32_t m_NextID = 1;
@@ -90,7 +106,7 @@ namespace Engine::RHI::Vulkan
 
         // Render passes
         // ICommandBuffer* BeginPass(TextureHandle renderTarget, Vec4 clearColor) override;
-        ICommandBuffer* BeginPass(SwapChainHandle renderTarget, Vec4 clearColor) override;
+        ICommandBuffer* BeginPass(SwapChainHandle renderTarget, Vec4 clearColor, TextureHandle depthBuffer = {}) override;
         void EndPass(ICommandBuffer* cmd) override;
 
         // Immediate command buffer

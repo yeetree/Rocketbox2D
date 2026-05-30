@@ -28,7 +28,7 @@ namespace Engine::RHI
     enum class GraphicsAPI       { Vulkan };
     enum class BufferType        { Vertex, Index, Uniform };
     enum class BufferUsage       { Static, Dynamic };
-    enum class PixelFormat       { RGBA8 };
+    enum class PixelFormat       { RGBA8, Depth32, Depth24Stencil8 };
     enum class PresentMode       { Immediate, VSync, Mailbox };
     enum class ShaderStage       { Vertex, Fragment };
     enum class PrimitiveTopology { PointList, LineList, TriangleList };
@@ -45,6 +45,7 @@ namespace Engine::RHI
         None         = 0,
         Sampled      = 1 << 0,
         RenderTarget = 1 << 1,
+        DepthStencil = 1 << 2
     };
     using TextureUsageFlags = Flags<TextureUsage>;
 
@@ -104,6 +105,9 @@ namespace Engine::RHI
         CullMode                    cullMode    = CullMode::Back;
         FrontFace                   frontFace   = FrontFace::Clockwise;
         bool                        blending    = false;
+        bool                        depthTest   = false;
+        bool                        depthWrite  = true;
+        PixelFormat                 depthFormat = PixelFormat::Depth32;
     };
 
     struct SwapChainDesc {

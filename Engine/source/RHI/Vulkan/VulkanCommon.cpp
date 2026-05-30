@@ -11,7 +11,9 @@ namespace Engine::RHI::Vulkan::VulkanCommon
         vk::AccessFlags2         srcAccess,
         vk::AccessFlags2         dstAccess,
         vk::PipelineStageFlags2  srcStage,
-        vk::PipelineStageFlags2  dstStage)
+        vk::PipelineStageFlags2  dstStage,
+        vk::ImageAspectFlags     aspect
+    )
     {
         vk::ImageMemoryBarrier2 barrier;
         barrier.srcStageMask        = srcStage;
@@ -23,7 +25,7 @@ namespace Engine::RHI::Vulkan::VulkanCommon
         barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         barrier.image               = image;
-        barrier.subresourceRange.aspectMask     = vk::ImageAspectFlagBits::eColor;
+        barrier.subresourceRange.aspectMask     = aspect;
         barrier.subresourceRange.baseMipLevel   = 0;
         barrier.subresourceRange.levelCount     = 1;
         barrier.subresourceRange.baseArrayLayer = 0;
@@ -34,6 +36,20 @@ namespace Engine::RHI::Vulkan::VulkanCommon
         dependencyInfo.pImageMemoryBarriers    = &barrier;
         
         cmd.pipelineBarrier2(dependencyInfo);
+    }
+
+    vk::Format GetPixelFormat(PixelFormat format)
+    {
+        vk::Format f = vk::Format::eUndefined;
+
+        switch(format)
+        {
+            case PixelFormat::RGBA8:           f = vk::Format::eR8G8B8A8Srgb; break;
+            case PixelFormat::Depth32:         f = vk::Format::eD32Sfloat; break;
+            case PixelFormat::Depth24Stencil8: f = vk::Format::eD24UnormS8Uint; break;
+        }
+
+        return f;
     }
 
     vk::SurfaceFormatKHR GetSurfaceFormat(PixelFormat format)
@@ -48,6 +64,7 @@ namespace Engine::RHI::Vulkan::VulkanCommon
                 surfaceFormat.colorSpace = vk::ColorSpaceKHR::eSrgbNonlinear;
                 break;
             }
+            // No Depth formats
         }
 
         return surfaceFormat;
@@ -220,6 +237,23 @@ namespace Engine::RHI::Vulkan::VulkanCommon
             case BufferType::Index: flags = vk::BufferUsageFlagBits::eIndexBuffer; break;
             case BufferType::Uniform: flags = vk::BufferUsageFlagBits::eUniformBuffer; break;
         }
+        return flags;
+    }
+
+    vk::ImageUsageFlags GetImageUsageFlags(TextureUsageFlags usage)
+    {
+        vk::ImageUsageFlags flags = {};
+
+        if (usage.Has(TextureUsage::Sampled))
+        {
+            flags |= vk::ImageUsageFlagBits::eSampled;
+            flags |= vk::ImageUsageFlagBits::eTransferDst;
+        }
+        if (usage.Has(TextureUsage::RenderTarget))
+            flags |= vk::ImageUsageFlagBits::eColorAttachment;
+        if (usage.Has(TextureUsage::DepthStencil))
+            flags |= vk::ImageUsageFlagBits::eDepthStencilAttachment;
+
         return flags;
     }
 

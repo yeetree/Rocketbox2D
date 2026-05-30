@@ -21,7 +21,6 @@ namespace Engine
 
     private:
         SDL_Window* m_Window;
-        unsigned int m_Width, m_Height;
     };
 } // namespace Engine
 

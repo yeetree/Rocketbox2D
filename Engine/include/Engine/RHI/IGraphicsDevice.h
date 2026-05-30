@@ -41,7 +41,7 @@ namespace Engine::RHI
 
         // Render passes
         // virtual ICommandBuffer* BeginPass(TextureHandle renderTarget, Vec4 clearColor) = 0;
-        virtual ICommandBuffer* BeginPass(SwapChainHandle renderTarget, Vec4 clearColor) = 0;
+        virtual ICommandBuffer* BeginPass(SwapChainHandle renderTarget, Vec4 clearColor, TextureHandle depthBuffer = {}) = 0;
         virtual void EndPass(ICommandBuffer* cmd) = 0;
 
         // Immediate command buffer

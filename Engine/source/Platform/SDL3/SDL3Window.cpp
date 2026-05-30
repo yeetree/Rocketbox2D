@@ -4,7 +4,7 @@
 
 namespace Engine
 {
-    SDL3Window::SDL3Window(const WindowProperties& props) : IWindow(Platform::SDL, props.api), m_Width(props.width), m_Height(props.height)
+    SDL3Window::SDL3Window(const WindowProperties& props) : IWindow(Platform::SDL, props.api)
     {
         SDL_WindowFlags flags = 0;
 
@@ -15,7 +15,7 @@ namespace Engine
             case RHI::GraphicsAPI::Vulkan: flags |= SDL_WINDOW_VULKAN; break;
         }
 
-        m_Window = SDL_CreateWindow(props.title.c_str(), m_Width, m_Height, flags);
+        m_Window = SDL_CreateWindow(props.title.c_str(), props.width, props.height, flags);
         if(m_Window == nullptr)
         {
             throw std::runtime_error(std::format("SDL3: Window could not be created! Error: {0}", SDL_GetError()));
@@ -39,12 +39,16 @@ namespace Engine
 
     unsigned int SDL3Window::GetWidth() 
     {
-        return m_Width;
+        int w, h;
+        SDL_GetWindowSize(m_Window, &w, &h);
+        return static_cast<unsigned int>(w);
     };
 
     unsigned int SDL3Window::GetHeight()
     {
-        return m_Height;
+        int w, h;
+        SDL_GetWindowSize(m_Window, &w, &h);
+        return static_cast<unsigned int>(h);
     };
 
     // SDL3Window specific -- not declared in IWindow

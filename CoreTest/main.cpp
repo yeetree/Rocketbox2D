@@ -13,7 +13,7 @@ using namespace Engine::RHI;
 
 struct Vertex
 {
-    Vec2 inPosition;
+    Vec3 inPosition;
     Vec3 inColor;
     Vec2 inTexCoord;
 };
@@ -26,14 +26,20 @@ struct UniformBufferObject
 };
 
 const std::vector<Vertex> vertices = {
-    {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-    {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-    {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-    {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
+    {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+    {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+    {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+    {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
+
+    {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+    {{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+    {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+    {{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
 };
 
 const std::vector<uint16_t> indices = {
-    0, 1, 2, 2, 3, 0
+    0, 1, 2, 2, 3, 0,
+    4, 5, 6, 6, 7, 4
 };
 
 class EngineTestApp : public Application {
@@ -46,6 +52,7 @@ public:
 
     ShaderHandle shader;
     PipelineHandle pipeline;
+    TextureHandle depth;
 
     BufferHandle vb;
     BufferHandle ib;
@@ -90,7 +97,7 @@ public:
         PipelineDesc pdesc {
             .shader = shader,
             .vertexLayout = {
-                {VertexElementType::Vec2, "inPosition"},
+                {VertexElementType::Vec3, "inPosition"},
                 {VertexElementType::Vec3, "inColor"},
                 {VertexElementType::Vec2, "inTexCoord"}
             },
@@ -103,12 +110,23 @@ public:
             .polygonMode = PolygonMode::Fill,
             .cullMode = CullMode::Back,
             .frontFace = FrontFace::CounterClockwise,
-            .blending = false
+            .blending = false,
+            .depthTest = true,
+            .depthWrite = true,
+            .depthFormat = PixelFormat::Depth32
         };
 
         pipeline = gd->CreatePipeline(pdesc);
 
-        
+        TextureDesc depthdesc{
+            .width = win->GetWidth(),
+            .height = win->GetHeight(),
+            .format = PixelFormat::Depth32,
+            .usage = TextureUsage::DepthStencil
+        };
+
+        depth = gd->CreateTexture(depthdesc);
+
         BufferDesc vbdesc{
             .size = vertices.size() * sizeof(Vertex),
             .type = BufferType::Vertex,
@@ -156,11 +174,22 @@ public:
     void OnEvent(StringName type, const Event& event) override {
         if(type == Hash32("WindowResized"))
         {
+            const WindowResizedEvent& wr = static_cast<const WindowResizedEvent&>(event);
             if(sc.IsValid())
             {
-                const WindowResizedEvent& wr = static_cast<const WindowResizedEvent&>(event);
                 gd->ResizeSwapChain(sc, wr.GetSizeX(), wr.GetSizeY());
             }
+            if(depth.IsValid())
+            {
+                gd->DestroyTexture(depth);
+            }
+            TextureDesc depthdesc{
+                .width = wr.GetSizeX(),
+                .height = wr.GetSizeY(),
+                .format = PixelFormat::Depth32,
+                .usage = TextureUsage::DepthStencil
+            };
+            depth = gd->CreateTexture(depthdesc);
         }
     }
 
@@ -169,6 +198,7 @@ public:
         if(in->IsActionPressed("printFPS"))
         {
             LOG_INFO("FPS: {0}", 1 / dt);
+            LOG_INFO("{0}, {1}", win->GetWidth(), win->GetHeight());
         }
         if(in->IsActionPressed("immediate"))
         {
@@ -196,7 +226,7 @@ public:
 
         gd->BeginFrame();
 
-        ICommandBuffer* cmd = gd->BeginPass(sc, Vec4(0.0f, 0.0f, 0.25f, 1.0f));
+        ICommandBuffer* cmd = gd->BeginPass(sc, Vec4(0.0f, 0.0f, 0.25f, 1.0f), depth);
         if(cmd)
         {
             cmd->UploadBuffer(ub, (void*)&ubo, sizeof(UniformBufferObject), 0);
@@ -206,7 +236,7 @@ public:
             cmd->BindIndexBuffer(ib);
             cmd->BindUniformBuffer(ub, 0);
             cmd->BindTexture(tex, 1);
-            cmd->DrawIndexed(6);
+            cmd->DrawIndexed(12);
 
             gd->EndPass(cmd);
         }

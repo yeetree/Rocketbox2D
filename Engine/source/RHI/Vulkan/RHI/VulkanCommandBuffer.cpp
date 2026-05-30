@@ -301,7 +301,8 @@ namespace Engine::RHI::Vulkan
                 vk::AccessFlagBits2::eNone,
                 vk::AccessFlagBits2::eTransferWrite,
                 vk::PipelineStageFlagBits2::eTopOfPipe,
-                vk::PipelineStageFlagBits2::eTransfer
+                vk::PipelineStageFlagBits2::eTransfer,
+                vk::ImageAspectFlagBits::eColor
             );
 
             // Copy command from staging buffer to image
@@ -337,7 +338,8 @@ namespace Engine::RHI::Vulkan
                 vk::AccessFlagBits2::eTransferWrite,
                 vk::AccessFlagBits2::eShaderRead,
                 vk::PipelineStageFlagBits2::eTransfer,
-                vk::PipelineStageFlagBits2::eFragmentShader
+                vk::PipelineStageFlagBits2::eFragmentShader,
+                vk::ImageAspectFlagBits::eColor
             );
 
             // Add to staging buffer allocations
@@ -345,7 +347,7 @@ namespace Engine::RHI::Vulkan
         }
 
         // Begin/End* for Vulkan classes
-        void VulkanCommandBuffer::BeginRendering(VulkanTextureData* renderTarget, Vec4 clearColor)
+        void VulkanCommandBuffer::BeginRendering(VulkanTextureData* renderTarget, Vec4 clearColor, VulkanTextureData* depthBuffer)
         {
             ENGINE_CORE_ASSERT(m_CurrentRenderTarget == nullptr, "Vulkan: VulkanCommandBuffer: BeginRendering(): Already in a render pass!");
             ENGINE_CORE_ASSERT(renderTarget != nullptr, "Vulkan: VulkanCommandBuffer: BeginRendering(): renderTarget is nullptr!");
@@ -367,7 +369,8 @@ namespace Engine::RHI::Vulkan
                 {},
                 vk::AccessFlagBits2::eColorAttachmentWrite,
                 vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-                vk::PipelineStageFlagBits2::eColorAttachmentOutput
+                vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+                vk::ImageAspectFlagBits::eColor
             );
 
             // Rendering info
@@ -394,6 +397,39 @@ namespace Engine::RHI::Vulkan
                 1, &attachmentInfo
             );
 
+            // Depth buffer
+            if (depthBuffer != nullptr)
+            {
+                // Transition depth image
+                VulkanCommon::TransitionImageLayout(
+                    *m_CommandBuffer,
+                    depthBuffer->image,
+                    vk::ImageLayout::eUndefined,
+                    vk::ImageLayout::eDepthStencilAttachmentOptimal,
+                    {},
+                    vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
+                    vk::PipelineStageFlagBits2::eEarlyFragmentTests,
+                    vk::PipelineStageFlagBits2::eEarlyFragmentTests,
+                    vk::ImageAspectFlagBits::eDepth
+                );
+
+                vk::ClearValue depthClear;
+                depthClear.depthStencil = vk::ClearDepthStencilValue(1.0f, 0);
+
+                vk::RenderingAttachmentInfo depthAttachment(
+                    *depthBuffer->imageView,
+                    vk::ImageLayout::eDepthStencilAttachmentOptimal,
+                    vk::ResolveModeFlagBits::eNone,
+                    {},
+                    vk::ImageLayout::eUndefined,
+                    vk::AttachmentLoadOp::eClear,
+                    vk::AttachmentStoreOp::eStore,
+                    depthClear
+                );
+
+                renderingInfo.pDepthAttachment = &depthAttachment;
+            }
+
             // Begin rendering & viewport
             m_CommandBuffer.beginRendering(renderingInfo);
             m_CommandBuffer.setViewport(0, vk::Viewport(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f));
@@ -414,7 +450,8 @@ namespace Engine::RHI::Vulkan
                 vk::AccessFlagBits2::eColorAttachmentWrite,
                 {},
                 vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-                vk::PipelineStageFlagBits2::eBottomOfPipe
+                vk::PipelineStageFlagBits2::eBottomOfPipe,
+                vk::ImageAspectFlagBits::eColor
             );
 
             m_CommandBuffer.end();
