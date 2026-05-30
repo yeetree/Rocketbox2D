@@ -122,7 +122,7 @@ namespace Engine::RHI::Vulkan
             vk::DescriptorSet set = alloc.GetOrAllocate(m_BoundPipelineHandle.id, *pdata.descriptorSetLayout);
 
             // Check if descriptor set needs written
-            if (alloc.NeedsWrite(m_BoundPipelineHandle.id, binding, buffer.id))
+            if (alloc.NeedsWriteBuffer(m_BoundPipelineHandle.id, binding, buffer.id))
             {
                 vk::DescriptorBufferInfo bufferInfo;
                 bufferInfo.buffer = vkBuffer;
@@ -138,25 +138,74 @@ namespace Engine::RHI::Vulkan
 
                 m_GraphicsDevice.GetContext().GetDevice().updateDescriptorSets(write, {});
 
-                alloc.MarkWritten(m_BoundPipelineHandle.id, binding, buffer.id);
+                alloc.MarkWrittenBuffer(m_BoundPipelineHandle.id, binding, buffer.id);
             }
 
-            // Bind descriptor sets
-            m_CommandBuffer.bindDescriptorSets(
-                vk::PipelineBindPoint::eGraphics,
-                *pdata.pipelineLayout,
-                0, {set},
-                {dynamicOffset}
-            );
+            alloc.SetDynamicOffset(m_BoundPipelineHandle.id, binding, dynamicOffset);
+        }
+
+        void VulkanCommandBuffer::BindTexture(TextureHandle texture, uint32_t binding)
+        {
+            ENGINE_CORE_ASSERT(m_BoundPipelineHandle.IsValid(), "VulkanCommandBuffer: BindUniformBuffer(): no bound pipeline!");
+
+            // Get Data
+            VulkanTextureData&  tdata = m_GraphicsDevice.GetTextureData(texture);
+            VulkanPipelineData& pdata = m_GraphicsDevice.GetPipelineData(m_BoundPipelineHandle);
+
+            // Get descriptor set
+            VulkanDescriptorSetAllocator& alloc = m_GraphicsDevice.GetCurrentFrame()->GetDescriptorSetAllocator();
+            vk::DescriptorSet set = alloc.GetOrAllocate(m_BoundPipelineHandle.id, *pdata.descriptorSetLayout);
+
+            // Check if descriptor set needs written
+            if (alloc.NeedsWriteTexture(m_BoundPipelineHandle.id, binding, texture.id))
+            {
+                vk::DescriptorImageInfo imageInfo;
+                imageInfo.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+                imageInfo.imageView   = *tdata.imageView;
+                imageInfo.sampler     = *tdata.sampler;
+
+                vk::WriteDescriptorSet write;
+                write.dstSet          = set;
+                write.dstBinding      = binding;
+                write.descriptorCount = 1;
+                write.descriptorType  = vk::DescriptorType::eCombinedImageSampler;
+                write.pImageInfo      = &imageInfo;
+
+                m_GraphicsDevice.GetContext().GetDevice().updateDescriptorSets(write, {});
+
+                alloc.MarkWrittenTexture(m_BoundPipelineHandle.id, binding, texture.id);
+            }
+
+            alloc.MarkDirty(m_BoundPipelineHandle.id);
         }
 
         void VulkanCommandBuffer::Draw(uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance)
         {
+            if(m_BoundPipelineHandle.IsValid())
+            {
+                VulkanPipelineData& pdata = m_GraphicsDevice.GetPipelineData(m_BoundPipelineHandle);
+                m_GraphicsDevice.GetCurrentFrame()->GetDescriptorSetAllocator().BindDescriptorSets(
+                    m_BoundPipelineHandle.id,
+                    pdata.descriptorSetLayout,
+                    pdata.pipelineLayout,
+                    m_CommandBuffer
+                );
+            }
             m_CommandBuffer.draw(vertexCount, instanceCount, firstVertex, firstInstance);
         }
 
         void VulkanCommandBuffer::DrawIndexed(uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex, int32_t indexOffset, uint32_t firstInstance)
         {
+            if(m_BoundPipelineHandle.IsValid())
+            {
+                VulkanPipelineData& pdata = m_GraphicsDevice.GetPipelineData(m_BoundPipelineHandle);
+                m_GraphicsDevice.GetCurrentFrame()->GetDescriptorSetAllocator().BindDescriptorSets(
+                    m_BoundPipelineHandle.id,
+                    pdata.descriptorSetLayout,
+                    pdata.pipelineLayout,
+                    m_CommandBuffer
+                );
+            }
             m_CommandBuffer.drawIndexed(indexCount, instanceCount, firstIndex, indexOffset, firstInstance);
         }
 
@@ -220,7 +269,79 @@ namespace Engine::RHI::Vulkan
 
         void VulkanCommandBuffer::UploadTexture(TextureHandle texture, void* data)
         {
+            // Get data
+            VulkanTextureData& tdata = m_GraphicsDevice.GetTextureData(texture);
+            size_t size = tdata.desc.width * tdata.desc.height * VulkanCommon::GetPixelSize(tdata.desc.format);
 
+            // Create staging buffer
+            VkBufferCreateInfo stagingBufferInfo{ VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+            stagingBufferInfo.size = size;
+            stagingBufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+
+            // Allocation info + request memory mapping
+            VmaAllocationCreateInfo allocInfo{};
+            allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
+            allocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT;
+
+            // Create & allocate staging buffer
+            VmaAllocationInfo resultInfo;
+            VkBuffer stagingBuffer;
+            VmaAllocation stagingAllocation;
+            vmaCreateBuffer(m_GraphicsDevice.GetContext().GetAllocator(), &stagingBufferInfo, &allocInfo, &stagingBuffer, &stagingAllocation, &resultInfo);
+
+            // Copy data to staging buffer
+            std::memcpy(resultInfo.pMappedData, data, size);
+
+            // Transition image layout eUndefined->eTransferDstOptimal
+            VulkanCommon::TransitionImageLayout(
+                m_CommandBuffer,
+                tdata.image, 
+                vk::ImageLayout::eUndefined, 
+                vk::ImageLayout::eTransferDstOptimal,
+                vk::AccessFlagBits2::eNone,
+                vk::AccessFlagBits2::eTransferWrite,
+                vk::PipelineStageFlagBits2::eTopOfPipe,
+                vk::PipelineStageFlagBits2::eTransfer
+            );
+
+            // Copy command from staging buffer to image
+            vk::BufferImageCopy region{};
+            region.bufferOffset = 0;
+            region.bufferRowLength = 0;
+            region.bufferImageHeight = 0;
+            region.imageSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
+            region.imageSubresource.mipLevel = 0;
+            region.imageSubresource.baseArrayLayer = 0;
+            region.imageSubresource.layerCount = 1;
+            region.imageOffset = vk::Offset3D{0, 0, 0};
+            region.imageExtent = vk::Extent3D{ tdata.desc.width, tdata.desc.height, 1 };
+
+            vk::BufferCopy copyRegion{};
+            copyRegion.srcOffset = 0;
+            copyRegion.dstOffset = 0;
+            copyRegion.size = size;
+
+            m_CommandBuffer.copyBufferToImage(
+                stagingBuffer,
+                tdata.image,
+                vk::ImageLayout::eTransferDstOptimal,
+                region
+            );
+
+            // eTransferDstOptimal -> eShaderReadOnlyOptimal
+            VulkanCommon::TransitionImageLayout(
+                m_CommandBuffer,
+                tdata.image, 
+                vk::ImageLayout::eTransferDstOptimal, 
+                vk::ImageLayout::eShaderReadOnlyOptimal,
+                vk::AccessFlagBits2::eTransferWrite,
+                vk::AccessFlagBits2::eShaderRead,
+                vk::PipelineStageFlagBits2::eTransfer,
+                vk::PipelineStageFlagBits2::eFragmentShader
+            );
+
+            // Add to staging buffer allocations
+            m_StagingBufferAllocations.emplace_back(stagingBuffer, stagingAllocation);
         }
 
         // Begin/End* for Vulkan classes

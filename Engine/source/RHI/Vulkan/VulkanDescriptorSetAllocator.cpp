@@ -10,6 +10,7 @@ namespace Engine::RHI::Vulkan
         // Descriptor pool
         std::vector<vk::DescriptorPoolSize> poolSizes = {
             { vk::DescriptorType::eUniformBufferDynamic, k_MaxUniformBuffersPerFrame },
+            { vk::DescriptorType::eCombinedImageSampler, k_MaxSamplersPerFrame },
         };
 
         vk::DescriptorPoolCreateInfo poolInfo;
@@ -42,7 +43,30 @@ namespace Engine::RHI::Vulkan
         return *entry.set;
     }
 
-    bool VulkanDescriptorSetAllocator::NeedsWrite(uint32_t pipelineId, uint32_t binding, uint32_t bufferId) const
+    void VulkanDescriptorSetAllocator::SetDynamicOffset(uint32_t pipelineId, uint32_t binding, uint32_t offset)
+    {
+        // Get entry
+        auto it = m_Sets.find(pipelineId);
+        if (it == m_Sets.end()) return;
+        DescriptorSetEntry& entry = it->second;
+        if (binding >= entry.pendingOffsets.size())
+            entry.pendingOffsets.resize(binding + 1, 0);
+
+        if(entry.pendingOffsets[binding] != offset)
+        {
+            entry.pendingOffsets[binding] = offset;
+            entry.dirty = true;
+        }
+    }
+
+    void VulkanDescriptorSetAllocator::MarkDirty(uint32_t pipelineId)
+    {
+        auto it = m_Sets.find(pipelineId);
+        if (it != m_Sets.end())
+            it->second.dirty = true;
+    }
+
+    bool VulkanDescriptorSetAllocator::NeedsWriteBuffer(uint32_t pipelineId, uint32_t binding, uint32_t bufferId) const
     {
         // Check cache: If not allocated, needs write
         auto it = m_Sets.find(pipelineId);
@@ -53,11 +77,45 @@ namespace Engine::RHI::Vulkan
         return it->second.boundBuffers[binding] != bufferId;
     }
 
-    void VulkanDescriptorSetAllocator::MarkWritten(uint32_t pipelineId, uint32_t binding, uint32_t bufferId)
+    bool VulkanDescriptorSetAllocator::NeedsWriteTexture(uint32_t pipelineId, uint32_t binding, uint32_t textureId) const
+    {
+        // Check cache: If not allocated, needs write
+        auto it = m_Sets.find(pipelineId);
+        if (it == m_Sets.end())
+            return true;
+
+        // Else, check if this binding is this texture
+        return it->second.boundTextures[binding] != textureId;
+    }
+
+    void VulkanDescriptorSetAllocator::MarkWrittenBuffer(uint32_t pipelineId, uint32_t binding, uint32_t bufferId)
     {
         auto it = m_Sets.find(pipelineId);
         if (it != m_Sets.end())
             it->second.boundBuffers[binding] = bufferId;
+    }
+
+    void VulkanDescriptorSetAllocator::MarkWrittenTexture(uint32_t pipelineId, uint32_t binding, uint32_t textureId)
+    {
+        auto it = m_Sets.find(pipelineId);
+        if (it != m_Sets.end())
+            it->second.boundTextures[binding] = textureId;
+    }
+
+    void VulkanDescriptorSetAllocator::BindDescriptorSets(uint32_t pipelineId, vk::DescriptorSetLayout layout, vk::PipelineLayout pipelineLayout, vk::CommandBuffer cmd)
+    {
+        DescriptorSetEntry& entry = m_Sets.at(pipelineId);
+        if (!entry.dirty) return;
+
+        cmd.bindDescriptorSets(
+            vk::PipelineBindPoint::eGraphics,
+            pipelineLayout,
+            0, { *entry.set },
+            entry.pendingOffsets
+        );
+
+        entry.dirty = false;
+        entry.pendingOffsets.clear();
     }
 
     void VulkanDescriptorSetAllocator::Reset()

@@ -64,6 +64,7 @@ namespace Engine::RHI::Vulkan
 
         // Textures
         void CreateImageView(VulkanTextureData& textureData);
+        void CreateSampler(VulkanTextureData& textureData);
 
     public:
         VulkanGraphicsDevice(Scope<IVulkanGraphicsBridge> bridge);

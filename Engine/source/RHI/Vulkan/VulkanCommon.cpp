@@ -53,6 +53,18 @@ namespace Engine::RHI::Vulkan::VulkanCommon
         return surfaceFormat;
     }
 
+    size_t GetPixelSize(PixelFormat format)
+    {
+        size_t size = 0;
+
+        switch(format)
+        {
+            case PixelFormat::RGBA8: size = 4; break;
+        }
+
+        return size;
+    }
+
     vk::SurfaceFormatKHR ChooseSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats, vk::SurfaceFormatKHR requestedFormat)
     {   
         for (const auto& availableFormat : availableFormats) {
@@ -172,6 +184,17 @@ namespace Engine::RHI::Vulkan::VulkanCommon
             case FrontFace::CounterClockwise: f = vk::FrontFace::eCounterClockwise; break;
         }
         return f;
+    }
+
+    vk::DescriptorType GetUniformDescriptorType(UniformType type)
+    {
+        vk::DescriptorType t;
+        switch(type)
+        {
+            case UniformType::UniformBuffer: t = vk::DescriptorType::eUniformBufferDynamic; break;
+            case UniformType::Texture: t = vk::DescriptorType::eCombinedImageSampler; break;
+        }
+        return t;
     }
 
     vk::Format GetVertexElementFormat(VertexElementType type)

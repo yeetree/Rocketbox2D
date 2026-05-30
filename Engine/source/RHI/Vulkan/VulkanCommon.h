@@ -23,6 +23,7 @@ namespace Engine::RHI::Vulkan::VulkanCommon
     );
 
     ENGINE_EXPORT vk::SurfaceFormatKHR GetSurfaceFormat(PixelFormat format);
+    ENGINE_EXPORT size_t GetPixelSize(PixelFormat format);
 
     // Returns vk::SurfaceFormatKHR.format = vk::Format::eUndefined if format is not supported
     ENGINE_EXPORT vk::SurfaceFormatKHR ChooseSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats, vk::SurfaceFormatKHR requestedFormat);
@@ -45,6 +46,8 @@ namespace Engine::RHI::Vulkan::VulkanCommon
     ENGINE_EXPORT vk::CullModeFlags GetCullMode(CullMode mode);
     ENGINE_EXPORT vk::FrontFace GetFrontFace(FrontFace frontFace);
     ENGINE_EXPORT vk::Format GetVertexElementFormat(VertexElementType type);
+
+    ENGINE_EXPORT vk::DescriptorType GetUniformDescriptorType(UniformType type);
 
     ENGINE_EXPORT vk::BufferUsageFlags GetBufferUsageFlags(BufferType type);
 

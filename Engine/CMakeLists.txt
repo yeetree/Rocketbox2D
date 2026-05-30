@@ -19,6 +19,7 @@ target_include_directories(Engine
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/gen>
         $<INSTALL_INTERFACE:include>
+        ../vendor/stb # temporary
     PRIVATE 
         source
         ../vendor/stb

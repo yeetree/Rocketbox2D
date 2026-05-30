@@ -35,6 +35,7 @@ namespace Engine::RHI
     enum class PolygonMode       { Fill, Line, Point };
     enum class CullMode          { None, Back, Front };
     enum class FrontFace         { Clockwise, CounterClockwise };
+    enum class UniformType       { UniformBuffer, Texture };
 
     // ========================================================================
     // Flags
@@ -54,6 +55,7 @@ namespace Engine::RHI
     struct UniformBinding {
         uint32_t    binding;
         ShaderStage stage;
+        UniformType type;
     };
 
     // =========================================================================
@@ -77,10 +79,10 @@ namespace Engine::RHI
     };
 
     struct TextureDesc {
-        uint32_t      width  = 0;
-        uint32_t      height = 0;
-        PixelFormat   format = PixelFormat::RGBA8;
-        TextureUsage  usage  = TextureUsage::Sampled;
+        uint32_t          width  = 0;
+        uint32_t          height = 0;
+        PixelFormat       format = PixelFormat::RGBA8;
+        TextureUsageFlags usage  = TextureUsage::Sampled;
     };
 
     struct ShaderModule {

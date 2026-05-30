@@ -37,9 +37,9 @@ constexpr const uint32_t k_UniformDynamicBufferSizePerFrame = 1 * 1024 * 1024; /
 
 
 static constexpr uint32_t k_MaxBindings = 8;
-constexpr const int k_MaxDescriptorSetsPerFrame = 64;
-constexpr const int k_MaxUniformBuffersPerFrame = 64;
-constexpr const int k_MaxSamplersPerFrame = 64;
+constexpr const uint32_t k_MaxDescriptorSetsPerFrame = 64;
+constexpr const uint32_t k_MaxUniformBuffersPerFrame = 64;
+constexpr const uint32_t k_MaxSamplersPerFrame = 64;
 
 
 #endif // RHI_VULKAN_VULKANCONSTANTS

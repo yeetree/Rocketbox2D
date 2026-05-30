@@ -5,6 +5,9 @@
 #include "Engine/Events/WindowEvent.h"
 #include "Engine/Core/Assert.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 using namespace Engine;
 using namespace Engine::RHI;
 
@@ -12,6 +15,7 @@ struct Vertex
 {
     Vec2 inPosition;
     Vec3 inColor;
+    Vec2 inTexCoord;
 };
 
 struct UniformBufferObject
@@ -22,10 +26,10 @@ struct UniformBufferObject
 };
 
 const std::vector<Vertex> vertices = {
-    {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-    {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
-    {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-    {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
+    {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
+    {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+    {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
+    {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
 };
 
 const std::vector<uint16_t> indices = {
@@ -48,6 +52,7 @@ public:
     BufferHandle ub;
 
     UniformBufferObject ubo;
+    TextureHandle tex;
 
     void OnStart() override {
         Ref<Input> in = GetServiceLocator()->Get<Input>();
@@ -86,10 +91,12 @@ public:
             .shader = shader,
             .vertexLayout = {
                 {VertexElementType::Vec2, "inPosition"},
-                {VertexElementType::Vec3, "inColor"}
+                {VertexElementType::Vec3, "inColor"},
+                {VertexElementType::Vec2, "inTexCoord"}
             },
             .uniformBindings = {
-                {0, ShaderStage::Vertex}
+                {0, ShaderStage::Vertex, UniformType::UniformBuffer},
+                {1, ShaderStage::Fragment, UniformType::Texture},
             },
             .colorAttachmentFormats = { PixelFormat::RGBA8 },
             .topology = PrimitiveTopology::TriangleList,
@@ -126,10 +133,23 @@ public:
 
         ub = gd->CreateBuffer(ubdesc);
 
+        int w, h;
+        void* texdata = stbi_load(fs->GetAbsolutePath("./Assets/Textures/awesomeface.png").c_str(), &w, &h, nullptr, 4);
+
+        TextureDesc texdesc{
+            .width = static_cast<uint32_t>(w),
+            .height = static_cast<uint32_t>(h),
+            .format = PixelFormat::RGBA8,
+            .usage = TextureUsage::Sampled
+        };
+
+        tex = gd->CreateTexture(texdesc);
+
         // Upload init data
         ICommandBuffer* init = gd->BeginImmediate();
         init->UploadBuffer(vb, (void*)vertices.data(), vertices.size() * sizeof(Vertex), 0);
         init->UploadBuffer(ib, (void*)indices.data(), indices.size() * sizeof(uint16_t), 0);
+        init->UploadTexture(tex, texdata);
         gd->EndImmediate(init);
     }
 
@@ -185,6 +205,7 @@ public:
             cmd->BindVertexBuffer(vb);
             cmd->BindIndexBuffer(ib);
             cmd->BindUniformBuffer(ub, 0);
+            cmd->BindTexture(tex, 1);
             cmd->DrawIndexed(6);
 
             gd->EndPass(cmd);

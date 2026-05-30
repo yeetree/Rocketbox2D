@@ -38,11 +38,17 @@ namespace Engine::RHI::Vulkan
     {
         m_Context.GetDevice().waitIdle();
 
-        // Destroy all buffers because they are non-raii
+        // Destroy all buffers and textures because they are non-raii
         for(auto const& [id, data] : m_Buffers)
         {
             BufferHandle handle = {.id = id};
             DestroyBuffer(handle);
+        }
+
+        for(auto const& [id, data] : m_Textures)
+        {
+            TextureHandle handle = {.id = id};
+            DestroyTexture(handle);
         }
     };
 
@@ -79,7 +85,51 @@ namespace Engine::RHI::Vulkan
 
     TextureHandle VulkanGraphicsDevice::CreateTexture(const TextureDesc& desc)
     {
-        return { .id = 0 };
+        // Get data
+        uint32_t id = AllocateID();
+        VulkanTextureData& data = m_Textures[id];
+        data.desc = desc;
+
+        // Create image
+        VkImageCreateInfo imageInfo = { VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO };
+        imageInfo.imageType = VK_IMAGE_TYPE_2D;
+        imageInfo.extent.width = data.desc.width;
+        imageInfo.extent.height = data.desc.height;
+        imageInfo.extent.depth = 1;
+        imageInfo.mipLevels = 1;
+        imageInfo.arrayLayers = 1;
+        imageInfo.format = static_cast<VkFormat>(VulkanCommon::GetSurfaceFormat(data.desc.format).format);
+        imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+        imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        imageInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+        imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+
+        VmaAllocationCreateInfo allocInfo = {};
+        allocInfo.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
+        
+        VkImage image = nullptr;
+
+        vmaCreateImage(
+            m_Context.GetAllocator(), 
+            &imageInfo, 
+            &allocInfo, 
+            &image, 
+            &data.allocation, 
+            nullptr
+        );
+
+        data.image = image;
+        data.format = VulkanCommon::GetSurfaceFormat(data.desc.format).format;
+        data.ownsImage = true;
+
+        CreateImageView(data);
+
+        if(data.desc.usage.Has(TextureUsage::Sampled))
+        {
+            CreateSampler(data);
+        }
+
+        return TextureHandle{ .id = id };
     }
 
     ShaderHandle VulkanGraphicsDevice::CreateShader(const ShaderDesc& desc)
@@ -216,7 +266,7 @@ namespace Engine::RHI::Vulkan
         {
             vk::DescriptorSetLayoutBinding binding;
             binding.binding = ub.binding;
-            binding.descriptorType = vk::DescriptorType::eUniformBufferDynamic;
+            binding.descriptorType = VulkanCommon::GetUniformDescriptorType(ub.type);
             binding.descriptorCount = 1;
             binding.stageFlags = VulkanCommon::GetShaderStage(ub.stage);
             layoutBindings.push_back(binding);
@@ -312,6 +362,10 @@ namespace Engine::RHI::Vulkan
     void VulkanGraphicsDevice::DestroyTexture(TextureHandle& texture)
     {
         VulkanTextureData& data = GetTextureData(texture);
+        if(data.ownsImage && data.image && data.allocation)
+        {
+            vmaDestroyImage(m_Context.GetAllocator(), data.image, data.allocation);
+        }
         m_Textures.erase(texture.id);
         texture.id = 0;
     }
@@ -642,6 +696,26 @@ namespace Engine::RHI::Vulkan
         );
 
         textureData.imageView = vk::raii::ImageView(m_Context.GetDevice(), imageViewCreateInfo);
+    }
+
+    void VulkanGraphicsDevice::CreateSampler(VulkanTextureData& textureData)
+    {
+        // Create sampler
+        // TODO: Vulkan: Texture sampling options
+        // Hardcoded: linear sampling, repeat
+        vk::SamplerCreateInfo samplerInfo{};
+        samplerInfo.magFilter = vk::Filter::eLinear;
+        samplerInfo.minFilter = vk::Filter::eLinear;
+        samplerInfo.addressModeU = vk::SamplerAddressMode::eRepeat;
+        samplerInfo.addressModeV = vk::SamplerAddressMode::eRepeat;
+        samplerInfo.addressModeW = vk::SamplerAddressMode::eRepeat;
+        samplerInfo.anisotropyEnable = vk::False;
+        samplerInfo.borderColor = vk::BorderColor::eIntOpaqueBlack;
+        samplerInfo.unnormalizedCoordinates = vk::False;
+        samplerInfo.compareEnable = vk::False;
+        samplerInfo.mipmapMode = vk::SamplerMipmapMode::eLinear;
+
+        textureData.sampler = vk::raii::Sampler(m_Context.GetDevice(), samplerInfo);
     }
 
     // Public getters for Vulkan classes
