@@ -46,6 +46,8 @@ namespace Engine::RHI::Vulkan::VulkanCommon
     ENGINE_EXPORT vk::FrontFace GetFrontFace(FrontFace frontFace);
     ENGINE_EXPORT vk::Format GetVertexElementFormat(VertexElementType type);
 
+    ENGINE_EXPORT vk::BufferUsageFlags GetBufferUsageFlags(BufferType type);
+
 } // namespace Engine::RHI::Vulkan::VulkanCommon
 
 

@@ -13,7 +13,6 @@ namespace Engine::RHI::Vulkan
     VulkanGraphicsDevice::VulkanGraphicsDevice(Scope<IVulkanGraphicsBridge> bridge)
         : m_Bridge(std::move(bridge)),
           m_Context(m_Bridge.get()),
-          m_ImmediateAllocator(m_Context),
           m_FrameIndex(0)
     {
         // Create frames
@@ -21,14 +20,61 @@ namespace Engine::RHI::Vulkan
         {
             m_Frames.push_back(CreateScope<VulkanFrame>(m_Context));
         }
+
+        // Immediate commands
+        vk::CommandPoolCreateInfo poolInfo(
+            vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
+            m_Context.GetGraphicsQueue().familyIndex
+        );
+        m_ImmediatePool = vk::raii::CommandPool(m_Context.GetDevice(), poolInfo);
+        m_ImmediateCommandBuffer = CreateScope<VulkanCommandBuffer>(*this, *m_ImmediatePool);
+
+        // Immediate fence
+        vk::FenceCreateInfo fenceInfo{};
+        m_ImmediateFence = vk::raii::Fence(m_Context.GetDevice(), fenceInfo);
     }
 
-    VulkanGraphicsDevice::~VulkanGraphicsDevice() = default;
+    VulkanGraphicsDevice::~VulkanGraphicsDevice()
+    {
+        m_Context.GetDevice().waitIdle();
+
+        // Destroy all buffers because they are non-raii
+        for(auto const& [id, data] : m_Buffers)
+        {
+            BufferHandle handle = {.id = id};
+            DestroyBuffer(handle);
+        }
+    };
 
     // Resource creation
     BufferHandle VulkanGraphicsDevice::CreateBuffer(const BufferDesc& desc)
     {
-        return { .id = 0 };
+        // Get data
+        uint32_t id = AllocateID();
+        VulkanBufferData& data = m_Buffers[id];
+        data.desc = desc;
+        
+        // Dynamic buffers are allocated on the fly via VulkanDynamicBufferAllocator.
+        // data.dynamicOffsets is already sized to k_MaxFramesInFlight.
+        if(data.desc.usage == BufferUsage::Static)
+        {
+            // Buffer info
+            vk::BufferCreateInfo bufferInfo;
+            bufferInfo.size = data.desc.size;
+            bufferInfo.usage = VulkanCommon::GetBufferUsageFlags(data.desc.type) | vk::BufferUsageFlagBits::eTransferDst;
+
+            // Alloc info: map to GPU memory
+            VmaAllocationCreateInfo allocInfo{};
+            allocInfo.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
+
+            // Allocate / Create buffer
+            VmaAllocationInfo resultInfo;
+            VkBuffer buffer;
+            vmaCreateBuffer(m_Context.GetAllocator(), bufferInfo, &allocInfo, &buffer, &data.allocation, &resultInfo);
+            data.buffer = buffer;
+        }
+
+        return BufferHandle{ .id = id };
     }
 
     TextureHandle VulkanGraphicsDevice::CreateTexture(const TextureDesc& desc)
@@ -255,6 +301,10 @@ namespace Engine::RHI::Vulkan
     void VulkanGraphicsDevice::DestroyBuffer(BufferHandle& buffer)
     {
         VulkanBufferData& data = GetBufferData(buffer);
+        if(data.desc.usage == BufferUsage::Static)
+        {
+            vmaDestroyBuffer(m_Context.GetAllocator(), data.buffer, data.allocation);
+        }
         m_Buffers.erase(buffer.id);
         buffer.id = 0;
     }
@@ -361,8 +411,6 @@ namespace Engine::RHI::Vulkan
             return nullptr;
         }
 
-        
-
         // Acquire next image
         sc.acquiredImageIndex = sc.swapchain.acquireNextImage(
             UINT64_MAX,
@@ -415,12 +463,33 @@ namespace Engine::RHI::Vulkan
     // Immediate command buffer
     ICommandBuffer* VulkanGraphicsDevice::BeginImmediate()
     {
-        return nullptr;
+        ENGINE_CORE_ASSERT(m_InImmediatePass == false, "Vulkan: VulkanGraphicsDevice: BeginImmediate(): already in immediate pass!");
+        VulkanCommandBuffer* cmd = m_ImmediateCommandBuffer.get();
+        cmd->Reset();
+        cmd->BeginImmediate();
+        m_InImmediatePass = true;
+        return cmd;
     }
 
     void VulkanGraphicsDevice::EndImmediate(ICommandBuffer* cmd)
     {
+        ENGINE_ASSERT(cmd != nullptr, "Vulkan: VulkanGraphicsDevice: EndImmediate(): cmd is nullptr!");
+        ENGINE_CORE_ASSERT(cmd == m_ImmediateCommandBuffer.get(), "Vulkan: VulkanGraphicsDevice: EndImmediate(): cmd is not immediate command buffer!");
+        ENGINE_CORE_ASSERT(m_InImmediatePass != false, "Vulkan: VulkanGraphicsDevice: EndImmediate(): not in immediate pass!");
 
+        m_ImmediateCommandBuffer->EndImmediate();
+
+        vk::SubmitInfo submitInfo;
+        submitInfo.commandBufferCount = 1;
+        submitInfo.pCommandBuffers = &*(m_ImmediateCommandBuffer->GetCommandBuffer());
+
+        m_Context.GetGraphicsQueue().queue.submit(submitInfo, *m_ImmediateFence);
+
+        m_Context.GetDevice().waitForFences(*m_ImmediateFence, VK_TRUE, UINT64_MAX);
+        m_Context.GetDevice().resetFences(*m_ImmediateFence);
+
+        m_ImmediateCommandBuffer->Reset();
+        m_InImmediatePass = false;
     }
 
     // Swapchain configuration

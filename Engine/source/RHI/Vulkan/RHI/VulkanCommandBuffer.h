@@ -6,6 +6,7 @@
 #include "Engine/Math/Vector.h"
 
 #include <vulkan/vulkan_raii.hpp>
+#include <vk_mem_alloc.h>
 
 namespace Engine::RHI::Vulkan
 {
@@ -25,9 +26,18 @@ namespace Engine::RHI::Vulkan
         // State
         VulkanTextureData* m_CurrentRenderTarget = nullptr;
 
-        // Begin/EndRendering for Vulkan classes
+        // Staging buffer
+        struct StagingBufferAllocation {
+            VkBuffer buffer;
+            VmaAllocation allocation;
+        };
+        std::vector<StagingBufferAllocation> m_StagingBufferAllocations;
+
+        // Begin/End* for Vulkan classes
         void BeginRendering(VulkanTextureData* renderTarget, Vec4 clearColor);
         void EndRendering();
+        void BeginImmediate();
+        void EndImmediate();
 
     public:
         VulkanCommandBuffer(VulkanGraphicsDevice& graphicsDevice, vk::CommandPool commandPool);

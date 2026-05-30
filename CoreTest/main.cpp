@@ -43,6 +43,9 @@ public:
     ShaderHandle shader;
     PipelineHandle pipeline;
 
+    BufferHandle vb;
+    BufferHandle ib;
+
     UniformBufferObject ubo;
 
     void OnStart() override {
@@ -80,7 +83,10 @@ public:
 
         PipelineDesc pdesc {
             .shader = shader,
-            .vertexLayout = {},
+            .vertexLayout = {
+                {VertexElementType::Vec2, "inPosition"},
+                {VertexElementType::Vec3, "inColor"}
+            },
             .uniformBindings = {},
             .colorAttachmentFormats = { PixelFormat::RGBA8 },
             .topology = PrimitiveTopology::TriangleList,
@@ -92,7 +98,7 @@ public:
 
         pipeline = gd->CreatePipeline(pdesc);
 
-        /*
+        
         BufferDesc vbdesc{
             .size = vertices.size() * sizeof(Vertex),
             .type = BufferType::Vertex,
@@ -109,6 +115,8 @@ public:
 
         ib = gd->CreateBuffer(ibdesc);
 
+        /*
+
         BufferDesc ubdesc{
             .size = sizeof(UniformBufferObject),
             .type = BufferType::Uniform,
@@ -116,14 +124,13 @@ public:
         };
 
         ub = gd->CreateBuffer(ubdesc);
+        */
 
         // Upload init data
-        ICommandBuffer* init = gd->BeginSingleTimeCommands();
-        init->Begin();
-        init->SetBufferData(vb.get(), (void*)vertices.data(), vb->GetSize(), 0);
-        init->SetBufferData(ib.get(), (void*)indices.data(), ib->GetSize(), 0);
-        init->End();
-        gd->EndSingleTimeCommands(init);*/
+        ICommandBuffer* init = gd->BeginImmediate();
+        init->UploadBuffer(vb, (void*)vertices.data(), vertices.size() * sizeof(Vertex), 0);
+        init->UploadBuffer(ib, (void*)indices.data(), indices.size() * sizeof(uint16_t), 0);
+        gd->EndImmediate(init);
     }
 
     void OnEvent(StringName type, const Event& event) override {
@@ -173,7 +180,9 @@ public:
         if(cmd)
         {
             cmd->BindPipeline(pipeline);
-            cmd->Draw(3);
+            cmd->BindVertexBuffer(vb);
+            cmd->BindIndexBuffer(ib);
+            cmd->DrawIndexed(6);
 
             gd->EndPass(cmd);
         }

@@ -43,7 +43,10 @@ namespace Engine::RHI::Vulkan
         std::vector<SwapChainHandle> m_FrameSwapChainPresentations;
 
         // Immediate command buffers
-        VulkanCommandBufferAllocator m_ImmediateAllocator;
+        bool                       m_InImmediatePass        = false;
+        vk::raii::CommandPool      m_ImmediatePool          = nullptr;
+        Scope<VulkanCommandBuffer> m_ImmediateCommandBuffer = nullptr;
+        vk::raii::Fence            m_ImmediateFence         = nullptr;
 
         // Resources
         std::unordered_map<uint32_t, VulkanBufferData> m_Buffers;

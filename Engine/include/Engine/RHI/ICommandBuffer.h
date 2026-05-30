@@ -23,6 +23,7 @@ namespace Engine::RHI
         virtual void DrawIndexed(uint32_t indexCount, uint32_t instanceCount = 1, uint32_t firstIndex = 0, int32_t indexOffset = 0, uint32_t firstInstance = 0) = 0;
    
         // Data
+        // offset is only used by static buffers and is ignored by dynamic buffers.
         virtual void UploadBuffer(BufferHandle buffer, void* data, size_t size, size_t offset) = 0;
         virtual void UploadTexture(TextureHandle texture, void* data) = 0;
     };

@@ -188,4 +188,16 @@ namespace Engine::RHI::Vulkan::VulkanCommon
         return e;
     }
 
+    vk::BufferUsageFlags GetBufferUsageFlags(BufferType type)
+    {
+        vk::BufferUsageFlags flags;
+        switch(type)
+        {
+            case BufferType::Vertex: flags = vk::BufferUsageFlagBits::eVertexBuffer; break;
+            case BufferType::Index: flags = vk::BufferUsageFlagBits::eIndexBuffer; break;
+            case BufferType::Uniform: flags = vk::BufferUsageFlagBits::eUniformBuffer; break;
+        }
+        return flags;
+    }
+
 } // namespace Engine::RHI::Vulkan::VulkanCommon

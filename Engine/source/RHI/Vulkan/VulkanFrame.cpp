@@ -16,13 +16,13 @@ namespace Engine::RHI::Vulkan
           m_IndexDynamicBufferAllocator(
             context, 
             k_VertexDynamicBufferSizePerFrame, 
-            vk::BufferUsageFlagBits::eVertexBuffer,
+            vk::BufferUsageFlagBits::eIndexBuffer,
             64
           ),
           m_UniformDynamicBufferAllocator(
             context, 
             k_VertexDynamicBufferSizePerFrame, 
-            vk::BufferUsageFlagBits::eVertexBuffer,
+            vk::BufferUsageFlagBits::eUniformBuffer,
             context.GetPhysicalDeviceProperties().limits.minUniformBufferOffsetAlignment
           ),
           m_DescriptorSetAllocator(context)
