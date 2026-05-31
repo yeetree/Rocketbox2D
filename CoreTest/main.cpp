@@ -42,11 +42,69 @@ const std::vector<uint16_t> indices = {
     4, 5, 6, 6, 7, 4
 };
 
+class TextureResource : public IResource {
+public:
+    TextureResource(TextureHandle tex) : texture(tex) {}
+    ~TextureResource() = default;
+    TextureHandle texture;
+};
+
+struct TextureLoadDesc : public ResourceLoadDesc {
+    TextureLoadDesc(std::string path) : path(path) {}
+    ~TextureLoadDesc() = default;
+    std::string path;
+};
+
+class TextureLoader : public IResourceLoader {
+private:
+    Ref<IGraphicsDevice> m_gd;
+
+public:
+    TextureLoader(Ref<IGraphicsDevice> graphicsDevice) : m_gd(graphicsDevice) {}
+    ~TextureLoader() = default;
+
+    Scope<IResource> Load(const ResourceLoadDesc& desc) override
+    {
+        const TextureLoadDesc& tdesc = static_cast<const TextureLoadDesc&>(desc);
+        int w, h;
+        void* texdata = stbi_load(tdesc.path.c_str(), &w, &h, nullptr, 4);
+
+        TextureDesc texdesc{
+            .width = static_cast<uint32_t>(w),
+            .height = static_cast<uint32_t>(h),
+            .format = PixelFormat::RGBA8,
+            .usage = TextureUsage::Sampled
+        };
+
+        TextureHandle handle = m_gd->CreateTexture(texdesc);
+
+        ICommandBuffer* init = m_gd->BeginImmediate();
+        init->UploadTexture(handle, texdata);
+        m_gd->EndImmediate(init);
+        stbi_image_free(texdata);
+
+        return CreateScope<TextureResource>(handle);
+    }
+
+    Scope<IResource> Create(const ResourceCreateDesc& desc) override
+    {
+        return nullptr;
+    }
+
+    void Unload(Scope<IResource> resource)
+    {
+        TextureResource* tex = static_cast<TextureResource*>(resource.get());
+        m_gd->DestroyTexture(tex->texture);
+        resource.reset();
+    }
+};
+
 class EngineTestApp : public Application {
 public:
     Ref<IWindow> win;
     Ref<IGraphicsDevice> gd;
     Ref<FileSystem> fs;
+    Ref<ResourceManager> rm;
 
     SwapChainHandle sc;
 
@@ -59,7 +117,8 @@ public:
     BufferHandle ub;
 
     UniformBufferObject ubo;
-    TextureHandle tex;
+    //TextureHandle tex;
+    VersionedHandle<TextureResource> tex;
 
     void OnStart() override {
         Ref<Input> in = GetServiceLocator()->Get<Input>();
@@ -71,6 +130,10 @@ public:
         gd = GetServiceLocator()->Get<IGraphicsDevice>();
         win = GetServiceLocator()->Get<IWindow>();
         fs = GetServiceLocator()->Get<FileSystem>();
+        rm = GetServiceLocator()->Get<ResourceManager>();
+
+        rm->RegisterLoader<TextureResource>(CreateScope<TextureLoader>(gd));
+        tex = rm->Load<TextureResource>("awesomeface", TextureLoadDesc(fs->GetAbsolutePath("./Assets/Textures/awesomeface.png")));
 
         SwapChainDesc scdesc{
             .window = win.get(),
@@ -154,6 +217,7 @@ public:
         int w, h;
         void* texdata = stbi_load(fs->GetAbsolutePath("./Assets/Textures/awesomeface.png").c_str(), &w, &h, nullptr, 4);
 
+        /*
         TextureDesc texdesc{
             .width = static_cast<uint32_t>(w),
             .height = static_cast<uint32_t>(h),
@@ -161,13 +225,13 @@ public:
             .usage = TextureUsage::Sampled
         };
 
-        tex = gd->CreateTexture(texdesc);
+        tex = gd->CreateTexture(texdesc);*/
 
         // Upload init data
         ICommandBuffer* init = gd->BeginImmediate();
         init->UploadBuffer(vb, (void*)vertices.data(), vertices.size() * sizeof(Vertex), 0);
         init->UploadBuffer(ib, (void*)indices.data(), indices.size() * sizeof(uint16_t), 0);
-        init->UploadTexture(tex, texdata);
+        //init->UploadTexture(tex, texdata);
         gd->EndImmediate(init);
     }
 
@@ -234,7 +298,7 @@ public:
             cmd->BindVertexBuffer(vb);
             cmd->BindIndexBuffer(ib);
             cmd->BindUniformBuffer(ub, 0);
-            cmd->BindTexture(tex, 1);
+            cmd->BindTexture(rm->Get<TextureResource>(tex)->texture, 1);
             cmd->DrawIndexed(12);
 
             gd->EndPass(cmd);

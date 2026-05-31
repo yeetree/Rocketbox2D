@@ -7,8 +7,12 @@
 
 namespace Engine
 {
-    struct ENGINE_EXPORT ResourceDesc {
-        virtual ~ResourceDesc() = default;
+    struct ENGINE_EXPORT ResourceLoadDesc {
+        virtual ~ResourceLoadDesc() = default;
+    };
+
+    struct ENGINE_EXPORT ResourceCreateDesc {
+        virtual ~ResourceCreateDesc() = default;
     };
 
     class ENGINE_EXPORT IResource

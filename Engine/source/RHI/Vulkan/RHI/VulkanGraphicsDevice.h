@@ -71,10 +71,6 @@ namespace Engine::RHI::Vulkan
         // Destroy
         void ImmediateDestroy(QueuedDestruction::Type type, uint32_t id);
 
-        // Resource ID
-        uint32_t m_NextID = 1;
-        uint32_t AllocateID() { return m_NextID++; }
-
         // Swapchain
         void RebuildSwapchain(VulkanSwapChainData& swapChainData);
 

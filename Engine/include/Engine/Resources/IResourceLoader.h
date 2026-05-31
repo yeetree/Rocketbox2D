@@ -9,15 +9,14 @@
 
 namespace Engine
 {
-    struct ResourceInfo;
-
     class ENGINE_EXPORT IResourceLoader
     {
     public:
         virtual ~IResourceLoader() = default;
         
-        virtual Scope<IResource> Load(const ResourceInfo& info) = 0;
-        virtual Scope<IResource> Create(const ResourceInfo& info) = 0;
+        virtual Scope<IResource> Load(const ResourceLoadDesc& info) = 0;
+        virtual Scope<IResource> Create(const ResourceCreateDesc& info) = 0;
+        virtual void Unload(Scope<IResource> resource) = 0;
     };
 } // namespace Engine
 

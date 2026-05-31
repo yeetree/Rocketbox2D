@@ -4,6 +4,7 @@
 #include "Engine/RHI/VertexLayout.h"
 
 #include "Engine/Core/Flags.h"
+#include "Engine/Core/Handle.h"
 #include <cstddef>
 #include <cstdint>
 #include <string>
@@ -63,11 +64,17 @@ namespace Engine::RHI
     // Handles
     // =========================================================================
 
-    struct BufferHandle    { uint32_t id = 0; bool IsValid() const { return id != 0; } bool operator==(const BufferHandle&)    const = default; };
-    struct TextureHandle   { uint32_t id = 0; bool IsValid() const { return id != 0; } bool operator==(const TextureHandle&)   const = default; };
-    struct ShaderHandle    { uint32_t id = 0; bool IsValid() const { return id != 0; } bool operator==(const ShaderHandle&)    const = default; };
-    struct PipelineHandle  { uint32_t id = 0; bool IsValid() const { return id != 0; } bool operator==(const PipelineHandle&)  const = default; };
-    struct SwapChainHandle { uint32_t id = 0; bool IsValid() const { return id != 0; } bool operator==(const SwapChainHandle&) const = default; };
+    struct BufferTag {};
+    struct TextureTag {};
+    struct ShaderTag {};
+    struct PipelineTag {};
+    struct SwapChainTag {};
+
+    using BufferHandle    = Handle<BufferTag>;
+    using TextureHandle   = Handle<TextureTag>;
+    using ShaderHandle    = Handle<ShaderTag>;
+    using PipelineHandle  = Handle<PipelineTag>;
+    using SwapChainHandle = Handle<SwapChainTag>;
 
     // ========================================================================
     // Descs

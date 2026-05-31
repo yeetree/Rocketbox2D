@@ -109,7 +109,7 @@ namespace Engine::RHI::Vulkan
     BufferHandle VulkanGraphicsDevice::CreateBuffer(const BufferDesc& desc)
     {
         // Get data
-        uint32_t id = AllocateID();
+        uint32_t id = BufferHandle::AllocateID();
         VulkanBufferData& data = m_Buffers[id];
         data.desc = desc;
         
@@ -139,7 +139,7 @@ namespace Engine::RHI::Vulkan
     TextureHandle VulkanGraphicsDevice::CreateTexture(const TextureDesc& desc)
     {
         // Get data
-        uint32_t id = AllocateID();
+        uint32_t id = TextureHandle::AllocateID();
         VulkanTextureData& data = m_Textures[id];
         data.desc = desc;
 
@@ -188,7 +188,7 @@ namespace Engine::RHI::Vulkan
     ShaderHandle VulkanGraphicsDevice::CreateShader(const ShaderDesc& desc)
     {
         // Get data
-        uint32_t id = AllocateID();
+        uint32_t id = ShaderHandle::AllocateID();
         VulkanShaderData& data = m_Shaders[id]; 
 
         // Loop through all shader modules
@@ -211,7 +211,7 @@ namespace Engine::RHI::Vulkan
     PipelineHandle VulkanGraphicsDevice::CreatePipeline(const PipelineDesc& desc)
     {
         // Get data
-        uint32_t id = AllocateID();
+        uint32_t id = PipelineHandle::AllocateID();
         VulkanPipelineData& data = m_Pipelines[id]; 
 
         // Get shader data
@@ -390,7 +390,7 @@ namespace Engine::RHI::Vulkan
         ENGINE_CORE_ASSERT(desc.window != nullptr, "Vulkan: VulkanGraphicsDevice: CreateSwapChain(): desc.window is nullptr!");
 
         // Get data
-        uint32_t id = AllocateID();
+        uint32_t id = SwapChainHandle::AllocateID();
         VulkanSwapChainData& data = m_SwapChains[id]; 
 
         // Create surface
