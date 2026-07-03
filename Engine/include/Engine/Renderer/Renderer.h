@@ -4,6 +4,9 @@
 #include "engine_export.h"
 
 #include "Engine/Core/Base.h"
+#include "Engine/Core/StringName.h"
+
+#include "Engine/Events/Event.h"
 
 #include "Engine/RHI/RHI.h"
 #include "Engine/RHI/ICommandBuffer.h"
@@ -31,6 +34,8 @@ namespace Engine
     public:
         Renderer();
         ~Renderer();
+
+        void OnEvent(StringName type, const Event& event);
 
         void Begin(RHI::SwapChainHandle sc);
         void DrawSprite(RHI::TextureHandle tex, Vec2 pos, Vec2 size, float rot);

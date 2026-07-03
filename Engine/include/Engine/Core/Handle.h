@@ -23,12 +23,12 @@ namespace Engine
     };
 
     template<typename Tag>
-    struct VersionedHandle
+    struct ResourceHandle
     {
         uint32_t id = 0;
         uint32_t version = 0;
         // Must use external manager to check validity
-        bool operator==(const VersionedHandle<Tag>& other) const {
+        bool operator==(const ResourceHandle<Tag>& other) const {
             return this->id == other.id && this->version == other.version;
         }
     };
@@ -45,8 +45,8 @@ namespace std {
     };
 
     template<typename Tag>
-    struct hash<Engine::VersionedHandle<Tag>> {
-        std::size_t operator()(const Engine::VersionedHandle<Tag>& h) const noexcept {
+    struct hash<Engine::ResourceHandle<Tag>> {
+        std::size_t operator()(const Engine::ResourceHandle<Tag>& h) const noexcept {
             size_t seed = std::hash<uint32_t>{}(h.id);
             seed ^= std::hash<uint32_t>{}(h.version) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
             return seed;

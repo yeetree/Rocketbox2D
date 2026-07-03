@@ -6,7 +6,8 @@
 #include "Engine/Core/Base.h"
 #include "Engine/Core/Assert.h"
 
-#include <functional>
+#include <typeindex>
+#include <typeinfo>
 #include <memory>
 #include <unordered_map>
 

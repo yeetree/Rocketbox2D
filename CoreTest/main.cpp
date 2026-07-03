@@ -13,37 +13,6 @@
 using namespace Engine;
 using namespace Engine::RHI;
 
-struct Vertex
-{
-    Vec3 inPosition;
-    Vec3 inColor;
-    Vec2 inTexCoord;
-};
-
-struct UniformBufferObject
-{
-    Mat4 model;
-    Mat4 view;
-    Mat4 proj;
-};
-
-const std::vector<Vertex> vertices = {
-    {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-    {{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-    {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-    {{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
-
-    {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-    {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-    {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-    {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
-};
-
-const std::vector<uint16_t> indices = {
-    0, 1, 2, 2, 3, 0,
-    4, 5, 6, 6, 7, 4
-};
-
 class TextureResource : public IResource {
 public:
     TextureResource(TextureHandle tex) : texture(tex) {}
@@ -59,10 +28,10 @@ struct TextureLoadDesc : public ResourceLoadDesc {
 
 class TextureLoader : public IResourceLoader {
 private:
-    Ref<IGraphicsDevice> m_gd;
+    IGraphicsDevice* m_gd;
 
 public:
-    TextureLoader(Ref<IGraphicsDevice> graphicsDevice) : m_gd(graphicsDevice) {}
+    TextureLoader(IGraphicsDevice* graphicsDevice) : m_gd(graphicsDevice) {}
     ~TextureLoader() = default;
 
     Scope<IResource> Load(const ResourceLoadDesc& desc) override
@@ -108,21 +77,10 @@ public:
     FileSystem* fs;
     ResourceManager* rm;
 
-    Ref<Renderer> renderer;
+    Scope<Renderer> renderer;
 
-    SwapChainHandle sc;
-
-    ShaderHandle shader;
-    PipelineHandle pipeline;
-    TextureHandle depth;
-
-    BufferHandle vb;
-    BufferHandle ib;
-    BufferHandle ub;
-
-    UniformBufferObject ubo;
     //TextureHandle tex;
-    VersionedHandle<TextureResource> tex;
+    ResourceHandle<TextureResource> tex;
 
     void OnStart() override {
         Input* in = GetServiceLocator()->Get<Input>();
@@ -139,153 +97,35 @@ public:
         rm->RegisterLoader<TextureResource>(CreateScope<TextureLoader>(gd));
         tex = rm->Load<TextureResource>("awesomeface", TextureLoadDesc(fs->GetAbsolutePath("./Assets/Textures/awesomeface.png")));
 
-        ShaderDesc shdesc{
-            .modules = {
-                ShaderModule{
-                    .spirv = fs->ReadSPV(fs->GetAbsolutePath("./Assets/Shaders/shader.spv")),
-                    .entryPoints = {
-                        {ShaderStage::Vertex, "vertMain"},
-                        {ShaderStage::Fragment, "fragMain"}
-                    }
-                }
-            }
-        };
-
-        shader = gd->CreateShader(shdesc);
-
-        PipelineDesc pdesc {
-            .shader = shader,
-            .vertexLayout = {
-                {VertexElementType::Vec3, "inPosition"},
-                {VertexElementType::Vec3, "inColor"},
-                {VertexElementType::Vec2, "inTexCoord"}
-            },
-            .uniformBindings = {
-                {0, ShaderStage::Vertex, UniformType::UniformBuffer},
-                {1, ShaderStage::Fragment, UniformType::Texture},
-            },
-            .colorAttachmentFormats = { PixelFormat::RGBA8 },
-            .topology = PrimitiveTopology::TriangleList,
-            .polygonMode = PolygonMode::Fill,
-            .cullMode = CullMode::Back,
-            .frontFace = FrontFace::CounterClockwise,
-            .blending = true,
-            .depthTest = true,
-            .depthWrite = true,
-            .depthFormat = PixelFormat::Depth32
-        };
-
-        pipeline = gd->CreatePipeline(pdesc);
-
-        TextureDesc depthdesc{
-            .width = win->GetWidth(),
-            .height = win->GetHeight(),
-            .format = PixelFormat::Depth32,
-            .usage = TextureUsage::DepthStencil
-        };
-
-        depth = gd->CreateTexture(depthdesc);
-
-        BufferDesc vbdesc{
-            .size = vertices.size() * sizeof(Vertex),
-            .type = BufferType::Vertex,
-            .usage = BufferUsage::Static
-        };
-
-        vb = gd->CreateBuffer(vbdesc);
-
-        BufferDesc ibdesc{
-            .size = indices.size() * sizeof(uint16_t),
-            .type = BufferType::Index,
-            .usage = BufferUsage::Static
-        };
-
-        ib = gd->CreateBuffer(ibdesc);
-
-        BufferDesc ubdesc{
-            .size = sizeof(UniformBufferObject),
-            .type = BufferType::Uniform,
-            .usage = BufferUsage::Dynamic
-        };
-
-        ub = gd->CreateBuffer(ubdesc);
-
-        int w, h;
-        void* texdata = stbi_load(fs->GetAbsolutePath("./Assets/Textures/awesomeface.png").c_str(), &w, &h, nullptr, 4);
-
-        /*
-        TextureDesc texdesc{
-            .width = static_cast<uint32_t>(w),
-            .height = static_cast<uint32_t>(h),
-            .format = PixelFormat::RGBA8,
-            .usage = TextureUsage::Sampled
-        };
-
-        tex = gd->CreateTexture(texdesc);*/
-
-        // Upload init data
-        ICommandBuffer* init = gd->BeginImmediate();
-        init->UploadBuffer(vb, (void*)vertices.data(), vertices.size() * sizeof(Vertex), 0);
-        init->UploadBuffer(ib, (void*)indices.data(), indices.size() * sizeof(uint16_t), 0);
-        //init->UploadTexture(tex, texdata);
-        gd->EndImmediate(init);
-
-        renderer = CreateRef<Renderer>();
+        renderer = CreateScope<Renderer>();
     }
 
     void OnEvent(StringName type, const Event& event) override {
-        if(type == Hash32("WindowResized"))
-        {
-            const WindowResizedEvent& wr = static_cast<const WindowResizedEvent&>(event);
-            if(sc.IsValid())
-            {
-                gd->ResizeSwapChain(sc, wr.GetSizeX(), wr.GetSizeY());
-            }
-            if(depth.IsValid())
-            {
-                gd->DestroyTexture(depth);
-            }
-            TextureDesc depthdesc{
-                .width = wr.GetSizeX(),
-                .height = wr.GetSizeY(),
-                .format = PixelFormat::Depth32,
-                .usage = TextureUsage::DepthStencil
-            };
-            depth = gd->CreateTexture(depthdesc);
-        }
+        renderer->OnEvent(type, event);
     }
 
     void OnUpdate(float dt) override {
-        Ref<Input> in = GetServiceLocator()->Get<Input>();
+        Input* in = GetServiceLocator()->Get<Input>();
         if(in->IsActionPressed("printFPS"))
         {
             LOG_INFO("FPS: {0}", 1 / dt);
         }
         if(in->IsActionPressed("immediate"))
         {
-            gd->SetSwapChainPresentMode(sc, PresentMode::Immediate);
+            gd->SetSwapChainPresentMode(GetSwapChain(), PresentMode::Immediate);
         }
         if(in->IsActionPressed("vsync"))
         {
-            gd->SetSwapChainPresentMode(sc, PresentMode::VSync);
+            gd->SetSwapChainPresentMode(GetSwapChain(), PresentMode::VSync);
         }
         if(in->IsActionPressed("mailbox"))
         {
-            gd->SetSwapChainPresentMode(sc, PresentMode::Mailbox);
+            gd->SetSwapChainPresentMode(GetSwapChain(), PresentMode::Mailbox);
         }
-
-        static float time = 0;
-        time += dt;
-        ubo.model = glm::rotate(Mat4(1.0f), time * glm::radians(90.0f), Vec3(0.0f, 0.0f, 1.0f));
-        ubo.view = lookAt(Vec3(2.0f, 2.0f, 2.0f), Vec3(0.0f, 0.0f, 0.0f), Vec3(0.0f, 0.0f, 1.0f));
-        ubo.proj = glm::perspective(glm::radians(45.0f), static_cast<float>(win->GetWidth()) / static_cast<float>(win->GetHeight()), 0.1f, 10.0f);
-        ubo.proj[1][1] *= -1; // TODO: Fix projection
     }
 
     void OnRender() override {
         ENGINE_CORE_ASSERT(gd != nullptr, "GD null!");
-
-        gd->BeginFrame();
 
         /*ICommandBuffer* cmd = gd->BeginPass(sc, Vec4(0.0f, 0.0f, 0.25f, 1.0f), depth);
         if(cmd)
@@ -302,12 +142,9 @@ public:
             gd->EndPass(cmd);
         }*/
 
-        renderer->Begin(sc);
+        renderer->Begin(GetSwapChain());
         renderer->DrawSprite(rm->Get<TextureResource>(tex)->texture, {0, 0}, {100, 100}, 0);
         renderer->End();
-        
-
-        gd->EndFrame();
 
         //gd->SetBufferData(ub.get(), (void*)&ubo, sizeof(UniformBufferObject));
 

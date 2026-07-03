@@ -3,6 +3,7 @@
 #include "Engine/RHI/IGraphicsDevice.h"
 #include "Engine/RHI/ICommandBuffer.h"
 #include "Engine/Math/Matrix.h"
+#include "Engine/Events/WindowEvent.h"
 
 namespace Engine
 {
@@ -104,6 +105,25 @@ namespace Engine
     Renderer::~Renderer()
     {
         
+    }
+
+    void Renderer::OnEvent(StringName type, const Event& event) {
+        if(type == Hash32("WindowResized"))
+        {
+            auto gd = Application::Get()->GetServiceLocator()->Get<IGraphicsDevice>();
+            const WindowResizedEvent& wr = static_cast<const WindowResizedEvent&>(event);
+            if(m_DepthBuffer.IsValid())
+            {
+                gd->DestroyTexture(m_DepthBuffer);
+            }
+            TextureDesc depthdesc{
+                .width = wr.GetSizeX(),
+                .height = wr.GetSizeY(),
+                .format = PixelFormat::Depth32,
+                .usage = TextureUsage::DepthStencil
+            };
+            m_DepthBuffer = gd->CreateTexture(depthdesc);
+        }
     }
 
     void Renderer::Begin(RHI::SwapChainHandle sc)

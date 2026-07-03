@@ -22,6 +22,7 @@ namespace Engine::RHI::Vulkan
     // Forward
     class IVulkanGraphicsBridge;
     class VulkanFrame;
+    class VulkanCommandBuffer;
 
     class ENGINE_EXPORT VulkanGraphicsDevice: public IGraphicsDevice
     {
@@ -45,7 +46,7 @@ namespace Engine::RHI::Vulkan
         // Immediate command buffers
         bool                       m_InImmediatePass        = false;
         vk::raii::CommandPool      m_ImmediatePool          = nullptr;
-        Scope<VulkanCommandBuffer> m_ImmediateCommandBuffer = nullptr;
+        Scope<VulkanCommandBuffer> m_ImmediateCommandBuffer;
         vk::raii::Fence            m_ImmediateFence         = nullptr;
 
         // TODO: Vulkan: VulkanResourceManager: Wrap resource creation, destruction, & destruction queue
@@ -66,6 +67,7 @@ namespace Engine::RHI::Vulkan
 
         std::vector<QueuedDestruction> m_DeletionQueue;
 
+        void FlushDeletionQueue(bool forceNow = false);
         void EnqueueDeletion(QueuedDestruction::Type type, uint32_t id);
 
         // Destroy

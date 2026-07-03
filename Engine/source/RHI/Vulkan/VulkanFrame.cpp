@@ -33,6 +33,11 @@ namespace Engine::RHI::Vulkan
         m_Fence = vk::raii::Fence(context.GetDevice(), fenceInfo);
     }
 
+    VulkanFrame::~VulkanFrame()
+    {
+      Reset();
+    }
+
     void VulkanFrame::Reset()
     {
         m_CommandBufferAllocator.Reset();

@@ -26,7 +26,7 @@ namespace Engine
         };
 
         std::unordered_map<std::type_index, Scope<IResourceLoader>>                    m_Loaders;
-        std::unordered_map<std::type_index, std::unordered_map<std::string, std::any>> m_Identifiers; // std::string -> VersionedHandle<T>
+        std::unordered_map<std::type_index, std::unordered_map<std::string, std::any>> m_Identifiers; // std::string -> ResourceHandle<T>
 
         std::unordered_map<std::type_index, std::vector<Slot>> m_Slots; // Slot index = handle.id + 1 (0 is reserved)
         std::unordered_map<std::type_index, std::vector<uint32_t>> m_FreeIDs;
@@ -39,7 +39,7 @@ namespace Engine
 
             // Existing slot
             if (it != innerMap.end()) {
-                VersionedHandle<T> oldHandle = std::any_cast<VersionedHandle<T>>(it->second);
+                ResourceHandle<T> oldHandle = std::any_cast<ResourceHandle<T>>(it->second);
                 uint32_t index = oldHandle.id - 1;
 
                 // Clear slot data and invalidate existing handles
@@ -82,7 +82,7 @@ namespace Engine
         // Load a resource by name using the loader. If resource exists,
         // it will be overwritten and its handles will be invalidated.
         template<typename T>
-        VersionedHandle<T> Load(const std::string& identifier, const ResourceLoadDesc& desc)
+        ResourceHandle<T> Load(const std::string& identifier, const ResourceLoadDesc& desc)
         {
             auto loaderIt = m_Loaders.find(typeid(T));
             ENGINE_CORE_ASSERT(loaderIt != m_Loaders.end(), "ResourceManager: Load<T>(): No resource loader registered for type!");
@@ -98,7 +98,7 @@ namespace Engine
             slot.resource = std::move(resource);
 
             // Create handle
-            VersionedHandle<T> handle;
+            ResourceHandle<T> handle;
             handle.id = index + 1; // 0 is reserved
             handle.version = slot.version;
 
@@ -111,7 +111,7 @@ namespace Engine
         // Create a resource by name using the registered loader. If resource exists,
         // it will be overwritten and its handles will be invalidated.
         template<typename T>
-        VersionedHandle<T> Create(const std::string& identifier, const ResourceCreateDesc& desc)
+        ResourceHandle<T> Create(const std::string& identifier, const ResourceCreateDesc& desc)
         {
             auto loaderIt = m_Loaders.find(typeid(T));
             ENGINE_CORE_ASSERT(loaderIt != m_Loaders.end(), "ResourceManager: Create<T>(): No resource loader registered for type!");
@@ -126,7 +126,7 @@ namespace Engine
             slot.resource = std::move(resource);
 
             // Create handle
-            VersionedHandle<T> handle;
+            ResourceHandle<T> handle;
             handle.id = idx + 1; // 0 is reserved
             handle.version = slot.version;
 
@@ -138,7 +138,7 @@ namespace Engine
 
         // Set a resource by name
         template<typename T>
-        VersionedHandle<T> Set(const std::string& identifier, Scope<T> resource)
+        ResourceHandle<T> Set(const std::string& identifier, Scope<T> resource)
         {
             if (!resource) return {};
 
@@ -148,7 +148,7 @@ namespace Engine
             slot.resource = std::move(resource); 
 
             // Create handle
-            VersionedHandle<T> handle;
+            ResourceHandle<T> handle;
             handle.id = index + 1; // 0 is reserved
             handle.version = slot.version;
 
@@ -160,7 +160,7 @@ namespace Engine
 
         // Unloads a resource
         template<typename T>
-        void Unload(VersionedHandle<T> handle)
+        void Unload(ResourceHandle<T> handle)
         {
             if (!IsValid(handle)) return;
 
@@ -181,7 +181,7 @@ namespace Engine
 
             // Unmap identifer map
             for (auto it = m_Identifiers[typeid(T)].begin(); it != m_Identifiers[typeid(T)].end(); ++it) {
-                auto storedHandle = std::any_cast<VersionedHandle<T>>(it->second);
+                auto storedHandle = std::any_cast<ResourceHandle<T>>(it->second);
                 if (storedHandle.id == handle.id) {
                     m_Identifiers[typeid(T)].erase(it);
                     break;
@@ -194,7 +194,7 @@ namespace Engine
 
         // Get existing resource handle by name
         template<typename T>
-        VersionedHandle<T> Find(const std::string& identifier) const
+        ResourceHandle<T> Find(const std::string& identifier) const
         {
             // Find resource std::string -> handle map
             auto mapIt = m_Identifiers.find(typeid(T));
@@ -204,8 +204,8 @@ namespace Engine
             auto handleIt = mapIt->second.find(identifier);
             if(handleIt == mapIt->second.end()) return {}; // Not found
 
-            // Cast to VersionedHandle<T>
-            return std::any_cast<VersionedHandle<T>>(handleIt->second);
+            // Cast to ResourceHandle<T>
+            return std::any_cast<ResourceHandle<T>>(handleIt->second);
         }
 
         // Check if an identifier points to an existing resource
@@ -216,7 +216,7 @@ namespace Engine
         }
         
         template<typename T>
-        bool IsValid(VersionedHandle<T> handle) const
+        bool IsValid(ResourceHandle<T> handle) const
         {
             if (handle.id == 0 && handle.version == 0) return false; 
 
@@ -231,7 +231,7 @@ namespace Engine
         }
 
         template<typename T>
-        T* Get(VersionedHandle<T> handle) const
+        T* Get(ResourceHandle<T> handle) const
         {
             if (!IsValid(handle)) return nullptr;
     

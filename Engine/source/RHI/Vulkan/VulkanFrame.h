@@ -34,6 +34,7 @@ namespace Engine::RHI::Vulkan
 
     public:
         VulkanFrame(VulkanContext& context);
+        ~VulkanFrame();
 
         // Begin new frame
         void Reset();

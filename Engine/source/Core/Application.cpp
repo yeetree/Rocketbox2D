@@ -7,7 +7,7 @@
 
 //#include "Engine/Events/Event.h"
 //#include "Engine/Events/ApplicationEvent.h"
-//#include "Engine/Events/WindowEvent.h"
+#include "Engine/Events/WindowEvent.h"
 //#include "Engine/Events/KeyEvent.h"
 //#include "Engine/Events/MouseEvent.h"
 
@@ -105,6 +105,14 @@ namespace Engine {
         {
             m_Running = false;
         }
+        if(type == Hash32("WindowResized"))
+        {
+            const WindowResizedEvent& wr = static_cast<const WindowResizedEvent&>(event);
+            if(m_SwapChain.IsValid())
+            {
+                m_GraphicsDevice->ResizeSwapChain(m_SwapChain, wr.GetSizeX(), wr.GetSizeY());
+            }
+        }
         OnEvent(type, event);
     }
 
@@ -145,9 +153,9 @@ namespace Engine {
             timePrev = timeNow;
         }
         LOG_CORE_INFO("Shutting down...");
+        OnDestroy();
         m_EventManager->UnsubscribeAll(m_EventListenerID);
         m_GraphicsDevice->OnDestroy();
-        OnDestroy();
     }
 
     Application::~Application() {

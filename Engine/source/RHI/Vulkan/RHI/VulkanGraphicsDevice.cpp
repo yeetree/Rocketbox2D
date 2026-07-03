@@ -41,16 +41,43 @@ namespace Engine::RHI::Vulkan
         // Destroy all buffers and textures because they are non-raii
         for(auto const& [id, data] : m_Buffers)
         {
-            ImmediateDestroy(QueuedDestruction::Type::Buffer, id);
+            EnqueueDeletion(QueuedDestruction::Type::Buffer, id);
         }
 
         for(auto const& [id, data] : m_Textures)
         {
-            ImmediateDestroy(QueuedDestruction::Type::Texture, id);
+            EnqueueDeletion(QueuedDestruction::Type::Texture, id);
         }
+
+        for(auto const& [id, data] : m_SwapChains)
+        {
+            EnqueueDeletion(QueuedDestruction::Type::SwapChain, id);
+        }
+
+        FlushDeletionQueue(true);
+
+        m_Frames.clear();
     };
 
     // Deletion queue
+    void VulkanGraphicsDevice::FlushDeletionQueue(bool forceNow)
+    {
+        for (auto it = m_DeletionQueue.begin(); it != m_DeletionQueue.end(); )
+        {
+            it->framesRemaining--;
+            if (it->framesRemaining == 0 || forceNow)
+            {
+                ImmediateDestroy(it->type, it->id);
+                it = m_DeletionQueue.erase(it);
+            }
+            else
+            {
+                ++it;
+            }
+        }
+    }
+
+
     void VulkanGraphicsDevice::EnqueueDeletion(QueuedDestruction::Type type, uint32_t id)
     {
         m_DeletionQueue.push_back({type, id, k_MaxFramesInFlight});
@@ -99,6 +126,11 @@ namespace Engine::RHI::Vulkan
             {
                 auto it = m_SwapChains.find(id);
                 if (it == m_SwapChains.end()) return;
+                for (auto& texData : it->second.textures)
+                {
+                    if (texData.ownsImage && texData.image && texData.allocation)
+                        vmaDestroyImage(m_Context.GetAllocator(), texData.image, texData.allocation);
+                }
                 m_SwapChains.erase(it);
                 break;
             }
@@ -475,20 +507,7 @@ namespace Engine::RHI::Vulkan
         m_FrameStageFlags.clear();
         m_FrameSwapChainPresentations.clear();
 
-        // Deletion queue
-        for (auto it = m_DeletionQueue.begin(); it != m_DeletionQueue.end(); )
-        {
-            it->framesRemaining--;
-            if (it->framesRemaining == 0)
-            {
-                ImmediateDestroy(it->type, it->id);
-                it = m_DeletionQueue.erase(it);
-            }
-            else
-            {
-                ++it;
-            }
-        }
+        FlushDeletionQueue();
     }
 
     void VulkanGraphicsDevice::EndFrame()
