@@ -30,7 +30,7 @@ namespace Engine {
         // Initialize platform
         m_Platform = IPlatform::Create();
         ENGINE_CORE_ASSERT(m_Platform, "Platform is null!");
-        m_Locator->RegisterInstance<IPlatform>(m_Platform);
+        m_Locator->Register<IPlatform>(m_Platform.get());
         
         // Set event callback
         //m_Platform->SetEventCallback(std::bind(&Engine::Application::EventCallback, this, std::placeholders::_1));
@@ -39,6 +39,8 @@ namespace Engine {
     Application* Application::Get() { return s_Instance; }
 
     ServiceLocator* Application::GetServiceLocator() { return m_Locator.get(); }
+
+    RHI::SwapChainHandle Application::GetSwapChain() { return m_SwapChain; }
 
     void Application::Init(const WindowProperties& properties) {
         
@@ -49,37 +51,46 @@ namespace Engine {
         // Create window
         LOG_CORE_INFO("Creating window...");
         m_Window = std::move(m_Platform->CreateWindow(properties));
-        m_Locator->RegisterInstance<IWindow>(m_Window);
+        m_Locator->Register<IWindow>(m_Window.get());
 
         // Init filesystem
         LOG_CORE_INFO("Initializing filesystem...");
-        m_FileSystem = CreateRef<FileSystem>(m_Platform->GetBasePath());
-        m_Locator->RegisterInstance<FileSystem>(m_FileSystem);
+        m_FileSystem = CreateScope<FileSystem>(m_Platform->GetBasePath());
+        m_Locator->Register<FileSystem>(m_FileSystem.get());
 
         // Create graphics device
         LOG_CORE_INFO("Initializing graphics device...");
         m_GraphicsDevice = RHI::IGraphicsDevice::Create(m_Window->GetAPI());
-        m_Locator->RegisterInstance<RHI::IGraphicsDevice>(m_GraphicsDevice);
+        m_Locator->Register<RHI::IGraphicsDevice>(m_GraphicsDevice.get());
+
+        // Create swapchain
+        RHI::SwapChainDesc scdesc{
+            .window = m_Window.get(),
+            .presentation = RHI::PresentMode::VSync,
+            .format = RHI::PixelFormat::RGBA8
+        };
+        m_SwapChain = m_GraphicsDevice->CreateSwapChain(scdesc);
+
 
         // Create Renderer2D
         //LOG_CORE_INFO("Initializing renderer...");
         //m_Renderer = CreateScope<Renderer>(m_GraphicsDevice.get());
-        //s_Locator->RegisterInstance<Renderer>(m_Renderer.get());
+        //s_Locator->Register<Renderer>(m_Renderer.get());
 
         // Create resource manager
         LOG_CORE_INFO("Initializing resource manager...");
-        m_ResourceManager = CreateRef<ResourceManager>();
-        m_Locator->RegisterInstance<ResourceManager>(m_ResourceManager);
+        m_ResourceManager = CreateScope<ResourceManager>();
+        m_Locator->Register<ResourceManager>(m_ResourceManager.get());
 
         // Create event manager
         LOG_CORE_INFO("Initializing event manager...");
-        m_EventManager = CreateRef<EventManager>();
-        m_Locator->RegisterInstance<EventManager>(m_EventManager);
+        m_EventManager = CreateScope<EventManager>();
+        m_Locator->Register<EventManager>(m_EventManager.get());
 
         // Create input
         LOG_CORE_INFO("Initializing input...");
-        m_Input = CreateRef<Input>();
-        m_Locator->RegisterInstance<Input>(m_Input);
+        m_Input = CreateScope<Input>();
+        m_Locator->Register<Input>(m_Input.get());
 
         // Subscribe to event callback
         // Bind both parameters (EventType and Event) so the resulting callable
@@ -126,12 +137,10 @@ namespace Engine {
             m_EventManager->FlushEvents();
 
             // Render
-            //m_GraphicsDevice->BeginFrame();
+            m_GraphicsDevice->BeginFrame();
             OnRender();
-            //m_GraphicsDevice->EndFrame();
-            //m_GraphicsDevice->Present();
+            m_GraphicsDevice->EndFrame();
 
-            
             // Update time
             timePrev = timeNow;
         }

@@ -1,5 +1,5 @@
-#ifndef ENGINE_CORE_APPLICATION
-#define ENGINE_CORE_APPLICATION
+#ifndef _ENGINE_CORE_APPLICATION
+#define _ENGINE_CORE_APPLICATION
 
 #include "engine_export.h"
 
@@ -34,6 +34,7 @@ namespace Engine {
         static Application* Get();
 
         ServiceLocator* GetServiceLocator();
+        RHI::SwapChainHandle GetSwapChain();
 
         void Init(const WindowProperties& properties);
         //void EventCallback(Event& event);
@@ -52,13 +53,14 @@ namespace Engine {
 
         Scope<ServiceLocator> m_Locator;
         
-        Ref<FileSystem> m_FileSystem;
-        Ref<IPlatform> m_Platform;
-        Ref<RHI::IGraphicsDevice> m_GraphicsDevice;
-        Ref<IWindow> m_Window;
-        Ref<ResourceManager> m_ResourceManager;
-        Ref<EventManager> m_EventManager;
-        Ref<Input> m_Input;
+        Scope<FileSystem> m_FileSystem;
+        Scope<IPlatform> m_Platform;
+        Scope<RHI::IGraphicsDevice> m_GraphicsDevice;
+        Scope<IWindow> m_Window;
+        RHI::SwapChainHandle m_SwapChain;
+        Scope<ResourceManager> m_ResourceManager;
+        Scope<EventManager> m_EventManager;
+        Scope<Input> m_Input;
         //Scope<Renderer> m_Renderer;
 
         void EventCallback(StringName type, const Event& event);
@@ -70,4 +72,4 @@ namespace Engine {
 } // namespace Engine
 
 
-#endif // ENGINE_CORE_APPLICATION
+#endif // _ENGINE_CORE_APPLICATION

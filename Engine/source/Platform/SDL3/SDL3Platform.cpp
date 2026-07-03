@@ -35,8 +35,8 @@ namespace Engine
 
     void SDL3Platform::PollEvents()
     {
-        Ref<EventManager> em = Application::Get()->GetServiceLocator()->Get<EventManager>();
-        Ref<Input> in = Application::Get()->GetServiceLocator()->Get<Input>();
+        EventManager* em = Application::Get()->GetServiceLocator()->Get<EventManager>();
+        Input* in = Application::Get()->GetServiceLocator()->Get<Input>();
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
@@ -46,7 +46,7 @@ namespace Engine
                 {
                     if(em)
                     {
-                        em->QueueEvent(Hash32("Quit"), CreateScope<Event>(Hash32("Quit")));
+                        em->EnqueueEvent(Hash32("Quit"), CreateScope<Event>(Hash32("Quit")));
                     }
                     break;
                 }
@@ -56,7 +56,7 @@ namespace Engine
                     KeyCode k = SDLToKeyCode(event.key.key);
                     if(em)
                     {
-                        em->QueueEvent(Hash32("KeyPressed"), CreateScope<KeyPressedEvent>(k, event.key.repeat));
+                        em->EnqueueEvent(Hash32("KeyPressed"), CreateScope<KeyPressedEvent>(k, event.key.repeat));
                     }
                     if(in)
                     {
@@ -70,7 +70,7 @@ namespace Engine
                     KeyCode k = SDLToKeyCode(event.key.key);
                     if(em)
                     {
-                        em->QueueEvent(Hash32("KeyReleased"), CreateScope<KeyReleasedEvent>(k, event.key.repeat));
+                        em->EnqueueEvent(Hash32("KeyReleased"), CreateScope<KeyReleasedEvent>(k, event.key.repeat));
                     }
                     if(in)
                     {
@@ -84,7 +84,7 @@ namespace Engine
                     MouseButton k = SDLToMouseButton(event.button.button);
                     if(em)
                     {
-                        em->QueueEvent(Hash32("MouseButtonPressed"), CreateScope<MouseButtonPressedEvent>(k));
+                        em->EnqueueEvent(Hash32("MouseButtonPressed"), CreateScope<MouseButtonPressedEvent>(k));
                     }
                     if(in)
                     {
@@ -97,7 +97,7 @@ namespace Engine
                 {
                     if(em)
                     {
-                        em->QueueEvent(Hash32("MouseMoved"), CreateScope<MouseMovedEvent>(event.motion.xrel, event.motion.yrel));
+                        em->EnqueueEvent(Hash32("MouseMoved"), CreateScope<MouseMovedEvent>(event.motion.xrel, event.motion.yrel));
                     }
                     if(in)
                     {
@@ -111,7 +111,7 @@ namespace Engine
                 {
                     if(em)
                     {
-                        em->QueueEvent(Hash32("MouseScrolled"), CreateScope<MouseScrolledEvent>(event.wheel.x, event.wheel.y));
+                        em->EnqueueEvent(Hash32("MouseScrolled"), CreateScope<MouseScrolledEvent>(event.wheel.x, event.wheel.y));
                     }
                     if(in)
                     {
@@ -125,7 +125,7 @@ namespace Engine
                 {
                     if(em)
                     {
-                        em->QueueEvent(Hash32("WindowMoved"), CreateScope<WindowMovedEvent>(event.window.data1, event.window.data2));
+                        em->EnqueueEvent(Hash32("WindowMoved"), CreateScope<WindowMovedEvent>(event.window.data1, event.window.data2));
                     }
                     break;
                 }

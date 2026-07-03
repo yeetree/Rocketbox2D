@@ -96,6 +96,9 @@ namespace Engine::RHI::Vulkan
         void DestroyPipeline(PipelineHandle& pipeline) override;
         void DestroySwapChain(SwapChainHandle& swapchain) override;
 
+        // TODO: EnqueueUploadBuffer, EnqueueUploadTexture, and FlushUploads
+        // Enqueues uploads into an immediate command buffer.
+
         // Frame pacing
         void BeginFrame() override;
         void EndFrame() override;

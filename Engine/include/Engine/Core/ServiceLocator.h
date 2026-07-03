@@ -4,6 +4,7 @@
 #include "engine_export.h"
 
 #include "Engine/Core/Base.h"
+#include "Engine/Core/Assert.h"
 
 #include <functional>
 #include <memory>
@@ -20,28 +21,37 @@ namespace Engine
 
         void Clear();
 
-        // Register an external instance that is not owned by ServiceLocator.
-        //template<typename T>
-	    //void RegisterExternalInstance(T* instance = new T());
-
-        // Register an instance that is owned by ServiceLocator.
         template<typename T>
-	    void RegisterInstance(Ref<T> instance = CreateRef<T>());
-
-        // Register a creator function for type T. Creator will be called to create instance on Get<T>().
-        template<typename T>
-	    void RegisterCreator(std::function<Ref<T>()> creator = []() { return CreateRef<T>(); });
+        void Register(T* service)
+        {
+            auto typeIdx = std::type_index(typeid(T));
+            m_Services[typeIdx] = static_cast<void*>(service);
+        }
 
         template<typename T>
-	    Ref<T> Get() const;
+        void Unregister()
+        {
+            auto typeIdx = std::type_index(typeid(T));
+            m_Services.erase(typeIdx);
+        }
+
+        template<typename T>
+        T* Get() const
+        {
+            auto typeIdx = std::type_index(typeid(T));
+            auto it = m_Services.find(typeIdx);
+            
+            ENGINE_CORE_ASSERT(it != m_Services.end(), "Service requested is not registered!");
+            
+            if (it == m_Services.end())
+                return nullptr;
+
+            return static_cast<T*>(it->second);
+        }
 
     private:
-        //std::unordered_map<size_t, void*> m_ExternalInstances;
-        std::unordered_map<size_t, Ref<void>> m_Instances;
-        std::unordered_map<size_t, std::function<Ref<void>()>> m_Creators;
+        std::unordered_map<std::type_index, void*> m_Services;
     };
 } // namespace Engine
-
-#include "ServiceLocator.inl"
 
 #endif // ENGINE_CORE_SERVICELOCATOR

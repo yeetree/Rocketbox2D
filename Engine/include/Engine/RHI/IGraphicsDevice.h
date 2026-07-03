@@ -35,6 +35,9 @@ namespace Engine::RHI
         virtual void DestroyPipeline(PipelineHandle& pipeline) = 0;
         virtual void DestroySwapChain(SwapChainHandle& swapchain) = 0;
 
+        // TODO: IGraphicsDevice: EnqueueUploadBuffer, EnqueueUploadTexture, and FlushUploads
+        // Enqueues uploads into an immediate command buffer.
+
         // Frame pacing
         virtual void BeginFrame() = 0;
         virtual void EndFrame() = 0;

@@ -54,7 +54,7 @@ namespace Engine
     }
 
     // On FlushEvents
-    void EventManager::QueueEvent(StringName type, Scope<Event> event)
+    void EventManager::EnqueueEvent(StringName type, Scope<Event> event)
     {
         m_EventQueue.emplace(type, std::move(event));
     }

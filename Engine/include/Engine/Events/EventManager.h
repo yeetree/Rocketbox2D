@@ -48,7 +48,7 @@ namespace Engine
         void Dispatch(StringName type, const Event& event);
 
         // On FlushEvents
-        void QueueEvent(StringName type, Scope<Event> event);
+        void EnqueueEvent(StringName type, Scope<Event> event);
         void FlushEvents();
     };
 } // namespace Engine

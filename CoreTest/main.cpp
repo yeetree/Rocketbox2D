@@ -5,6 +5,8 @@
 #include "Engine/Events/WindowEvent.h"
 #include "Engine/Core/Assert.h"
 
+#include "Engine/Renderer/Renderer.h"
+
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
@@ -26,15 +28,15 @@ struct UniformBufferObject
 };
 
 const std::vector<Vertex> vertices = {
-    {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-    {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-    {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-    {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
-
     {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
     {{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
     {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-    {{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
+    {{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
+
+    {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+    {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+    {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+    {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
 };
 
 const std::vector<uint16_t> indices = {
@@ -101,10 +103,12 @@ public:
 
 class EngineTestApp : public Application {
 public:
-    Ref<IWindow> win;
-    Ref<IGraphicsDevice> gd;
-    Ref<FileSystem> fs;
-    Ref<ResourceManager> rm;
+    IWindow* win;
+    IGraphicsDevice* gd;
+    FileSystem* fs;
+    ResourceManager* rm;
+
+    Ref<Renderer> renderer;
 
     SwapChainHandle sc;
 
@@ -121,7 +125,7 @@ public:
     VersionedHandle<TextureResource> tex;
 
     void OnStart() override {
-        Ref<Input> in = GetServiceLocator()->Get<Input>();
+        Input* in = GetServiceLocator()->Get<Input>();
         in->MapAction("printFPS", KeyCode::A);
         in->MapAction("immediate", KeyCode::Q);
         in->MapAction("vsync", KeyCode::W);
@@ -134,14 +138,6 @@ public:
 
         rm->RegisterLoader<TextureResource>(CreateScope<TextureLoader>(gd));
         tex = rm->Load<TextureResource>("awesomeface", TextureLoadDesc(fs->GetAbsolutePath("./Assets/Textures/awesomeface.png")));
-
-        SwapChainDesc scdesc{
-            .window = win.get(),
-            .presentation = PresentMode::VSync,
-            .format = PixelFormat::RGBA8
-        };
-
-        sc = gd->CreateSwapChain(scdesc);
 
         ShaderDesc shdesc{
             .modules = {
@@ -233,6 +229,8 @@ public:
         init->UploadBuffer(ib, (void*)indices.data(), indices.size() * sizeof(uint16_t), 0);
         //init->UploadTexture(tex, texdata);
         gd->EndImmediate(init);
+
+        renderer = CreateRef<Renderer>();
     }
 
     void OnEvent(StringName type, const Event& event) override {
@@ -289,7 +287,7 @@ public:
 
         gd->BeginFrame();
 
-        ICommandBuffer* cmd = gd->BeginPass(sc, Vec4(0.0f, 0.0f, 0.25f, 1.0f), depth);
+        /*ICommandBuffer* cmd = gd->BeginPass(sc, Vec4(0.0f, 0.0f, 0.25f, 1.0f), depth);
         if(cmd)
         {
             cmd->UploadBuffer(ub, (void*)&ubo, sizeof(UniformBufferObject), 0);
@@ -302,7 +300,11 @@ public:
             cmd->DrawIndexed(12);
 
             gd->EndPass(cmd);
-        }
+        }*/
+
+        renderer->Begin(sc);
+        renderer->DrawSprite(rm->Get<TextureResource>(tex)->texture, {0, 0}, {100, 100}, 0);
+        renderer->End();
         
 
         gd->EndFrame();
